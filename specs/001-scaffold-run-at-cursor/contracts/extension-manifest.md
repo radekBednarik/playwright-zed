@@ -4,11 +4,11 @@
 
 ```toml
 id = "playwright"
-name = "Playwright"
+name = "Playwright for Zed"
 version = "0.1.0"
 schema_version = 1
 authors = ["Radek Bednarik <radek.bednarik@tesena.com>"]
-description = "Run and manage Playwright end-to-end tests from Zed, mirroring the Playwright VS Code extension."
+description = "Run Playwright end-to-end tests from Zed: run at cursor, run file, re-run last, with results in the editor. Community extension, not affiliated with or endorsed by Microsoft."
 repository = "https://github.com/radekBednarik/playwright-zed"
 
 capabilities = [
@@ -29,7 +29,10 @@ languages = ["TypeScript", "TSX", "JavaScript"]
 table header belongs to that table, and Zed then rejects the manifest ("invalid type:
 sequence, expected a string").
 
-Rules: no `grammars`, no `languages` directory, no `slash_commands`, no bundled binaries.
+Rules: no `grammars`, no `languages` directory, no `slash_commands`, no bundled binaries, no
+Playwright or Microsoft logo. The display name is `Playwright for Zed` and the description
+carries the non-affiliation notice, so the extension is not mistaken for a Microsoft product
+("Playwright" is a Microsoft trademark; the id `playwright` is an internal identifier).
 `version` here must equal the `version` entry in `zed-industries/extensions/extensions.toml`
 at the submitted commit.
 

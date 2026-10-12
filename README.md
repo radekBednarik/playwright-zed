@@ -1,10 +1,16 @@
 # Playwright for Zed
 
 Run and manage [Playwright](https://playwright.dev) end-to-end tests from the
-[Zed](https://zed.dev) editor. The goal is capability parity with the
+[Zed](https://zed.dev) editor. The goal is feature parity with the
 [Playwright VS Code extension](https://github.com/microsoft/playwright-vscode), delivered
 through the surfaces Zed gives extensions. Progress per upstream capability is tracked in
 [docs/parity.md](docs/parity.md).
+
+This is an independent community extension. It is not affiliated with, endorsed by, or
+maintained by Microsoft or the Playwright team. "Playwright" is a trademark of Microsoft
+Corporation; the name is used only to describe what this extension works with. The extension
+contains no code from the Playwright projects and drives the Playwright installed in your
+own workspace through its public command line.
 
 ## What it does today
 
@@ -118,7 +124,7 @@ from a WSL path).
    ```
 4. `ctrl-shift-p`, run `zed: install dev extension`, choose the repository root. Zed
    compiles the Rust crate; the first build takes about a minute.
-5. `zed: extensions` must list **Playwright 0.1.0**.
+5. `zed: extensions` must list **Playwright for Zed 0.1.0**.
 6. `zed: open settings`, add `"code_lens": "on"`.
 7. Open `tests/passing.spec.ts`. Expect `▶ Run test` above each test and `▶ Run describe`
    above each group. Click the lightning bolt in the status bar, or run
@@ -159,4 +165,5 @@ visit https://demo.playwright.dev/todomvc/ and need network access.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE). Playwright itself is licensed separately by Microsoft under
+Apache 2.0 and is not distributed with this extension.

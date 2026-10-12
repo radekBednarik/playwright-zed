@@ -71,3 +71,4 @@ the id to `playwright-lsp` before the first publication; ids cannot change after
 - [ ] all user-facing text in English
 - [ ] only `npm:install` for `playwright-zed-language-server` in `capabilities`
 - [ ] tested manually at the submitted commit
+- [ ] display name `Playwright for Zed`, non-affiliation notice in the description and READMEs, no Playwright or Microsoft logo
