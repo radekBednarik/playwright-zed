@@ -8,7 +8,7 @@ name = "Playwright for Zed"
 version = "0.1.0"
 schema_version = 1
 authors = ["Radek Bednarik <radek.bednarik@tesena.com>"]
-description = "Run Playwright end-to-end tests from Zed: run at cursor, run file, re-run last, with results in the editor. Community extension, not affiliated with or endorsed by Microsoft."
+description = "Work in progress. Run Playwright end-to-end tests from Zed: run at cursor, run file, re-run last, with results in the editor. Community extension, not affiliated with or endorsed by Microsoft."
 repository = "https://github.com/radekBednarik/playwright-zed"
 
 capabilities = [
