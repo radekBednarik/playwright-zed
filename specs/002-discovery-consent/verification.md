@@ -51,9 +51,13 @@ requires them on every verification.
 
 ## Manual verification in Zed (T017)
 
-Pending: quickstart scenarios 1, 2, 4 to 10 need a developer at the editor. Record outcomes
-below.
+Performed by the repository owner on 2026-10-12 in Zed stable 1.23.2 (Linux build under
+WSL2 with WSLg), dev extension installed from the repository root, server loaded from the
+local build through `PLAYWRIGHT_ZED_SERVER_ENTRY` at commit `785ed0f`. The owner reports
+quickstart scenarios 1, 2 and 4 to 10 as passing (scenario 3 is automated only). The
+per-scenario observations were not transcribed; the owner's report is the record.
 
 | # | Scenario | Outcome |
 |---|----------|---------|
-| 1, 2, 4 to 10 | see quickstart.md | pending |
+| 1, 2, 4 to 10 | see quickstart.md | pass, reported by the owner on 2026-10-12 |
+| 3 | run command while pending | automated, `consent.test.ts` (b) |

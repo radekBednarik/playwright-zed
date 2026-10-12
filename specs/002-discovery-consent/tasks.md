@@ -122,7 +122,7 @@ prompt; `playwright.enableDiscovery` then enables everything.
 - [X] T014 [P] Add the `zed-only` row `Discovery consent (Workspace Trust substitute)` to `docs/parity.md` with primitive `lsp` and the note from `quickstart.md`, and update the note of the row `Playwright project detection and selection` to mention that discovery waits for consent
 - [X] T015 [P] Document the question, the `Playwright: Enable test discovery` action and the per-session scope in `README.md` (new subsection "Before the first run: test discovery" under Usage, plus a line in "What it does today" and in the Manual testing table), and extend `specs/001-scaffold-run-at-cursor/quickstart.md` scenario 2 and `specs/001-scaffold-run-at-cursor/contracts/lsp-protocol.md` (commands table, code actions table, notifications table, status request) with the additions from `contracts/discovery-consent.md`
 - [X] T016 Run `cd server && npm run lint && npm test && npm run build`, then `cargo test` and `cargo build --release --target wasm32-wasip2` (unchanged Rust, still required by Constitution V), and record the commands with their final output lines in `specs/002-discovery-consent/verification.md`
-- [ ] T017 Run quickstart scenarios 1, 2, 4 to 10 as a dev extension in Zed (`npm run build` in `server/`, `PLAYWRIGHT_ZED_SERVER_ENTRY` exported, `editor: restart language server`), record each outcome in `specs/002-discovery-consent/verification.md`; this needs a developer at the editor
+- [X] T017 Run quickstart scenarios 1, 2, 4 to 10 as a dev extension in Zed (`npm run build` in `server/`, `PLAYWRIGHT_ZED_SERVER_ENTRY` exported, `editor: restart language server`), record each outcome in `specs/002-discovery-consent/verification.md`; this needs a developer at the editor
 
 ---
 
@@ -183,4 +183,5 @@ prompt; `playwright.enableDiscovery` then enables everything.
 
 - T001 to T016: done; 88 server tests (9 files) and 7 Rust tests pass, WASM build green;
   see `verification.md`.
-- T017 (manual quickstart scenarios in Zed): **open**, needs a developer at the editor.
+- T017: done on 2026-10-12, the owner ran quickstart scenarios 1, 2 and 4 to 10 in Zed
+  1.23.2 and reported all passing. No open tasks remain for feature 002.
