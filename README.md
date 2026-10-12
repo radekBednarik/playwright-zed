@@ -16,7 +16,7 @@ through the surfaces Zed gives extensions. Progress per upstream capability is t
   code actions (`ctrl-.` / `cmd-.`).
 - Runs happen through the Playwright installed in your workspace, headless. Results arrive
   as a progress indicator, a pass/fail notification, an error marker on each failing line,
-  and the full output in Zed's language server log (`debug: open language server logs`).
+  and the full output in Zed's language server log (`dev: open language server logs`).
 
 ## Requirements
 
@@ -93,6 +93,53 @@ add this task to `~/.config/zed/tasks.json`. Zed already recognises `test(` and
   }
 ]
 ```
+
+## Manual testing
+
+Prerequisites: Rust with the `wasm32-wasip2` target, Node 20+, Zed 1.23+ on the same
+machine as this clone (on WSL use a Linux Zed, the Windows one cannot load a dev extension
+from a WSL path).
+
+1. Build the server and the browser for the sample project:
+   ```sh
+   (cd server && npm install && npm run build)
+   (cd fixtures/sample-project && npm install && npx playwright install chromium)
+   ```
+2. Point the extension at the local server. Add to `~/.bashrc` (Zed reads the shell
+   environment, a one-off `export` is not enough), then open a new shell:
+   ```sh
+   export PLAYWRIGHT_ZED_SERVER_ENTRY=/absolute/path/to/playwright-zed/server/bin/playwright-zed-language-server.js
+   ```
+3. Start Zed on the sample project with logs attached:
+   ```sh
+   cd fixtures/sample-project && zed --foreground .
+   ```
+4. `ctrl-shift-p`, run `zed: install dev extension`, choose the repository root. Zed
+   compiles the Rust crate; the first build takes about a minute.
+5. `zed: extensions` must list **Playwright 0.1.0**.
+6. `zed: open settings`, add `"code_lens": "on"`.
+7. Open `tests/passing.spec.ts`. Expect `▶ Run test` above each test and `▶ Run describe`
+   above each group. Click the lightning bolt in the status bar, or run
+   `dev: open language server logs`, pick **Playwright**: the log shows
+   `discovered 11 test(s)`.
+8. Run checks (`ctrl-.` opens the actions):
+
+   | Check | Steps | Expected |
+   |-------|-------|----------|
+   | Single test | cursor in `adds numbers`, **Run test at cursor** | progress, then "1 passed, 0 failed, 0 skipped" |
+   | Failure | `tests/failing.spec.ts`, run first test | error notification with "Expected: 3", red marker on the `expect` line |
+   | Describe | cursor on `test.describe('math'`, **Run describe at cursor** | "2 passed" |
+   | Duplicate titles | run each `same title` | "1 passed" each |
+   | File | **Run file** in `passing.spec.ts` | "8 passed, 0 failed, 1 skipped" |
+   | Re-run | in `playwright.config.ts`, **Re-run last** | previous selection runs again |
+   | Cancel | start two runs back to back | "cancelled" warning, then the second result |
+   | Unsaved | edit without saving, run | "unsaved changes" warning, saved file runs |
+   | No Playwright | open a folder with a `.ts` file and no Playwright | no lenses, no actions, no warnings |
+   | Old version | copy the sample, set `@playwright/test` version to `1.37.1` in `node_modules`, open it | one warning naming 1.37.1 and 1.38, no actions |
+
+After a Rust change run `zed: install dev extension` again. After a server change run
+`npm run build` and `editor: restart language server`. Problems with the extension itself
+appear in `zed: open log`; problems with runs appear in the Playwright server log.
 
 ## Development
 

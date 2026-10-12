@@ -37,7 +37,8 @@ loop-generated and one skipped, 2 in failing.spec.ts: one failing, one fixme).
    development-only).
 2. In Zed run `zed: install dev extension`, choose the repository root.
 3. In Zed settings add `"code_lens": "on"` to see run lenses (code actions work without it).
-4. Run `zed: open log` to watch for extension errors.
+4. Run `zed: open log` to watch for extension errors, and `dev: open language server logs`
+   (or the lightning bolt in the status bar) for the Playwright server log.
 
 ## Scenarios
 
@@ -47,7 +48,7 @@ loop-generated and one skipped, 2 in failing.spec.ts: one failing, one fixme).
 | 2 | US1-2 | Open `fixtures/sample-project` in Zed, open `tests/passing.spec.ts` | Language server "Playwright" shows running in the status bar; lenses "▶ Run test" above each test; ctrl-. shows "Playwright: Run test at cursor" |
 | 3 | US1-3 | Open a folder with a `.ts` file and no Playwright | No Playwright lenses or actions; no errors in Zed log from the extension |
 | 4 | US1-4 | In a scratch copy of the fixture, install `@playwright/test@1.37.1`, reopen | One warning notification naming 1.37.1 and the 1.38 minimum; no run actions |
-| 5 | US2-1 | Cursor inside `test('adds numbers')`, ctrl-., Enter | Progress "Running 1 test(s)"; Info notification "1 passed"; LSP log shows the command and list output |
+| 5 | US2-1 | Cursor inside `test('adds numbers')`, ctrl-., Enter | Progress "Running 1 test(s)"; Info notification "1 passed"; Playwright server log (`dev: open language server logs`) shows the command and list output |
 | 6 | US2-2 | Cursor inside the failing test in `failing.spec.ts`, run at cursor | Error notification "0 passed, 1 failed"; a `playwright` diagnostic on the failing `expect` line with the assertion message |
 | 7 | US2-3 | Cursor on the `test.describe('math')` line, run | Only the 2 tests inside the describe run (summary shows 2) |
 | 8 | US2-4 | Cursor on line 1 (imports), run at cursor | All 9 tests in the file run; summary 8 passed, 1 skipped |
