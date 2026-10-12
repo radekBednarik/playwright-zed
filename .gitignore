@@ -20,3 +20,6 @@ Thumbs.db
 *.tmp
 .idea/
 .vscode/
+
+# Zed dev-extension build output
+/extension.wasm
