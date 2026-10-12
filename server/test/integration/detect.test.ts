@@ -15,7 +15,7 @@ afterAll(() => {
 });
 
 describe('workspace detection (US1)', () => {
-  it('recognises the fixture, gates on version and discovers all 11 tests', async () => {
+  it('recognises the fixture, gates on version and discovers all 15 tests', async () => {
     const client = await TestClient.start(FIXTURE);
     try {
       await client.waitForDiscovery();
@@ -28,13 +28,14 @@ describe('workspace detection (US1)', () => {
       expect(config.playwrightVersion).toMatch(/^1\.(3[8-9]|[4-9]\d)\./);
       expect(config.testDirs).toEqual([path.join(FIXTURE, 'tests')]);
       expect(config.discoveryState).toBe('idle');
-      expect(config.testCount).toBe(11);
+      expect(config.testCount).toBe(15);
 
       const passingLenses = await client.codeLenses(PASSING);
       const failingLenses = await client.codeLenses(FAILING);
-      expect(passingLenses.filter((l) => l.command.title === '▶ Run test')).toHaveLength(8);
-      expect(passingLenses.filter((l) => l.command.title === '▶ Run describe')).toHaveLength(2);
-      expect(failingLenses.filter((l) => l.command.title === '▶ Run test')).toHaveLength(2);
+      expect(passingLenses.filter((l) => l.command.title === '▶ Run test')).toHaveLength(11);
+      expect(passingLenses.filter((l) => l.command.title === '▶ Run describe')).toHaveLength(3);
+      expect(failingLenses.filter((l) => l.command.title === '▶ Run test')).toHaveLength(3);
+      expect(failingLenses.filter((l) => l.command.title === '▶ Run describe')).toHaveLength(1);
       expect(client.showMessages(MessageType.Warning)).toEqual([]);
       expect(client.showMessages(MessageType.Error)).toEqual([]);
     } finally {

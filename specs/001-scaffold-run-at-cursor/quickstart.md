@@ -24,8 +24,9 @@ cd server && npm ci && npm test && npm run build && cd ..
 cd fixtures/sample-project && npm ci && npx playwright test --list && cd ../..
 ```
 
-Expected: all commands exit 0; `--list` prints 11 tests (9 in passing.spec.ts including two
-loop-generated and one skipped, 2 in failing.spec.ts: one failing, one fixme).
+Expected: all commands exit 0; `--list` prints 15 tests (12 in passing.spec.ts including two
+loop-generated, one skipped and three real TodoMVC browser tests; 3 in failing.spec.ts: one
+failing, one fixme, one real TodoMVC failure). The TodoMVC tests need network access.
 
 ## Install as dev extension
 
@@ -51,10 +52,10 @@ loop-generated and one skipped, 2 in failing.spec.ts: one failing, one fixme).
 | 5 | US2-1 | Cursor inside `test('adds numbers')`, ctrl-., Enter | Progress "Running 1 test(s)"; Info notification "1 passed"; Playwright server log (`dev: open language server logs`) shows the command and list output |
 | 6 | US2-2 | Cursor inside the failing test in `failing.spec.ts`, run at cursor | Error notification "0 passed, 1 failed"; a `playwright` diagnostic on the failing `expect` line with the assertion message |
 | 7 | US2-3 | Cursor on the `test.describe('math')` line, run | Only the 2 tests inside the describe run (summary shows 2) |
-| 8 | US2-4 | Cursor on line 1 (imports), run at cursor | All 9 tests in the file run; summary 8 passed, 1 skipped |
+| 8 | US2-4 | Cursor on line 1 (imports), run at cursor | All 12 tests in the file run; summary 11 passed, 1 skipped |
 | 9 | US2-5 | Run each of the two tests titled `same title` | Exactly 1 test runs each time, from the matching describe |
 | 10 | US2-6 | Start a run, immediately run again on the same test | First run cancelled (warning), second completes; diagnostics reflect the second only |
-| 11 | US3-1 | ctrl-. "Playwright: Run file" in passing.spec.ts | Summary shows 9 results: 8 passed, 1 skipped |
+| 11 | US3-1 | ctrl-. "Playwright: Run file" in passing.spec.ts | Summary shows 12 results: 11 passed, 1 skipped |
 | 12 | US3-2 | Open `playwright.config.ts`, ctrl-. | No Playwright run actions |
 | 13 | US4-1 | After scenario 5, move cursor to another file, ctrl-. "Re-run last" | Same single test runs again |
 | 14 | US4-2 | Fresh Zed session, "Re-run last" | Info "Nothing to re-run yet" |
@@ -64,6 +65,8 @@ loop-generated and one skipped, 2 in failing.spec.ts: one failing, one fixme).
 | 18 | Edge: loop tests | Cursor on the `for` line that generates `loop 1` and `loop 2`, run at cursor | Exactly 2 tests run |
 | 19 | Edge: skipped test | Cursor in `test.skip('skipped on purpose')`, run at cursor | Summary reports 1 skipped, 0 failed; no diagnostic |
 | 20 | Edge: fixme test | Cursor in `test.fixme('fixme on purpose')` in failing.spec.ts, run at cursor | Summary reports 1 skipped, 0 failed; no diagnostic |
+| 21 | Real browser | Cursor on `test.describe('todomvc'` in passing.spec.ts, run describe | Chromium opens demo.playwright.dev; summary 3 passed |
+| 22 | Real failure | Run `expects a wrong heading` in failing.spec.ts | Error notification with `Expected: "tasks"`, `Received: "todos"`; diagnostic on the `toHaveText` line |
 
 ## Terminal-output path (zed-only recipe)
 

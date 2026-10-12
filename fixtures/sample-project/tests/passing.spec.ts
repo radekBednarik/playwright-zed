@@ -39,3 +39,37 @@ for (const n of [1, 2]) test(`loop ${n}`, async ({ page }) => { await page.setCo
 test.skip('skipped on purpose', async ({ page }) => {
   await page.setContent('<p>never runs</p>');
 });
+
+// Real end-to-end tests against the public TodoMVC demo (network required).
+test.describe('todomvc', () => {
+  const url = 'https://demo.playwright.dev/todomvc/#/';
+
+  test('shows the empty app', async ({ page }) => {
+    await page.goto(url);
+    await expect(page.getByRole('heading', { name: 'todos' })).toBeVisible();
+    await expect(page.getByPlaceholder('What needs to be done?')).toBeVisible();
+    await expect(page.getByTestId('todo-item')).toHaveCount(0);
+  });
+
+  test('adds a todo item', async ({ page }) => {
+    await page.goto(url);
+    const input = page.getByPlaceholder('What needs to be done?');
+    await input.fill('buy milk');
+    await input.press('Enter');
+    await expect(page.getByTestId('todo-title')).toHaveText(['buy milk']);
+    await expect(page.getByTestId('todo-count')).toHaveText('1 item left');
+  });
+
+  test('completes a todo and filters it out of Active', async ({ page }) => {
+    await page.goto(url);
+    const input = page.getByPlaceholder('What needs to be done?');
+    await input.fill('buy milk');
+    await input.press('Enter');
+    await input.fill('walk the dog');
+    await input.press('Enter');
+    await page.getByTestId('todo-item').nth(0).getByRole('checkbox').check();
+    await expect(page.getByTestId('todo-item').nth(0)).toHaveClass(/completed/);
+    await page.getByRole('link', { name: 'Active' }).click();
+    await expect(page.getByTestId('todo-title')).toHaveText(['walk the dog']);
+  });
+});

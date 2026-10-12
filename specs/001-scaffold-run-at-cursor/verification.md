@@ -86,7 +86,7 @@ Then follow `quickstart.md`. Record outcomes below.
 
 | # | Scenario | Outcome |
 |---|----------|---------|
-| 1 to 20 | see quickstart.md | pending |
+| 1 to 22 | see quickstart.md | pending |
 
 ## Convergence pass (Phase 8, 2026-10-12)
 

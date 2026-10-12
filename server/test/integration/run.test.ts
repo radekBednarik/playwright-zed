@@ -6,7 +6,7 @@ const RUN_FILE = 'playwright.runFile';
 const RERUN_LAST = 'playwright.rerunLast';
 
 // 0-based lines of the fixture (1-based minus one)
-const L = { adds: 2, parens: 7, mathDescribe: 12, mathSame: 13, stringsSame: 25, loop: 36, skip: 38, failing: 2, fixme: 6, imports: 0 };
+const L = { adds: 2, parens: 7, mathDescribe: 12, mathSame: 13, stringsSame: 25, loop: 36, skip: 38, todomvc: 43, failing: 2, fixme: 6, failingTodomvc: 11, imports: 0 };
 
 let client: TestClient;
 
@@ -96,7 +96,7 @@ describe('run at cursor (US2)', () => {
   it('(g) runs the whole file from a line outside any test', async () => {
     await runAtCursor(PASSING, L.imports);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toBe('Playwright: 8 passed, 0 failed, 1 skipped');
+    expect(info.message).toBe('Playwright: 11 passed, 0 failed, 1 skipped');
   });
 
   it('(h) warns about unsaved changes and still runs the saved file', async () => {
@@ -129,6 +129,23 @@ describe('run at cursor (US2)', () => {
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
     expect(info.message).toBe('Playwright: 0 passed, 0 failed, 1 skipped');
     expect(diagnosticsFor(FAILING).filter((m) => m.params.diagnostics.length > 0)).toEqual([]);
+  });
+
+  it('(m) runs real browser tests against the TodoMVC demo from the describe line', async () => {
+    await runAtCursor(PASSING, L.todomvc);
+    const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info, 120_000);
+    expect(info.message).toBe('Playwright: 3 passed, 0 failed, 0 skipped');
+  });
+
+  it('(n) reports a real browser assertion failure with the received text', async () => {
+    await runAtCursor(FAILING, L.failingTodomvc);
+    const error = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Error, 120_000);
+    expect(error.message).toContain('1 failed');
+    expect(error.message).toContain('Expected: "tasks"');
+    expect(error.message).toContain('Received: "todos"');
+    const published = diagnosticsFor(FAILING).filter((m) => m.params.diagnostics.length > 0);
+    expect(published).toHaveLength(1);
+    expect(published[0].params.diagnostics[0].range.start.line).toBe(14);
   });
 
   it('(k) clears failure diagnostics as soon as the file is edited', async () => {
@@ -167,7 +184,7 @@ describe('run file (US3)', () => {
   it('runs every test in the file', async () => {
     await client.execute(RUN_FILE, [{ uri: uriOf(PASSING) }]);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toBe('Playwright: 8 passed, 0 failed, 1 skipped');
+    expect(info.message).toBe('Playwright: 11 passed, 0 failed, 1 skipped');
   });
 
   it('offers no run actions in a non-test file such as the config', async () => {

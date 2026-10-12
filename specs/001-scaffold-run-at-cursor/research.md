@@ -123,7 +123,9 @@ order:
   only, `testDir: tests`, two files: `passing.spec.ts` (two top-level tests, one
   `test.describe` with two tests, two tests titled identically in different describes, one
   title with `(parens) [brackets] "quotes"`), `failing.spec.ts` (one failing expectation and, since convergence task T045, one `test.fixme`).
-  No real site: tests use `page.setContent` so they run offline.
+  The original tests use `page.setContent` so they run offline; a `todomvc` describe in each
+  file (added on request after the first implement pass) visits
+  https://demo.playwright.dev/todomvc/ for real end-to-end coverage and needs network access.
 - **Rationale**: covers every acceptance scenario and edge case in the spec in under 10 s of
   runtime.
 

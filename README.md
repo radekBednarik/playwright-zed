@@ -121,7 +121,7 @@ from a WSL path).
 7. Open `tests/passing.spec.ts`. Expect `▶ Run test` above each test and `▶ Run describe`
    above each group. Click the lightning bolt in the status bar, or run
    `dev: open language server logs`, pick **Playwright**: the log shows
-   `discovered 11 test(s)`.
+   `discovered 15 test(s)`.
 8. Run checks (`ctrl-.` opens the actions):
 
    | Check | Steps | Expected |
@@ -130,7 +130,9 @@ from a WSL path).
    | Failure | `tests/failing.spec.ts`, run first test | error notification with "Expected: 3", red marker on the `expect` line |
    | Describe | cursor on `test.describe('math'`, **Run describe at cursor** | "2 passed" |
    | Duplicate titles | run each `same title` | "1 passed" each |
-   | File | **Run file** in `passing.spec.ts` | "8 passed, 0 failed, 1 skipped" |
+   | Real browser | cursor on `test.describe('todomvc'` in `passing.spec.ts`, **Run describe at cursor** | Chromium visits demo.playwright.dev, "3 passed" |
+   | Real failure | `failing.spec.ts`, run `expects a wrong heading` | error notification with `Expected: "tasks"` and `Received: "todos"` |
+   | File | **Run file** in `passing.spec.ts` | "11 passed, 0 failed, 1 skipped" |
    | Re-run | in `playwright.config.ts`, **Re-run last** | previous selection runs again |
    | Cancel | start two runs back to back | "cancelled" warning, then the second result |
    | Unsaved | edit without saving, run | "unsaved changes" warning, saved file runs |
@@ -150,7 +152,8 @@ cd server && npm run lint && npm test         # language server unit + integrati
 ```
 
 Integration tests run real Playwright against `fixtures/sample-project`; run
-`npm install && npx playwright install chromium` in that folder once.
+`npm install && npx playwright install chromium` in that folder once. The `todomvc` tests
+visit https://demo.playwright.dev/todomvc/ and need network access.
 
 ## License
 
