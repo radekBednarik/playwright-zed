@@ -153,6 +153,31 @@ file in a recognised workspace (T049). The Rust crate now matches the manifest c
 (`cdylib` only, unconditional `zed_extension_api`); `cargo test` on the host still passes
 without a `cfg` gate (T047).
 
-Still open: T041 (publish the server to npm, needs owner approval). The manual Zed scenarios
-1 to 23 (T019, T028, T031, T034) passed on 2026-10-12, see the manual verification section
-above.
+The manual Zed scenarios 1 to 23 (T019, T028, T031, T034) passed on 2026-10-12, see the
+manual verification section above.
+
+## npm publish (T041, 2026-10-12)
+
+Published by the repository owner from `server/` after `npm run lint && npm test && npm run
+build` (78 tests passed). The first attempt from the Claude Code `!` shell stopped with
+`EOTP` because the two-factor prompt needs an interactive terminal; the owner completed the
+publish from a regular terminal. npm's staged-publishing flow created a public placeholder
+`0.0.0-stage` at 16:07:26 UTC before `0.1.0` went live at 16:08:22 UTC.
+
+```text
+$ npm view playwright-zed-language-server versions dist-tags dist.shasum dist.fileCount
+versions   = ['0.0.0-stage', '0.1.0']
+dist-tags  = { latest: '0.1.0' }
+dist.shasum = 8a48b399e30020812f9a52dd0ab93b980d19a04a   (matches the local tarball)
+dist.fileCount = 22
+
+$ npm install playwright-zed-language-server@0.1.0        (scratch folder)
+added 6 packages
+
+$ node smoke.js   (LSP initialize against the installed bin)
+capabilities: textDocumentSync, codeActionProvider, codeLensProvider, executeCommandProvider, workspace
+commands: playwright.runAtCursor, playwright.runFile, playwright.rerunLast
+```
+
+Not yet verified: Zed installing the server from npm on its own (open a TypeScript project
+with `PLAYWRIGHT_ZED_SERVER_ENTRY` unset and check the Playwright server status).

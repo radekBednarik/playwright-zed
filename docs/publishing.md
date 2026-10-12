@@ -13,6 +13,13 @@ npm version <x.y.z>            # must equal PINNED_SERVER_VERSION in src/lib.rs
 npm publish --access public    # package: playwright-zed-language-server
 ```
 
+Publishing needs an interactive terminal: accounts with two-factor "authorization and
+writes" get a one-time-code or browser prompt, and a non-interactive shell fails with
+`EOTP`. Pass `--otp=<code>` or run the command in a normal terminal. npm's staged
+publishing may create a public `0.0.0-stage` placeholder for a brand-new package before the
+real version appears; it can be removed with `npm unpublish <package>@0.0.0-stage` within
+72 hours or left alone (`latest` points at the real version).
+
 ## 2. Prepare the extension
 
 - Set the same version in `extension.toml` (`version`) and `Cargo.toml`.
