@@ -61,3 +61,26 @@ per-scenario observations were not transcribed; the owner's report is the record
 |---|----------|---------|
 | 1, 2, 4 to 10 | see quickstart.md | pass, reported by the owner on 2026-10-12 |
 | 3 | run command while pending | automated, `consent.test.ts` (b) |
+
+## Release 0.2.0 (2026-10-12)
+
+Published by the repository owner from `server/` at commit `d1aa0a2` (`release: 0.2.0`);
+the registry accepted the tarball with HTTP 202 and listed it about three minutes later.
+The Rust shell pins 0.2.0; `extension.toml` and `Cargo.toml` are 0.2.0; tag `v0.2.0`.
+
+```text
+$ npm view playwright-zed-language-server versions dist-tags dist.shasum dist.fileCount
+versions   = ['0.0.0-stage', '0.1.0', '0.2.0']
+dist-tags  = { latest: '0.2.0' }
+dist.shasum = a7b17aff181f52aa8da2cec2334888837a0e596d
+dist.fileCount = 22
+
+$ npm install playwright-zed-language-server@0.2.0        (scratch folder)
+added 6 packages
+
+$ node smoke.js   (LSP initialize against the installed bin)
+commands: playwright.runAtCursor, playwright.runFile, playwright.rerunLast, playwright.enableDiscovery
+```
+
+Not yet verified: Zed installing 0.2.0 on its own after `zed: install dev extension` with
+the new pin and no dev override.
