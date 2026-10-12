@@ -1,6 +1,6 @@
 ---
 name: dev-environment-wsl-zed
-description: User works in WSL2 (Linux) from Zed on Windows; Linux Zed 1.23.2 installed at ~/.local/bin/zed with WSLg display; wasm32-wasip2 target installed
+description: WSL2-specific notes for this machine only (Linux Zed in ~/.local/zed.app, WSLg); User works in WSL2 (Linux) from Zed on Windows; Linux Zed 1.23.2 installed at ~/.local/bin/zed with WSLg display; wasm32-wasip2 target installed
 metadata:
   type: user
 ---

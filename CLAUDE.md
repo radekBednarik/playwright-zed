@@ -22,4 +22,5 @@ cd server && npm run lint && npm test && npm run build     # needs Chromium + ne
 ## Memory
 
 @.claude/memory/playwright-zed-project.md
+@.claude/memory/new-machine-setup.md
 @.claude/memory/dev-environment-wsl-zed.md

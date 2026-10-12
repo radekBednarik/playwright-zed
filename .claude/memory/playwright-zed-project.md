@@ -1,30 +1,42 @@
 ---
 name: playwright-zed-project
-description: State of the Playwright-for-Zed extension as of 2026-10-12; what is done, what waits on the owner, where the spec-kit artifacts live
+description: State of the Playwright-for-Zed extension as of 2026-10-12 evening; what is released, what is deliberately on hold, open decisions, where the spec-kit artifacts live
 metadata:
   type: project
 ---
 
-Public repo (since 2026-10-12) https://github.com/radekBednarik/playwright-zed. `main` has only the bootstrap
-commit; all work is on branch `001-scaffold-run-at-cursor` (feature 001, spec-kit artifacts in
-`specs/001-scaffold-run-at-cursor/`). Architecture: Rust/WASM shell + Node language server
-(`server/`, npm name `playwright-zed-language-server`, 0.1.0 and 0.2.0 published 2026-10-12). Automated suite:
-7 Rust tests, 88 vitest tests in 9 files (needs Chromium and network for the TodoMVC fixture tests).
+Public repo https://github.com/radekBednarik/playwright-zed (made public 2026-10-12). All
+work is merged: `main` at `ee66cc4` carries feature 001 (`specs/001-scaffold-run-at-cursor/`,
+run at cursor, run file, re-run last) and feature 002 (`specs/002-discovery-consent/`, per
+workspace per session consent prompt before `playwright test --list` runs workspace code).
+Feature branches `001-scaffold-run-at-cursor` and `002-discovery-consent` are merged and
+can be deleted. `.specify/feature.json` points at `specs/002-discovery-consent`; a new
+feature starts with `/speckit-specify`, which creates `specs/003-<name>/` and a branch.
 
-Feature 001 has no open tasks as of 2026-10-12: convergence Phases 8 and 9 done, all 23
-manual quickstart scenarios passed in Zed 1.23.2, server 0.1.0 on npm. Feature 002
-(`specs/002-discovery-consent/`, branch `002-discovery-consent`) adds a per-workspace,
-per-session consent prompt before `--list` runs workspace code; all tasks done and manual scenarios passed; merged to `main` on 2026-10-12. Released as
-0.2.0 on npm the same day (tag `v0.2.0`, pin bumped); Zed's own install of 0.2.0 verified
-(2026-10-12 18:53). Next: Zed registry PR per `docs/publishing.md`, opened by the owner personally
-(Zed's AI policy forbids agent-driven contributions). Zed installs the server from npm
-without the dev override (verified 2026-10-12). Repo public and tag v0.1.0 pushed (on commit 312fe67 of
-the feature branch; `main` still has only the bootstrap commit). Next step: open the Zed
-registry PR per `docs/publishing.md`, ideally after merging the feature branch into `main`. Display name is "Playwright for
-Zed" with a non-affiliation notice (Microsoft trademark).
+Released: npm `playwright-zed-language-server` 0.1.0 and 0.2.0 (0.2.0 is `latest`; a public
+`0.0.0-stage` placeholder from npm staged publishing also exists, harmless, removable with
+`npm unpublish playwright-zed-language-server@0.0.0-stage --otp=<code>` within 72 h of
+2026-10-12 16:07 UTC). Rust shell pins 0.2.0; `extension.toml` and `Cargo.toml` are 0.2.0;
+tags `v0.1.0`, `v0.2.0`. Zed installing 0.2.0 from npm on its own is verified. Display name
+is "Playwright for Zed", id `playwright`, description starts with "Work in progress." and
+carries a non-affiliation notice (Playwright is a Microsoft trademark); READMEs disclose
+AI-assisted development (GitHub Spec Kit, Claude Code, models Fable and Opus).
 
-**Why:** the next session should not re-derive the branch layout or re-ask about publishing.
+No open tasks in either feature. Automated suite: 7 Rust tests, 88 vitest tests in 9 files
+(needs Chromium and network for the TodoMVC fixture tests). Every verification is recorded
+in the feature's `verification.md`.
 
-**How to apply:** continue on the feature branch; ask before `npm publish`; see
-[[dev-environment-wsl-zed]] for the local Zed setup and the `PLAYWRIGHT_ZED_SERVER_ENTRY`
-override that must be exported in `~/.bashrc`.
+**On hold by the owner's decision (2026-10-12):** the Zed registry PR. Not to be prepared
+until asked. When asked: Zed's `AI_POLICY.md` forbids autonomous-agent contributions, so the
+owner forks `zed-industries/extensions`, opens the PR and writes every comment personally;
+the agent may only prepare the submodule and `extensions.toml` entry locally for review.
+Open decision before that PR, irreversible afterwards: keep id `playwright` or rename to
+`playwright-lsp` (Zed prerequisites suggest the suffix for language-server-only extensions;
+research R9 argued for the plain id because debugger and task capabilities will follow).
+
+**Why:** the next session on another machine must not re-derive the state, re-ask about
+publishing, or prepare the registry PR unasked.
+
+**How to apply:** continue on `main` or a new `/speckit-specify` feature; ask before any
+`npm publish` or registry action; see [[dev-environment-wsl-zed]] for the environment and
+[[new-machine-setup]] for bootstrapping a fresh clone.
