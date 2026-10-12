@@ -90,10 +90,17 @@ export interface RunResult {
   errorMessage?: string;
 }
 
+/** Per-workspace, per-session answer to "run test discovery?" (feature 002). */
+export type DiscoveryDecision = 'pending' | 'enabled' | 'declined';
+
 export interface Workspace {
   rootUri: string;
   rootPath: string;
   configs: PlaywrightConfig[];
   lastRun: RunRequest | null;
   versionWarningShown: boolean;
+  /** `pending` until the developer answers; `pending` and `declined` are both idle. */
+  discovery: DiscoveryDecision;
+  /** True once the question was sent, so it is asked at most once per session. */
+  discoveryAsked: boolean;
 }

@@ -33,6 +33,8 @@ AI-assisted project.
 
 - Detects Playwright workspaces (any `playwright.config.{ts,js,mts,mjs,cts,cjs}` with
   `@playwright/test` v1.38 or newer resolvable next to it, monorepos included).
+- Asks once per workspace and editing session before running anything from the folder,
+  because test discovery executes the workspace's Playwright configuration and test files.
 - Discovers tests through Playwright's own `--list` and shows **Run test** and
   **Run describe** code lenses above each test and group.
 - **Run test at cursor**, **Run describe at cursor**, **Run file** and **Re-run last** as
@@ -83,12 +85,30 @@ Use `"menu"` instead to list lenses inside the code action menu.
 
 ## Usage
 
+### Before the first run: test discovery
+
+When a folder with a Playwright configuration is opened, the Playwright server shows one
+notification: it names the folder, explains that discovery executes the workspace's
+Playwright configuration and test files, and offers **Run discovery** and **Not now**. Zed
+has no workspace-trust concept, so this question is the extension's substitute for the
+protection VS Code gives the upstream extension.
+
+- **Run discovery** starts discovery at once; lenses and run actions appear and nothing
+  asks again until Zed is restarted or the folder is closed.
+- **Not now**, or closing the notification, keeps the extension idle for that folder:
+  nothing from it is executed and no run actions are offered. To change your mind, open any
+  file in the folder, press `ctrl-.` and choose **Playwright: Enable test discovery**.
+- The answer is remembered for the editing session only; each root folder is asked
+  separately. Reading the installed Playwright version never executes workspace code, so
+  the "version too old" warning can appear before you answer.
+
 | Action | How |
 |--------|-----|
 | Run the test under the cursor | `ctrl-.` then **Playwright: Run test at cursor**, or click the **▶ Run test** lens |
 | Run a whole describe | cursor on the `test.describe` line, same action, or **▶ Run describe** |
 | Run the whole file | `ctrl-.` then **Playwright: Run file** |
 | Repeat the last run | `ctrl-.` anywhere in the workspace, **Playwright: Re-run last** |
+| Enable discovery after "Not now" | `ctrl-.` in any file of that folder, **Playwright: Enable test discovery** |
 
 Notes:
 
@@ -143,8 +163,9 @@ from a WSL path).
    compiles the Rust crate; the first build takes about a minute.
 5. `zed: extensions` must list **Playwright for Zed 0.1.0**.
 6. `zed: open settings`, add `"code_lens": "on"`.
-7. Open `tests/passing.spec.ts`. Expect `▶ Run test` above each test and `▶ Run describe`
-   above each group. Click the lightning bolt in the status bar, or run
+7. A notification asks whether to run test discovery for `sample-project`; click
+   **Run discovery**. Open `tests/passing.spec.ts`. Expect `▶ Run test` above each test and
+   `▶ Run describe` above each group. Click the lightning bolt in the status bar, or run
    `dev: open language server logs`, pick **Playwright**: the log shows
    `discovered 15 test(s)`.
 8. Run checks (`ctrl-.` opens the actions):
@@ -161,7 +182,8 @@ from a WSL path).
    | Re-run | in `playwright.config.ts`, **Re-run last** | previous selection runs again |
    | Cancel | start two runs back to back | "cancelled" warning, then the second result |
    | Unsaved | edit without saving, run | "unsaved changes" warning, saved file runs |
-   | No Playwright | open a folder with a `.ts` file and no Playwright | no lenses, no actions, no warnings |
+   | Declined discovery | restart Zed, open the fixture, click **Not now** | no lenses; `ctrl-.` offers only **Playwright: Enable test discovery**; using it brings the lenses |
+   | No Playwright | open a folder with a `.ts` file and no Playwright | no question, no lenses, no actions, no warnings |
    | Old version | copy the sample, set `@playwright/test` version to `1.37.1` in `node_modules`, open it | one warning naming 1.37.1 and 1.38, no actions |
 
 After a Rust change run `zed: install dev extension` again. After a server change run

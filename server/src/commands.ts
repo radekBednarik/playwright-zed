@@ -4,7 +4,8 @@ import type { DiscoveredTest, PlaywrightConfig, TestLocation } from './types';
 export const COMMAND_RUN_AT_CURSOR = 'playwright.runAtCursor';
 export const COMMAND_RUN_FILE = 'playwright.runFile';
 export const COMMAND_RERUN_LAST = 'playwright.rerunLast';
-export const ALL_COMMANDS = [COMMAND_RUN_AT_CURSOR, COMMAND_RUN_FILE, COMMAND_RERUN_LAST];
+export const COMMAND_ENABLE_DISCOVERY = 'playwright.enableDiscovery';
+export const ALL_COMMANDS = [COMMAND_RUN_AT_CURSOR, COMMAND_RUN_FILE, COMMAND_RERUN_LAST, COMMAND_ENABLE_DISCOVERY];
 
 /**
  * Resolves what the cursor points at (data-model "TestLocation").

@@ -18,12 +18,20 @@ export interface Message {
 
 export const uriOf = (file: string) => pathToFileURL(file).toString();
 
+/** How the client answers the discovery question; `null` models a dismissed prompt. */
+export type DiscoveryAnswer = 'Run discovery' | 'Not now' | null;
+
+export interface StartOptions {
+  answer?: DiscoveryAnswer;
+}
+
 export class TestClient {
   readonly notifications: Message[] = [];
   readonly requests: Message[] = [];
   private constructor(private readonly child: ChildProcess, readonly conn: MessageConnection) {}
 
-  static async start(folderOrFolders: string | string[]): Promise<TestClient> {
+  static async start(folderOrFolders: string | string[], options: StartOptions = {}): Promise<TestClient> {
+    const answer: DiscoveryAnswer = options.answer === undefined ? 'Run discovery' : options.answer;
     const folders = Array.isArray(folderOrFolders) ? folderOrFolders : [folderOrFolders];
     const folder = folders[0];
     if (!fs.existsSync(path.join(REPO_ROOT, 'server/dist/server.js'))) {
@@ -36,6 +44,11 @@ export class TestClient {
     conn.onNotification((method, params) => client.notifications.push({ method, params }));
     conn.onRequest((method, params) => {
       client.requests.push({ method, params });
+      if (method === 'window/showMessageRequest') {
+        if (answer === null) return new Promise(() => {}); // dismissed: Zed never answers
+        const actions = ((params as { actions?: { title: string }[] }).actions ?? []);
+        return actions.find((a) => a.title === answer) ?? null;
+      }
       if (method === 'window/workDoneProgress/create') {
         // vscode-jsonrpc routes `$/progress` to per-token handlers, not to the star handler.
         const token = (params as { token: string | number }).token;
@@ -89,6 +102,11 @@ export class TestClient {
 
   async waitForDiscovery(): Promise<void> {
     await this.waitFor('workspace/codeLens/refresh');
+  }
+
+  /** Every discovery question the server has sent so far. */
+  prompts(): any[] {
+    return this.requests.filter((m) => m.method === 'window/showMessageRequest').map((m) => m.params);
   }
 
   messages(method: string): Message[] {

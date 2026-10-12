@@ -12,6 +12,9 @@ import { pathToFileURL } from 'node:url';
 import type { Failure } from './types';
 
 export const DIAGNOSTIC_SOURCE = 'playwright';
+export const DISCOVERY_RUN = 'Run discovery';
+export const DISCOVERY_NOT_NOW = 'Not now';
+export type DiscoveryAnswer = typeof DISCOVERY_RUN | typeof DISCOVERY_NOT_NOW;
 
 /** Thin wrappers over the LSP channels Zed renders (progress, messages, diagnostics, log). */
 export class Reporter {
@@ -39,6 +42,22 @@ export class Reporter {
     if (!active) return;
     void this.connection.sendProgress(WorkDoneProgress.type, token, { kind: 'report', message: summary });
     void this.connection.sendProgress(WorkDoneProgress.type, token, { kind: 'end', message: summary });
+  }
+
+  /**
+   * Asks, once per workspace per session, whether discovery may run (feature 002). Resolves to
+   * the chosen action title, or null when the client answers without a selection. Rejects when
+   * the client cannot show the request. Zed never answers a dismissed prompt, so callers must
+   * not await this on the discovery path.
+   */
+  askDiscovery(folderName: string, folderPath: string): Promise<DiscoveryAnswer | null> {
+    const message =
+      `Playwright for Zed found a Playwright configuration in ${folderName} (${folderPath}). ` +
+      'Run test discovery? Discovery executes this workspace\'s Playwright configuration and test files with your user account. ' +
+      'You can enable it later with "Playwright: Enable test discovery" from the code actions menu.';
+    return this.connection.window
+      .showWarningMessage(message, { title: DISCOVERY_RUN }, { title: DISCOVERY_NOT_NOW })
+      .then((choice) => (choice ? (choice.title as DiscoveryAnswer) : null));
   }
 
   /** Sends the `window/showMessage` notification (the library helpers would send a request). */

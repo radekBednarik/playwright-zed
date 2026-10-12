@@ -46,7 +46,7 @@ failing, one fixme, one real TodoMVC failure). The TodoMVC tests need network ac
 | # | Spec ref | Steps | Expected |
 |---|----------|-------|----------|
 | 1 | US1-1 | Open Zed extensions page | "Playwright for Zed" listed with version and the description carrying the non-affiliation notice, marked as dev extension |
-| 2 | US1-2 | Open `fixtures/sample-project` in Zed, open `tests/passing.spec.ts` | Language server "Playwright" shows running in the status bar; lenses "▶ Run test" above each test; ctrl-. shows "Playwright: Run test at cursor" |
+| 2 | US1-2 | Open `fixtures/sample-project` in Zed, answer the discovery question with "Run discovery" (feature 002), open `tests/passing.spec.ts` | Language server "Playwright" shows running in the status bar; lenses "▶ Run test" above each test; ctrl-. shows "Playwright: Run test at cursor" |
 | 3 | US1-3 | Open a folder with a `.ts` file and no Playwright | No Playwright lenses or actions; no errors in Zed log from the extension |
 | 4 | US1-4 | In a scratch copy of the fixture, install `@playwright/test@1.37.1`, reopen | One warning notification naming 1.37.1 and the 1.38 minimum; no run actions |
 | 5 | US2-1 | Cursor inside `test('adds numbers')`, ctrl-., Enter | Progress "Running 1 test(s)"; Info notification "1 passed"; Playwright server log (`dev: open language server logs`) shows the command and list output |

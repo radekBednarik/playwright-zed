@@ -6,6 +6,11 @@ import { isSupported, parseVersion } from './version';
 const CONFIG_NAME = /^playwright\.config\.(ts|js|mts|mjs|cts|cjs)$/;
 const SKIPPED_DIRS = new Set(['node_modules', '.git', 'test-results', 'playwright-report', 'blob-report']);
 
+/** True when the file name is one Playwright treats as a configuration file. */
+export function isConfigFile(file: string): boolean {
+  return CONFIG_NAME.test(path.basename(file));
+}
+
 /** Finds every Playwright config file under `root`, skipping dependency and output folders. */
 export function findConfigs(root: string): string[] {
   const found: string[] = [];

@@ -29,6 +29,10 @@ describe('workspace detection (US1)', () => {
       expect(config.testDirs).toEqual([path.join(FIXTURE, 'tests')]);
       expect(config.discoveryState).toBe('idle');
       expect(config.testCount).toBe(15);
+      expect(status[0]).toMatchObject({ discovery: 'enabled', discoveryAsked: true });
+      const prompts = client.prompts();
+      expect(prompts).toHaveLength(1);
+      expect(prompts[0].actions.map((a: any) => a.title)).toEqual(['Run discovery', 'Not now']);
 
       const passingLenses = await client.codeLenses(PASSING);
       const failingLenses = await client.codeLenses(FAILING);
@@ -55,6 +59,7 @@ describe('workspace detection (US1)', () => {
       expect(await client.codeActions(file, 0)).toEqual([]);
       expect(await client.codeLenses(file)).toEqual([]);
       expect(client.showMessages()).toEqual([]);
+      expect(client.prompts()).toEqual([]);
     } finally {
       await client.stop();
     }
@@ -73,6 +78,9 @@ describe('workspace detection (US1)', () => {
       expect(await client.codeLenses(plainFile)).toEqual([]);
       expect(await client.codeActions(plainFile, 0)).toEqual([]);
       expect(client.showMessages(MessageType.Warning)).toEqual([]);
+      const prompts = client.prompts();
+      expect(prompts).toHaveLength(1);
+      expect(prompts[0].message).toContain(path.basename(FIXTURE));
     } finally {
       await client.stop();
     }
@@ -97,6 +105,7 @@ describe('workspace detection (US1)', () => {
       expect(client.showMessages(MessageType.Warning)).toHaveLength(1);
       const status = await client.status();
       expect(status[0].configs[0].supported).toBe(false);
+      expect(client.prompts()).toEqual([]);
       expect(await client.codeActions(path.join(dir, 'tests/passing.spec.ts'), 2)).toEqual([]);
       expect(await client.codeLenses(path.join(dir, 'tests/passing.spec.ts'))).toEqual([]);
       client.clear();

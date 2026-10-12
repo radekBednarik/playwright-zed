@@ -15,7 +15,7 @@ Advertised `ServerCapabilities`:
 | textDocumentSync | Incremental, with `save: { includeText: false }` |
 | codeActionProvider | `{ codeActionKinds: ["source.playwright"] }` |
 | codeLensProvider | `{ resolveProvider: false }` |
-| executeCommandProvider | `{ commands: ["playwright.runAtCursor", "playwright.runFile", "playwright.rerunLast"] }` |
+| executeCommandProvider | `{ commands: ["playwright.runAtCursor", "playwright.runFile", "playwright.rerunLast", "playwright.enableDiscovery"] }` |
 | workspace.workspaceFolders | `{ supported: true, changeNotifications: true }` |
 
 Nothing else is advertised (no hover, completion, formatting), so vtsls keeps owning those.
@@ -27,6 +27,10 @@ Nothing else is advertised (no hover, completion, formatting), so vtsls keeps ow
 | `playwright.runAtCursor` | `[{ uri: string, line: number }]` (line 0-based as LSP) | Resolve TestLocation per data model; start a RunRequest with trigger `cursor`. |
 | `playwright.runFile` | `[{ uri: string }]` | TestLocation kind `file`; trigger `file`. |
 | `playwright.rerunLast` | `[]` or `[{ uri }]` | Repeat `Workspace.lastRun`; if none, `window/showMessage` Info "Nothing to re-run yet". |
+| `playwright.enableDiscovery` | `[{ uri }]` | Feature 002: enable test discovery for the workspace of `uri` and run it; idempotent. See `specs/002-discovery-consent/contracts/discovery-consent.md`. |
+
+While a workspace's discovery is not enabled (feature 002), the three run commands start
+nothing and answer with a `window/showMessage` Warning that names the enable action.
 
 All commands return `null`. Errors in starting the process are reported through
 `window/showMessage` Error with the attempted command line and the underlying error (FR-013),
@@ -45,6 +49,7 @@ cursor is. Each action has `kind: "source.playwright"` and a `command` (no `edit
 | `Playwright: Run describe at cursor` | kind `describe` |
 | `Playwright: Run file` | always |
 | `Playwright: Re-run last` | `Workspace.lastRun` is set (any document in that workspace) |
+| `Playwright: Enable test discovery` | Feature 002: the document's workspace has a supported config and discovery is not enabled; then it is the only action returned |
 
 Order: the most specific run first, so Enter on the code-action menu runs the test.
 
@@ -69,6 +74,7 @@ Lenses are refreshed via `workspace/codeLens/refresh` after each discovery compl
 | `window/showMessage` | terminal state | Info on pass; Error on fail with the summary followed by the first failure's full error text (all lines, ANSI stripped) so multi-line hints such as Playwright's browser-install instructions survive; Error on process error with the attempted command and the underlying error; Warning on cancel |
 | `window/showMessage` | dirty target | Warning `<file> has unsaved changes; running the saved version` |
 | `window/showMessage` | first unsupported-version detection per workspace | Warning `Playwright <v> found; v1.38 or newer is required. Test running is disabled.` |
+| `window/showMessageRequest` | first supported config per workspace per session (feature 002) | Warning with actions `Run discovery` / `Not now`; discovery runs only after `Run discovery` |
 | `textDocument/publishDiagnostics` | run failed | one Diagnostic per Failure, source `playwright`, severity Error, message = title plus first error line; cleared (empty array) for every file touched by the next run and for a file as soon as it receives `didChange` |
 | `window/logMessage` | run start and end | exact command line, cwd, then full raw output |
 
@@ -81,8 +87,9 @@ a config's `testDirs` triggers rediscovery.
 ## Debug request (additive, not used by Zed)
 
 `playwright/status` with no parameters returns one entry per workspace:
-`{ rootPath, lastRun: { id, location, trigger } | null, configs: [{ configPath, playwrightVersion,
-supported, rootDir, testDirs, discoveryState, testCount }] }`. Used by integration tests and for
+`{ rootPath, discovery: "pending" | "enabled" | "declined", discoveryAsked, lastRun: { id, location,
+trigger } | null, configs: [{ configPath, playwrightVersion, supported, rootDir, testDirs,
+discoveryState, testCount }] }`. Used by integration tests and for
 troubleshooting; it never changes server state.
 
 ## Implementation notes

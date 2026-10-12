@@ -9,10 +9,14 @@ Public repo (since 2026-10-12) https://github.com/radekBednarik/playwright-zed. 
 commit; all work is on branch `001-scaffold-run-at-cursor` (feature 001, spec-kit artifacts in
 `specs/001-scaffold-run-at-cursor/`). Architecture: Rust/WASM shell + Node language server
 (`server/`, npm name `playwright-zed-language-server`, 0.1.0 published 2026-10-12). Automated suite:
-7 Rust tests, 78 vitest tests in 8 files (needs Chromium and network for the TodoMVC fixture tests).
+7 Rust tests, 88 vitest tests in 9 files (needs Chromium and network for the TodoMVC fixture tests).
 
 Feature 001 has no open tasks as of 2026-10-12: convergence Phases 8 and 9 done, all 23
-manual quickstart scenarios passed in Zed 1.23.2, server 0.1.0 on npm. Zed installs the server from npm
+manual quickstart scenarios passed in Zed 1.23.2, server 0.1.0 on npm. Feature 002
+(`specs/002-discovery-consent/`, branch `002-discovery-consent`) adds a per-workspace,
+per-session consent prompt before `--list` runs workspace code; T001 to T016 done, T017
+(manual Zed scenarios) open; it needs a server release (0.2.0 plus pin bump) before users
+get it. Zed installs the server from npm
 without the dev override (verified 2026-10-12). Repo public and tag v0.1.0 pushed (on commit 312fe67 of
 the feature branch; `main` still has only the bootstrap commit). Next step: open the Zed
 registry PR per `docs/publishing.md`, ideally after merging the feature branch into `main`. Display name is "Playwright for

@@ -13,13 +13,13 @@ import {
   WorkspaceFolder,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { ALL_COMMANDS, COMMAND_RERUN_LAST, COMMAND_RUN_AT_CURSOR, COMMAND_RUN_FILE, countSelectedTests, resolveTestLocation } from './commands';
+import { ALL_COMMANDS, COMMAND_ENABLE_DISCOVERY, COMMAND_RERUN_LAST, COMMAND_RUN_AT_CURSOR, COMMAND_RUN_FILE, countSelectedTests, resolveTestLocation } from './commands';
 import { runList } from './discovery';
-import { Reporter } from './reporting';
+import { DISCOVERY_NOT_NOW, DISCOVERY_RUN, Reporter } from './reporting';
 import { RunManager, summarize } from './runner';
 import type { PlaywrightConfig, RunRequest, RunTrigger, TestLocation, Workspace } from './types';
 import { formatVersion } from './version';
-import { buildConfig, configForFile, findConfigs, isUnderTestDirs } from './workspace';
+import { buildConfig, configForFile, findConfigs, isConfigFile, isUnderTestDirs } from './workspace';
 
 const CODE_ACTION_KIND = 'source.playwright';
 const STATUS_REQUEST = 'playwright/status';
@@ -91,25 +91,108 @@ async function discoverWorkspace(ws: Workspace): Promise<void> {
   if (ws.configs.length === 0) {
     reporter.info(`playwright: no Playwright configuration found in ${ws.rootPath}`);
   }
+  warnUnsupported(ws);
+  if (!hasSupportedConfig(ws)) return;
+  if (ws.discovery === 'enabled') {
+    await discoverEnabled(ws);
+    return;
+  }
+  // Feature 002: nothing from the workspace runs until the developer agrees. The prompt may
+  // never be answered (Zed does not respond to a dismissed notification), so it is not awaited.
+  if (ws.discovery === 'pending' && !ws.discoveryAsked) {
+    ws.discoveryAsked = true;
+    void askForDiscovery(ws);
+  }
+}
+
+/** Shows the unsupported-version warning once per workspace; reading the version runs no code. */
+function warnUnsupported(ws: Workspace): void {
+  const unsupported = ws.configs.find((c) => !c.supported);
+  if (unsupported && !ws.versionWarningShown) {
+    ws.versionWarningShown = true;
+    reporter.showWarning(
+      `Playwright ${formatVersion(unsupported.playwrightVersion)} found; v1.38 or newer is required. Test running is disabled.`,
+    );
+  }
+}
+
+function hasSupportedConfig(ws: Workspace): boolean {
+  return ws.configs.some((c) => c.supported);
+}
+
+function isCurrent(ws: Workspace): boolean {
+  return workspaces.get(ws.rootPath) === ws;
+}
+
+/** Runs `--list` for every supported config of an enabled workspace, then refreshes lenses. */
+async function discoverEnabled(ws: Workspace): Promise<void> {
   for (const config of ws.configs) {
-    if (!config.supported) {
-      if (!ws.versionWarningShown) {
-        ws.versionWarningShown = true;
-        reporter.showWarning(
-          `Playwright ${formatVersion(config.playwrightVersion)} found; v1.38 or newer is required. Test running is disabled.`,
-        );
-      }
-      continue;
-    }
-    await discoverConfig(config);
+    if (config.supported) await discoverConfig(config);
   }
   await reporter.refreshCodeLenses();
+}
+
+/** Idempotent: marks the workspace enabled and runs discovery once. */
+async function enableDiscovery(ws: Workspace): Promise<void> {
+  if (ws.discovery === 'enabled') return;
+  ws.discovery = 'enabled';
+  reporter.info(`playwright: test discovery enabled for ${ws.rootPath}`);
+  await discoverEnabled(ws);
+}
+
+async function askForDiscovery(ws: Workspace): Promise<void> {
+  const folderName = path.basename(ws.rootPath);
+  let answer: string | null;
+  try {
+    answer = await reporter.askDiscovery(folderName, ws.rootPath);
+  } catch (error) {
+    if (!isCurrent(ws) || ws.discovery !== 'pending') return;
+    ws.discovery = 'declined';
+    reporter.info(`playwright: discovery question could not be shown for ${ws.rootPath}: ${(error as Error).message}`);
+    reporter.showWarning(discoveryOffMessage(folderName));
+    return;
+  }
+  if (!isCurrent(ws)) return;
+  if (answer === DISCOVERY_RUN) {
+    await enableDiscovery(ws);
+  } else if (answer === DISCOVERY_NOT_NOW || answer === null) {
+    if (ws.discovery === 'pending') ws.discovery = 'declined';
+  }
+}
+
+function discoveryOffMessage(folderName: string): string {
+  return `Playwright test discovery is off for ${folderName}; use "Playwright: Enable test discovery" from the code actions menu to turn it on.`;
+}
+
+/** The workspace for `uri` when it has Playwright but discovery is not enabled, else null. */
+function gatedWorkspace(uri: string): Workspace | null {
+  const file = toPath(uri);
+  const ws = file ? workspaceForFile(file) : null;
+  if (!ws || ws.discovery === 'enabled' || !hasSupportedConfig(ws)) return null;
+  return ws;
+}
+
+function refuseNotEnabled(ws: Workspace): void {
+  const folderName = path.basename(ws.rootPath);
+  if (ws.discovery === 'declined') {
+    reporter.showWarning(`Playwright test discovery is disabled for ${folderName}; use "Playwright: Enable test discovery" from the code actions menu to turn it on.`);
+  } else {
+    reporter.showWarning(`Playwright test discovery has not been enabled for ${folderName}; answer the discovery question or use "Playwright: Enable test discovery" from the code actions menu.`);
+  }
 }
 
 async function addWorkspace(folder: WorkspaceFolder): Promise<void> {
   const rootPath = toPath(folder.uri);
   if (!rootPath) return;
-  const ws: Workspace = { rootUri: folder.uri, rootPath, configs: [], lastRun: null, versionWarningShown: false };
+  const ws: Workspace = {
+    rootUri: folder.uri,
+    rootPath,
+    configs: [],
+    lastRun: null,
+    versionWarningShown: false,
+    discovery: 'pending',
+    discoveryAsked: false,
+  };
   workspaces.set(rootPath, ws);
   await discoverWorkspace(ws);
 }
@@ -187,6 +270,18 @@ documents.onDidSave((event) => {
   if (!ws) return;
   void (async () => {
     let changed = false;
+    if (isConfigFile(file) && !ws.configs.some((c) => c.configPath === file)) {
+      const added = buildConfig(file);
+      if (added) {
+        ws.configs.push(added);
+        warnUnsupported(ws);
+        if (added.supported && ws.discovery === 'enabled') {
+          await discoverConfig(added);
+          changed = true;
+        }
+      }
+    }
+    if (ws.discovery !== 'enabled') return;
     for (const config of ws.configs) {
       if (!config.supported) continue;
       if (file === config.configPath || isUnderTestDirs(config, file)) {
@@ -218,6 +313,7 @@ function testFileContext(uri: string): { ws: Workspace | null; ctx: TestFileCont
   if (!file) return { ws: null, ctx: null };
   const ws = workspaceForFile(file);
   if (!ws) return { ws: null, ctx: null };
+  if (ws.discovery !== 'enabled') return { ws, ctx: null };
   const config = configForFile(ws, file);
   if (!config || !config.tests.some((t) => t.file === file)) return { ws, ctx: null };
   return { ws, ctx: { ws, config, file } };
@@ -229,6 +325,8 @@ function action(title: string, command: string, args: unknown[]): CodeAction {
 
 connection.onCodeAction((params) => {
   const uri = params.textDocument.uri;
+  const gated = gatedWorkspace(uri);
+  if (gated) return [action('Playwright: Enable test discovery', COMMAND_ENABLE_DISCOVERY, [{ uri }])];
   const { ws, ctx } = testFileContext(uri);
   const actions: CodeAction[] = [];
   if (ctx) {
@@ -341,6 +439,8 @@ function notPlaywright(uri: string): void {
 }
 
 async function runAtCursor(uri: string, line0: number): Promise<void> {
+  const gated = gatedWorkspace(uri);
+  if (gated) return refuseNotEnabled(gated);
   const { ctx } = testFileContext(uri);
   if (!ctx) return notPlaywright(uri);
   const location = resolveTestLocation(ctx.config.tests, ctx.file, line0 + 1);
@@ -348,12 +448,16 @@ async function runAtCursor(uri: string, line0: number): Promise<void> {
 }
 
 async function runFile(uri: string): Promise<void> {
+  const gated = gatedWorkspace(uri);
+  if (gated) return refuseNotEnabled(gated);
   const { ctx } = testFileContext(uri);
   if (!ctx) return notPlaywright(uri);
   await startRun(ctx.ws, { kind: 'file', file: ctx.file, line: null }, ctx.config, 'file');
 }
 
 async function rerunLast(uri?: string): Promise<void> {
+  const gated = uri ? gatedWorkspace(uri) : null;
+  if (gated) return refuseNotEnabled(gated);
   let ws: Workspace | null = null;
   const file = uri ? toPath(uri) : null;
   if (file) ws = workspaceForFile(file);
@@ -386,6 +490,13 @@ connection.onExecuteCommand(async (params) => {
       case COMMAND_RERUN_LAST:
         await rerunLast(arg.uri);
         break;
+      case COMMAND_ENABLE_DISCOVERY: {
+        const file = typeof arg.uri === 'string' ? toPath(arg.uri) : null;
+        const ws = file ? workspaceForFile(file) : null;
+        if (!ws) reporter.showWarning(`Playwright was not found in the workspace for ${file ? path.basename(file) : 'this document'}`);
+        else await enableDiscovery(ws);
+        break;
+      }
       default:
         break;
     }
@@ -399,6 +510,8 @@ connection.onExecuteCommand(async (params) => {
 connection.onRequest(STATUS_REQUEST, () =>
   Array.from(workspaces.values()).map((ws) => ({
     rootPath: ws.rootPath,
+    discovery: ws.discovery,
+    discoveryAsked: ws.discoveryAsked,
     lastRun: ws.lastRun ? { id: ws.lastRun.id, location: ws.lastRun.location, trigger: ws.lastRun.trigger } : null,
     configs: ws.configs.map((c) => ({
       configPath: c.configPath,
