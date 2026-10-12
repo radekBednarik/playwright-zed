@@ -198,6 +198,14 @@ describe('run file (US3)', () => {
     expect(actions.filter((a: any) => a.title.startsWith('Playwright: Run'))).toEqual([]);
     expect(await client.codeLenses(CONFIG)).toEqual([]);
   });
+
+  it('explains that a non-test file is not a test file rather than claiming Playwright is missing', async () => {
+    await client.execute(RUN_FILE, [{ uri: uriOf(CONFIG) }]);
+    const warning = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Warning);
+    expect(warning.message).toContain('playwright.config.ts is not a test file of playwright.config.ts');
+    expect(warning.message).not.toContain('not found');
+    expect(client.messages('$/progress')).toEqual([]);
+  });
 });
 
 describe('re-run last (US4)', () => {

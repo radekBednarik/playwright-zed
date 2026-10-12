@@ -27,9 +27,11 @@ through the surfaces Zed gives extensions. Progress per upstream capability is t
 
 ## Install
 
-From the Zed extension registry: search for **Playwright** in `zed: extensions`.
+From the Zed extension registry: not yet available. The first release to
+`zed-industries/extensions` is pending, see [docs/publishing.md](docs/publishing.md). Once it
+is merged, search for **Playwright** in `zed: extensions`.
 
-From source (development):
+From source, the current way to install:
 
 1. `rustup target add wasm32-wasip2`
 2. `cd server && npm install && npm run build`

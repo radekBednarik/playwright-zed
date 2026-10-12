@@ -316,10 +316,20 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
   }
 }
 
-/** Explains why a run cannot happen: unsupported version when a config covers the file, else not found. */
+/**
+ * Explains why a run cannot happen: the file is not a discovered test file of a supported config,
+ * the config's Playwright is below v1.38, or no Playwright exists for the file at all.
+ */
 function notPlaywright(uri: string): void {
   const file = toPath(uri) ?? uri;
   const ws = toPath(uri) ? workspaceForFile(file) : null;
+  const supported = ws ? configForFile(ws, file) : null;
+  if (supported) {
+    reporter.showWarning(
+      `Playwright: ${path.basename(file)} is not a test file of ${path.basename(supported.configPath)}; run from a file that Playwright lists for that configuration.`,
+    );
+    return;
+  }
   const unsupported = ws?.configs.find((c) => !c.supported && isWithin(c.configDir, file));
   if (unsupported) {
     reporter.showWarning(

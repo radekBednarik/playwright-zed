@@ -4,8 +4,8 @@
 //! installed in the extension's work directory and tell Zed how to start it for TypeScript,
 //! TSX and JavaScript worktrees. All Playwright logic lives in that server.
 //!
-//! Pure helpers are unconditional so `cargo test` covers them on the host; the Zed API is
-//! only linked for the `wasm32` target.
+//! Pure helpers (`version_differs`, `server_entry`, `dev_server_entry_from_env`) are covered
+//! by `cargo test` on the host; the `zed_extension_api` crate compiles on the host as well.
 
 /// npm package that contains the language server.
 pub const SERVER_PACKAGE: &str = "playwright-zed-language-server";
@@ -92,7 +92,6 @@ mod tests {
     }
 }
 
-#[cfg(target_arch = "wasm32")]
 mod extension {
     use super::{
         dev_server_entry_from_env, server_entry, version_differs, PINNED_SERVER_VERSION,

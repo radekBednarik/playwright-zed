@@ -107,3 +107,42 @@ skipped (T045). The dev override path is no longer checked inside the WASI sandb
 Still open: T041 (publish the server to npm, needs owner approval) and the manual Zed
 scenarios 1 to 20.
 
+
+## Convergence pass (Phase 9, 2026-10-12)
+
+Commands and final lines, run after T046, T047, T049 and T050 landed:
+
+```text
+$ cargo test
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+$ cargo build --release --target wasm32-wasip2
+    Finished `release` profile [optimized] target(s) in 0.23s
+
+$ cd server && npm run lint
+exit=0
+
+$ cd server && npm run build
+exit=0
+
+$ cd server && npx vitest run
+ Test Files  8 passed (8)
+      Tests  78 passed (78)
+   Duration  26.53s
+
+$ cd fixtures/sample-project && npx playwright test --list
+Total: 15 tests in 2 files
+```
+
+Vitest totals: 50 unit tests across 5 files and 28 integration tests across 3 files, all
+against real Playwright with Chromium; the `todomvc` cases need network access.
+
+New coverage: `test.only` in an isolated temp project (T046, `focus.test.ts`: a file run
+executes only the focused test, a line-targeted unfocused test still runs, as Playwright itself
+behaves); the "not a test file of <config>" warning for run commands issued from a non-test
+file in a recognised workspace (T049). The Rust crate now matches the manifest contract
+(`cdylib` only, unconditional `zed_extension_api`); `cargo test` on the host still passes
+without a `cfg` gate (T047).
+
+Still open: T041 (publish the server to npm, needs owner approval) and the manual Zed
+scenarios 1 to 23 (T019, T028, T031, T034).

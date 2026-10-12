@@ -62,7 +62,10 @@ zed_extension_api = "0.7.0"
 | `fn server_entry(workdir) -> String` | `node_modules/playwright-zed-language-server/bin/playwright-zed-language-server.js` under the extension work dir. |
 
 Pure helpers (`version_differs(installed: Option<&str>, pinned: &str) -> bool`,
-`server_entry`) are unit-tested on the host with `cargo test`.
+`server_entry`, `dev_server_entry_from_env`) are unit-tested on the host with `cargo test`.
+`zed_extension_api` compiles on the host, so the crate needs no `cfg(target_arch)` gate and
+`Cargo.toml` stays in the form above (plus `publish = false`, since the crate is not a
+crates.io package).
 
 ## Build and verification commands
 

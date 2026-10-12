@@ -67,6 +67,7 @@ failing, one fixme, one real TodoMVC failure). The TodoMVC tests need network ac
 | 20 | Edge: fixme test | Cursor in `test.fixme('fixme on purpose')` in failing.spec.ts, run at cursor | Summary reports 1 skipped, 0 failed; no diagnostic |
 | 21 | Real browser | Cursor on `test.describe('todomvc'` in passing.spec.ts, run describe | Chromium opens demo.playwright.dev; summary 3 passed |
 | 22 | Real failure | Run `expects a wrong heading` in failing.spec.ts | Error notification with `Expected: "tasks"`, `Received: "todos"`; diagnostic on the `toHaveText` line |
+| 23 | Edge: focused test | In a scratch copy of the fixture (not the fixture itself: `test.only` focuses the whole run) add a file with `test.only('focused')` and `test('not focused')`; **Run file**, then run `not focused` at cursor | File run: summary 1 passed, 0 skipped, only `focused` in the log. Cursor run: `not focused` runs and passes; Playwright applies focus only among the tests the line filter selected |
 
 ## Terminal-output path (zed-only recipe)
 

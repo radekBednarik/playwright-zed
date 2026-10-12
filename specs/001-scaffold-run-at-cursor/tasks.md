@@ -296,3 +296,22 @@ the record for manual verification and are not duplicated here.
 
 - T040, T042, T043, T044, T045: done, 72 server tests and 7 Rust tests pass.
 - T041 (npm publish): **open, awaiting the repository owner's approval**. Outward-facing.
+
+## Phase 9: Convergence
+
+**Purpose**: Gaps found by `/speckit-converge` on 2026-10-12 after the Phase 8 implement pass.
+Ordered by severity. Open tasks T019, T028, T031, T034 (manual Zed scenarios) and T041 (npm
+publish, owner approval) remain the record for that work and are not duplicated here.
+
+- [X] T046 Cover the `test.only` edge case without focusing the shared fixture: in `server/test/integration/run.test.ts` (or a new `server/test/integration/focus.test.ts`) build a temp project that copies `fixtures/sample-project/playwright.config.ts`, symlinks the fixture's `node_modules`, and writes `tests/focused.spec.ts` containing `test.only('focused', ...)` and `test('not focused', ...)`; assert that `playwright.runFile` reports `1 passed, 0 failed, 0 skipped` and that `playwright.runAtCursor` on the unfocused test surfaces Playwright's own outcome (an Info summary with 0 tests or an Error naming the attempted command) with no diagnostics; add quickstart scenario 23 for it. A focused test cannot live in the main fixture because Playwright's `createRootSuite` applies `filterOnly` across every file per spec: Edge Cases (`test.skip`, `test.fixme`, `test.only`) / T045 (partial)
+- [X] T047 Reconcile `Cargo.toml` and `src/lib.rs` with `specs/001-scaffold-run-at-cursor/contracts/extension-manifest.md`: build with `crate-type = ["cdylib"]` only and `zed_extension_api = "0.7.0"` as an unconditional dependency, removing the `cfg(target_arch = "wasm32")` gate on the dependency and on `mod extension`; if `cargo test` on the host and `cargo build --release --target wasm32-wasip2` both still pass, keep that form; otherwise restore the gate and document it in the contract's Cargo.toml section as a build-only exception to the constitution's `cfg` rule (host unit tests need a crate that compiles without the Zed host) per contract: extension-manifest.md / Constitution Technical Constraints (contradicts)
+- [X] T048 Append a current automated-verification record to `specs/001-scaffold-run-at-cursor/verification.md`: run `cargo test`, `cargo build --release --target wasm32-wasip2`, `cd server && npm run lint && npm run build && npx vitest run`, `cd fixtures/sample-project && npx playwright test --list`, paste the final output lines (expected 7 Rust tests, 74 vitest tests in 7 files, 15 fixture tests in 2 files), and correct the "Still open" line to quickstart scenarios 1 to 22 (23 after T046) per Constitution V / T038 (partial)
+- [X] T049 Make `notPlaywright` in `server/src/server.ts` accurate for recognised workspaces: when `configForFile` returns a supported config but the file is not among its discovered `tests`, show `Playwright: <file> is not a test file of <config basename>; run from a file that Playwright lists for that configuration` instead of "Playwright was not found in the workspace"; keep the existing not-found and unsupported-version messages for the other cases and add an integration assertion in `server/test/integration/run.test.ts` that `playwright.runFile` on `playwright.config.ts` yields that warning per US1/AC3 / FR-013 (partial)
+- [X] T050 Update the Install section of `README.md` so the registry path reads as pending until the first `zed-industries/extensions` release (link `docs/publishing.md`) and the dev-extension path is the current way to install, per T018 ("install from the Zed registry (future)") (partial)
+
+### Phase 9 status 2026-10-12
+
+- T046 to T050: done, 78 server tests (8 files) and 7 Rust tests pass, WASM build green;
+  see `verification.md`.
+- Still open: T041 (npm publish, owner approval) and the manual Zed scenarios T019, T028,
+  T031, T034 (quickstart scenarios 1 to 23).

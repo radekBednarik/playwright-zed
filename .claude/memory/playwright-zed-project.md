@@ -9,11 +9,11 @@ Private repo https://github.com/radekBednarik/playwright-zed. `main` has only th
 commit; all work is on branch `001-scaffold-run-at-cursor` (feature 001, spec-kit artifacts in
 `specs/001-scaffold-run-at-cursor/`). Architecture: Rust/WASM shell + Node language server
 (`server/`, npm name `playwright-zed-language-server`, not yet published). Automated suite:
-7 Rust tests, 74 vitest tests (needs Chromium and network for the TodoMVC fixture tests).
+7 Rust tests, 78 vitest tests in 8 files (needs Chromium and network for the TodoMVC fixture tests).
 
 Open on 2026-10-12: T041 npm publish of the server (owner must approve, outward-facing);
-manual Zed scenarios T019/T028/T031/T034 (quickstart scenarios 1 to 22, record in
-`verification.md`). The owner had installed the dev extension successfully and was testing
+manual Zed scenarios T019/T028/T031/T034 (quickstart scenarios 1 to 23, record in
+`verification.md`). Convergence Phases 8 and 9 are done. The owner had installed the dev extension successfully and was testing
 runs when the session ended. Repo must become public before a Zed registry PR.
 
 **Why:** the next session should not re-derive the branch layout or re-ask about publishing.
