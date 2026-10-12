@@ -1,0 +1,39 @@
+{
+  "name": "playwright-zed-language-server",
+  "version": "0.1.0",
+  "description": "Language server that lets the Zed Playwright extension discover and run Playwright tests",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/radekBednarik/playwright-zed",
+    "directory": "server"
+  },
+  "type": "commonjs",
+  "bin": {
+    "playwright-zed-language-server": "bin/playwright-zed-language-server.js"
+  },
+  "files": [
+    "bin/",
+    "dist/"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "vitest run test/integration"
+  },
+  "dependencies": {
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0",
+    "vitest": "^3.0.0",
+    "vscode-jsonrpc": "^8.2.1"
+  }
+}

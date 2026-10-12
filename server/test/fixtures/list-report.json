@@ -1,0 +1,333 @@
+{
+  "config": {
+    "argv": [
+      "/home/radek/.nvm/versions/node/v24.19.0/bin/node",
+      "/home/radek/repos/personal/playwright-zed/fixtures/sample-project/node_modules/.bin/playwright",
+      "test",
+      "--list",
+      "--reporter=json"
+    ],
+    "configFile": "/home/radek/repos/personal/playwright-zed/fixtures/sample-project/playwright.config.ts",
+    "rootDir": "/home/radek/repos/personal/playwright-zed/fixtures/sample-project/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/radek/repos/personal/playwright-zed/fixtures/sample-project/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/radek/repos/personal/playwright-zed/fixtures/sample-project/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/home/radek/repos/personal/playwright-zed/fixtures/sample-project/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "name": "chromium",
+        "testDir": "/home/radek/repos/personal/playwright-zed/fixtures/sample-project/tests",
+        "snapshotDir": "/home/radek/repos/personal/playwright-zed/fixtures/sample-project/tests",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "browserName": "chromium"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 16,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "failing.spec.ts",
+      "file": "failing.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "fails on purpose",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "8cd190df4f1066666642-8cb17408d9ef8722a9cd",
+          "file": "failing.spec.ts",
+          "line": 3,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "passing.spec.ts",
+      "file": "passing.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "adds numbers",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "e4e22c734946c72d0a75-74c7d968a05641e42290",
+          "file": "passing.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "handles (parens) [brackets] \"quotes\"",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "e4e22c734946c72d0a75-875513295d6318ae8202",
+          "file": "passing.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "loop 1",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "e4e22c734946c72d0a75-2694bbe33e20ea3cba68",
+          "file": "passing.spec.ts",
+          "line": 37,
+          "column": 29
+        },
+        {
+          "title": "loop 2",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "e4e22c734946c72d0a75-fe10a12607c326533c89",
+          "file": "passing.spec.ts",
+          "line": 37,
+          "column": 29
+        },
+        {
+          "title": "skipped on purpose",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "location": {
+                    "file": "/home/radek/repos/personal/playwright-zed/fixtures/sample-project/tests/passing.spec.ts",
+                    "line": 39,
+                    "column": 6
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "e4e22c734946c72d0a75-a5ff65abea2a47b75386",
+          "file": "passing.spec.ts",
+          "line": 39,
+          "column": 6
+        }
+      ],
+      "suites": [
+        {
+          "title": "math",
+          "file": "passing.spec.ts",
+          "line": 13,
+          "column": 6,
+          "specs": [
+            {
+              "title": "same title",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e4e22c734946c72d0a75-836702b3df2083de3951",
+              "file": "passing.spec.ts",
+              "line": 14,
+              "column": 7
+            },
+            {
+              "title": "multiplies",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e4e22c734946c72d0a75-3af3f165647c35db27b2",
+              "file": "passing.spec.ts",
+              "line": 19,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "strings",
+          "file": "passing.spec.ts",
+          "line": 25,
+          "column": 6,
+          "specs": [
+            {
+              "title": "same title",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e4e22c734946c72d0a75-deb31fb869e72fe59d17",
+              "file": "passing.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "concatenates",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e4e22c734946c72d0a75-5078999d09438870b32a",
+              "file": "passing.spec.ts",
+              "line": 31,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-12T12:33:38.051Z",
+    "duration": 10.920999999999992,
+    "expected": 0,
+    "skipped": 10,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

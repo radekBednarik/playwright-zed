@@ -1,0 +1,13 @@
+[package]
+name = "playwright-zed"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Zed extension shell for the Playwright language server"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+zed_extension_api = "0.7.0"

@@ -1,0 +1,108 @@
+import type { Connection } from 'vscode-languageserver/node';
+import {
+  CodeLensRefreshRequest,
+  Diagnostic,
+  DiagnosticSeverity,
+  MessageType,
+  ShowMessageNotification,
+  WorkDoneProgress,
+  WorkDoneProgressCreateRequest,
+} from 'vscode-languageserver/node';
+import { pathToFileURL } from 'node:url';
+import type { Failure } from './types';
+
+export const DIAGNOSTIC_SOURCE = 'playwright';
+
+/** Thin wrappers over the LSP channels Zed renders (progress, messages, diagnostics, log). */
+export class Reporter {
+  constructor(private readonly connection: Connection) {}
+
+  /**
+   * Starts a `$/progress` sequence whose token is the run request id, as the contract states.
+   * Returns false when the client refuses to create the token; progress is then skipped.
+   */
+  async progressBegin(token: string, testCount: number, file: string): Promise<boolean> {
+    try {
+      await this.connection.sendRequest(WorkDoneProgressCreateRequest.type, { token });
+    } catch {
+      return false;
+    }
+    void this.connection.sendProgress(WorkDoneProgress.type, token, {
+      kind: 'begin',
+      title: 'Playwright',
+      message: `Running ${testCount} test(s) in ${file}`,
+    });
+    return true;
+  }
+
+  progressEnd(token: string, active: boolean, summary: string): void {
+    if (!active) return;
+    void this.connection.sendProgress(WorkDoneProgress.type, token, { kind: 'report', message: summary });
+    void this.connection.sendProgress(WorkDoneProgress.type, token, { kind: 'end', message: summary });
+  }
+
+  /** Sends the `window/showMessage` notification (the library helpers would send a request). */
+  private showMessage(type: MessageType, message: string): void {
+    void this.connection.sendNotification(ShowMessageNotification.type, { type, message });
+  }
+
+  showInfo(message: string): void {
+    this.showMessage(MessageType.Info, message);
+  }
+
+  showWarning(message: string): void {
+    this.showMessage(MessageType.Warning, message);
+  }
+
+  showError(message: string): void {
+    this.showMessage(MessageType.Error, message);
+  }
+
+  /** Publishes one Error diagnostic per failure, grouped by file. */
+  publishFailures(failures: Failure[]): string[] {
+    const byFile = new Map<string, Diagnostic[]>();
+    for (const failure of failures) {
+      const line = Math.max(0, failure.line - 1);
+      const character = Math.max(0, failure.column - 1);
+      const diagnostic: Diagnostic = {
+        range: { start: { line, character }, end: { line, character: character + 1 } },
+        severity: DiagnosticSeverity.Error,
+        source: DIAGNOSTIC_SOURCE,
+        message: `${failure.title}: ${failure.message}`,
+      };
+      const list = byFile.get(failure.file) ?? [];
+      list.push(diagnostic);
+      byFile.set(failure.file, list);
+    }
+    for (const [file, diagnostics] of byFile) {
+      void this.connection.sendDiagnostics({ uri: pathToFileURL(file).toString(), diagnostics });
+    }
+    return Array.from(byFile.keys());
+  }
+
+  clearDiagnostics(files: Iterable<string>): void {
+    for (const file of files) {
+      void this.connection.sendDiagnostics({ uri: pathToFileURL(file).toString(), diagnostics: [] });
+    }
+  }
+
+  clearDiagnosticsForUri(uri: string): void {
+    void this.connection.sendDiagnostics({ uri, diagnostics: [] });
+  }
+
+  log(line: string): void {
+    this.connection.console.log(line);
+  }
+
+  info(line: string): void {
+    this.connection.console.info(line);
+  }
+
+  async refreshCodeLenses(): Promise<void> {
+    try {
+      await this.connection.sendRequest(CodeLensRefreshRequest.type);
+    } catch {
+      // client without refresh support
+    }
+  }
+}

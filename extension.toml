@@ -1,0 +1,20 @@
+id = "playwright"
+name = "Playwright"
+version = "0.1.0"
+schema_version = 1
+authors = ["Radek Bednarik <radek.bednarik@tesena.com>"]
+description = "Run and manage Playwright end-to-end tests from Zed, mirroring the Playwright VS Code extension."
+repository = "https://github.com/radekBednarik/playwright-zed"
+
+[language_servers.playwright]
+name = "Playwright"
+languages = ["TypeScript", "TSX", "JavaScript"]
+
+[language_servers.playwright.language_ids]
+"TypeScript" = "typescript"
+"TSX" = "typescriptreact"
+"JavaScript" = "javascript"
+
+capabilities = [
+  { kind = "npm:install", package = "playwright-zed-language-server" },
+]
