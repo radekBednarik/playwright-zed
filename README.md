@@ -161,7 +161,7 @@ from a WSL path).
    ```
 4. `ctrl-shift-p`, run `zed: install dev extension`, choose the repository root. Zed
    compiles the Rust crate; the first build takes about a minute.
-5. `zed: extensions` must list **Playwright for Zed 0.1.0**.
+5. `zed: extensions` must list **Playwright for Zed 0.2.0**.
 6. `zed: open settings`, add `"code_lens": "on"`.
 7. A notification asks whether to run test discovery for `sample-project`; click
    **Run discovery**. Open `tests/passing.spec.ts`. Expect `▶ Run test` above each test and

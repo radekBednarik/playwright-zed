@@ -49,7 +49,7 @@ Rules from https://zed.dev/docs/extensions/publishing/publishing-guide:
   ```toml
   [playwright]
   submodule = "extensions/playwright"
-  version = "0.1.0"
+  version = "0.2.0"
   ```
 
 - Run `pnpm sort-extensions` so `extensions.toml` and `.gitmodules` stay sorted.
