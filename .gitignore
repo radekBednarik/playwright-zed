@@ -1,0 +1,22 @@
+# Rust
+target/
+*.rs.bk
+
+# Node
+node_modules/
+server/dist/
+*.log
+.env*
+
+# Playwright fixture output
+fixtures/sample-project/test-results/
+fixtures/sample-project/playwright-report/
+fixtures/sample-project/blob-report/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+.idea/
+.vscode/
