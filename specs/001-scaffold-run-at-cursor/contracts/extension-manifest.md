@@ -11,6 +11,10 @@ authors = ["Radek Bednarik <radek.bednarik@tesena.com>"]
 description = "Run and manage Playwright end-to-end tests from Zed, mirroring the Playwright VS Code extension."
 repository = "https://github.com/radekBednarik/playwright-zed"
 
+capabilities = [
+  { kind = "npm:install", package = "playwright-zed-language-server" },
+]
+
 [language_servers.playwright]
 name = "Playwright"
 languages = ["TypeScript", "TSX", "JavaScript"]
@@ -19,11 +23,11 @@ languages = ["TypeScript", "TSX", "JavaScript"]
 "TypeScript" = "typescript"
 "TSX" = "typescriptreact"
 "JavaScript" = "javascript"
-
-capabilities = [
-  { kind = "npm:install", package = "playwright-zed-language-server" },
-]
 ```
+
+`capabilities` MUST appear before the first `[table]` header: a top-level key placed after a
+table header belongs to that table, and Zed then rejects the manifest ("invalid type:
+sequence, expected a string").
 
 Rules: no `grammars`, no `languages` directory, no `slash_commands`, no bundled binaries.
 `version` here must equal the `version` entry in `zed-industries/extensions/extensions.toml`
