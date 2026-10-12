@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { RunManager, mapExitCode, parseRunReport, stripAnsi, summarize } from '../../src/runner';
 import type { PlaywrightConfig, RunRequest } from '../../src/types';
 import type { SpawnHandle, SpawnOptions, SpawnOutcome } from '../../src/spawn';
@@ -71,6 +71,11 @@ function request(id: string): RunRequest {
   return { id, location: { kind: 'test', file: '/w/tests/a.spec.ts', line: 3 }, config, trigger: 'cursor', startedAt: new Date().toISOString(), dirty: false };
 }
 
+const tempDirs: string[] = [];
+afterEach(() => {
+  for (const dir of tempDirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
+});
+
 function controllableSpawn() {
   const calls: { options: SpawnOptions; resolve: (o: Partial<SpawnOutcome>) => void; cancelled: boolean }[] = [];
   const fn = (options: SpawnOptions): SpawnHandle => {
@@ -84,6 +89,7 @@ function controllableSpawn() {
       },
     };
     calls.push(entry);
+    tempDirs.push(path.dirname(options.reportFile));
     return {
       promise,
       cancel() {
@@ -106,7 +112,7 @@ describe('RunManager', () => {
       cwd: '/w',
       env: { FORCE_COLOR: '0' },
     });
-    expect(spawn.calls[0].options.reportFile).toMatch(/playwright-zed-run-1\.json$/);
+    expect(spawn.calls[0].options.reportFile).toMatch(/playwright-zed-[^/\\]+[/\\]run-1\.json$/);
     spawn.calls[0].resolve({ code: 0, report: load('run-report-pass.json'), stdout: '1 passed' });
     const result = await pending;
     expect(result.status).toBe('passed');

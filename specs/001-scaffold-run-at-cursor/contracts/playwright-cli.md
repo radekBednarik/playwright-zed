@@ -16,7 +16,7 @@ Version gate: `version >= 1.38.0`.
 
 ```sh
 node <playwrightCli> test --list --reporter=json -c <configPath>
-# env: PLAYWRIGHT_JSON_OUTPUT_FILE=<tmp>/playwright-zed-list-<id>.json, CI=1
+# env: PLAYWRIGHT_JSON_OUTPUT_FILE=<private tmp dir, mode 0700>/list-<id>.json, CI=1
 ```
 
 Parsed fields from the JSON report (recursive):
@@ -36,7 +36,7 @@ File-level suites (title == file name, no describe) contribute no `describeLines
 
 ```sh
 node <playwrightCli> test <relative file>[:<line>] -c <configPath> --reporter=list,json
-# env: PLAYWRIGHT_JSON_OUTPUT_FILE=<tmp>/playwright-zed-run-<id>.json, FORCE_COLOR=0
+# env: PLAYWRIGHT_JSON_OUTPUT_FILE=<private tmp dir, mode 0700>/run-<id>.json, FORCE_COLOR=0
 ```
 
 `<relative file>` is relative to `configDir`. `<line>` is the 1-based spec or describe line.
@@ -55,8 +55,9 @@ Exit codes: 0 all passed, 1 failures, anything else with no JSON report = `error
 
 ## Cancellation
 
-SIGTERM to the process group; SIGKILL after 5 s. Temp report files are deleted after parsing
-or on cancel.
+SIGTERM to the process group; SIGKILL after 5 s. Each run gets its own `mkdtemp` directory
+(owner-only, `0700`) for the report; the directory is removed after parsing or on cancel, and
+the report is read only if it is a regular file (no symlink following).
 
 ## Out of scope for this feature (recorded for later rows)
 

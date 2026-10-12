@@ -37,8 +37,33 @@ export const KILL_GRACE_MS = 5000;
 /** Injectable spawner so unit tests can replace the real child process. */
 export type SpawnFn = (options: SpawnOptions) => SpawnHandle;
 
+/**
+ * Allocates the JSON report path inside a fresh, owner-only temp directory so another user on
+ * a shared machine cannot pre-plant a symlink or a crafted report at a predictable path.
+ * The whole directory is removed after the run by `runPlaywright`.
+ */
 export function reportFilePath(prefix: string, id: string): string {
-  return path.join(os.tmpdir(), `playwright-zed-${prefix}-${id}.json`);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-zed-'));
+  fs.chmodSync(dir, 0o700);
+  return path.join(dir, `${prefix}-${id}.json`);
+}
+
+function readReport(file: string): unknown | null {
+  try {
+    const stat = fs.lstatSync(file);
+    if (!stat.isFile()) return null;
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function removeReportDir(file: string): void {
+  try {
+    fs.rmSync(path.dirname(file), { recursive: true, force: true });
+  } catch {
+    // best effort
+  }
 }
 
 function quote(arg: string): string {
@@ -83,20 +108,8 @@ export function runPlaywright(options: SpawnOptions): SpawnHandle {
     });
     child.on('close', (code, signal) => {
       if (killTimer) clearTimeout(killTimer);
-      let report: unknown | null = null;
-      try {
-        if (fs.existsSync(options.reportFile)) {
-          report = JSON.parse(fs.readFileSync(options.reportFile, 'utf8'));
-        }
-      } catch {
-        report = null;
-      } finally {
-        try {
-          fs.rmSync(options.reportFile, { force: true });
-        } catch {
-          // ignore
-        }
-      }
+      const report = readReport(options.reportFile);
+      removeReportDir(options.reportFile);
       resolve({
         code,
         signal,

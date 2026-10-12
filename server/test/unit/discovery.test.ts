@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { parseListReport, runList } from '../../src/discovery';
 import type { PlaywrightConfig } from '../../src/types';
 import type { SpawnHandle, SpawnOptions } from '../../src/spawn';
@@ -63,10 +63,16 @@ function fakeConfig(): PlaywrightConfig {
   };
 }
 
+const tempDirs: string[] = [];
+afterEach(() => {
+  for (const dir of tempDirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
+});
+
 function fakeSpawn(outcome: Partial<Awaited<SpawnHandle['promise']>>) {
   const calls: SpawnOptions[] = [];
   const fn = (options: SpawnOptions): SpawnHandle => {
     calls.push(options);
+    tempDirs.push(path.dirname(options.reportFile));
     return {
       promise: Promise.resolve({ code: 0, signal: null, stdout: '', stderr: '', report: null, cancelled: false, command: 'cmd', ...outcome }),
       cancel() {},
@@ -86,7 +92,8 @@ describe('runList', () => {
       cwd: '/p',
       env: { CI: '1' },
     });
-    expect(spawn.calls[0].reportFile).toMatch(/playwright-zed-list-\d+\.json$/);
+    expect(spawn.calls[0].reportFile).toMatch(/playwright-zed-[^/\\]+[/\\]list-\d+\.json$/);
+    expect(fs.statSync(path.dirname(spawn.calls[0].reportFile)).mode & 0o777).toBe(0o700);
     expect(config.discoveryState).toBe('idle');
     expect(config.tests).toHaveLength(10);
     expect(config.rootDir).toBe(FIXTURE_ROOT);
