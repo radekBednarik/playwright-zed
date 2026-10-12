@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-Private repo https://github.com/radekBednarik/playwright-zed. `main` has only the bootstrap
+Public repo (since 2026-10-12) https://github.com/radekBednarik/playwright-zed. `main` has only the bootstrap
 commit; all work is on branch `001-scaffold-run-at-cursor` (feature 001, spec-kit artifacts in
 `specs/001-scaffold-run-at-cursor/`). Architecture: Rust/WASM shell + Node language server
 (`server/`, npm name `playwright-zed-language-server`, 0.1.0 published 2026-10-12). Automated suite:
@@ -13,8 +13,9 @@ commit; all work is on branch `001-scaffold-run-at-cursor` (feature 001, spec-ki
 
 Feature 001 has no open tasks as of 2026-10-12: convergence Phases 8 and 9 done, all 23
 manual quickstart scenarios passed in Zed 1.23.2, server 0.1.0 on npm. Zed installs the server from npm
-without the dev override (verified 2026-10-12). Next steps: make the repo public, tag
-v0.1.0, open the Zed registry PR per `docs/publishing.md`. Display name is "Playwright for
+without the dev override (verified 2026-10-12). Repo public and tag v0.1.0 pushed (on commit 312fe67 of
+the feature branch; `main` still has only the bootstrap commit). Next step: open the Zed
+registry PR per `docs/publishing.md`, ideally after merging the feature branch into `main`. Display name is "Playwright for
 Zed" with a non-affiliation notice (Microsoft trademark).
 
 **Why:** the next session should not re-derive the branch layout or re-ask about publishing.
