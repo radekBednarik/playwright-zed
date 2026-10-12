@@ -9,8 +9,8 @@ Public repo https://github.com/radekBednarik/playwright-zed (made public 2026-10
 work is merged: `main` at `ee66cc4` carries feature 001 (`specs/001-scaffold-run-at-cursor/`,
 run at cursor, run file, re-run last) and feature 002 (`specs/002-discovery-consent/`, per
 workspace per session consent prompt before `playwright test --list` runs workspace code).
-Feature branches `001-scaffold-run-at-cursor` and `002-discovery-consent` are merged and
-can be deleted. `.specify/feature.json` points at `specs/002-discovery-consent`; a new
+Feature branches `001-scaffold-run-at-cursor` and `002-discovery-consent` were merged and
+deleted locally and on origin; `main` is the only branch. `.specify/feature.json` points at `specs/002-discovery-consent`; a new
 feature starts with `/speckit-specify`, which creates `specs/003-<name>/` and a branch.
 
 Released: npm `playwright-zed-language-server` 0.1.0 and 0.2.0 (0.2.0 is `latest`; a public
