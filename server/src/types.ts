@@ -84,6 +84,8 @@ export interface RunResult {
   failures: Failure[];
   rawOutput: string;
   command: string;
+  /** Wall-clock duration reported by Playwright, when a report exists. */
+  durationMs: number | null;
   /** Set when status is `error`. */
   errorMessage?: string;
 }

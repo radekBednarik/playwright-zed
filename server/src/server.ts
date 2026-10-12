@@ -300,13 +300,13 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
       reporter.showError(`Playwright could not run ${target}.\nCommand: ${result.command}\n${result.errorMessage ?? 'unknown error'}`);
       return;
     case 'passed':
-      reporter.progressEnd(request.id, progress, summarize(result.counts));
-      reporter.showInfo(`Playwright: ${summarize(result.counts)}`);
+      reporter.progressEnd(request.id, progress, summarize(result.counts, result.durationMs));
+      reporter.showInfo(`Playwright: ${summarize(result.counts, result.durationMs)}`);
       return;
     case 'failed': {
-      reporter.progressEnd(request.id, progress, summarize(result.counts));
+      reporter.progressEnd(request.id, progress, summarize(result.counts, result.durationMs));
       const first = result.failures[0];
-      reporter.showError(`Playwright: ${summarize(result.counts)}${first ? `\n${first.title}: ${first.fullMessage}` : ''}`);
+      reporter.showError(`Playwright: ${summarize(result.counts, result.durationMs)}${first ? `\n${first.title}: ${first.fullMessage}` : ''}`);
       const files = reporter.publishFailures(result.failures);
       if (files.length > 0) publishedFiles.set(ws.rootPath, new Set(files));
       return;

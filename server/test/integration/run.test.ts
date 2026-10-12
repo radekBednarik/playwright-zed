@@ -23,6 +23,11 @@ async function runAtCursor(file: string, line0: number) {
   await client.execute(RUN_AT_CURSOR, [{ uri: uriOf(file), line: line0 }]);
 }
 
+/** Matches `Playwright: <p> passed, <f> failed, <s> skipped (<n>s)`. */
+function summary(passed: number, failed: number, skipped: number): RegExp {
+  return new RegExp(`^Playwright: ${passed} passed, ${failed} failed, ${skipped} skipped \\(\\d+\\.\\ds\\)$`);
+}
+
 function diagnosticsFor(file: string) {
   return client.messages('textDocument/publishDiagnostics').filter((m) => m.params.uri === uriOf(file));
 }
@@ -39,7 +44,8 @@ describe('run at cursor (US2)', () => {
     const runLine = client.messages('window/logMessage').map((m) => m.params.message).find((m) => /^playwright: run \d+ \(cursor/.test(m));
     expect(runLine).toContain(`run ${begin.token} (`);
     const info = client.showMessages(MessageType.Info);
-    expect(info).toEqual(['Playwright: 1 passed, 0 failed, 0 skipped']);
+    expect(info).toHaveLength(1);
+    expect(info[0]).toMatch(summary(1, 0, 0));
     const log = client.messages('window/logMessage').map((m) => m.params.message).join('\n');
     expect(log).toContain('tests/passing.spec.ts:3');
     expect(log).toContain('--reporter=list,json');
@@ -62,7 +68,7 @@ describe('run at cursor (US2)', () => {
   it('(c) runs every test inside a describe from its title line', async () => {
     await runAtCursor(PASSING, L.mathDescribe);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toBe('Playwright: 2 passed, 0 failed, 0 skipped');
+    expect(info.message).toMatch(summary(2, 0, 0));
   });
 
   it('(d) disambiguates duplicate titles by position', async () => {
@@ -70,14 +76,14 @@ describe('run at cursor (US2)', () => {
       client.clear();
       await runAtCursor(PASSING, line);
       const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-      expect(info.message).toBe('Playwright: 1 passed, 0 failed, 0 skipped');
+      expect(info.message).toMatch(summary(1, 0, 0));
     }
   });
 
   it('(e) runs a title with regex-special characters', async () => {
     await runAtCursor(PASSING, L.parens);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toBe('Playwright: 1 passed, 0 failed, 0 skipped');
+    expect(info.message).toMatch(summary(1, 0, 0));
   });
 
   it('(f) a newer run cancels the running one and only its results remain', async () => {
@@ -88,7 +94,7 @@ describe('run at cursor (US2)', () => {
     const warning = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Warning);
     expect(warning.message).toContain('cancelled');
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toContain('1 passed');
+    expect(info.message).toMatch(summary(1, 0, 0));
     expect(client.showMessages(MessageType.Error)).toEqual([]);
     expect(diagnosticsFor(FAILING).filter((m) => m.params.diagnostics.length > 0)).toEqual([]);
   });
@@ -96,7 +102,7 @@ describe('run at cursor (US2)', () => {
   it('(g) runs the whole file from a line outside any test', async () => {
     await runAtCursor(PASSING, L.imports);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toBe('Playwright: 11 passed, 0 failed, 1 skipped');
+    expect(info.message).toMatch(summary(11, 0, 1));
   });
 
   it('(h) warns about unsaved changes and still runs the saved file', async () => {
@@ -114,27 +120,27 @@ describe('run at cursor (US2)', () => {
   it('(i) runs both loop-generated tests that share a line', async () => {
     await runAtCursor(PASSING, L.loop);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toBe('Playwright: 2 passed, 0 failed, 0 skipped');
+    expect(info.message).toMatch(summary(2, 0, 0));
   });
 
   it('(j) reports a skipped test as skipped without diagnostics', async () => {
     await runAtCursor(PASSING, L.skip);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toBe('Playwright: 0 passed, 0 failed, 1 skipped');
+    expect(info.message).toMatch(summary(0, 0, 1));
     expect(diagnosticsFor(PASSING).filter((m) => m.params.diagnostics.length > 0)).toEqual([]);
   });
 
   it('(l) reports a fixme test as skipped without diagnostics', async () => {
     await runAtCursor(FAILING, L.fixme);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toBe('Playwright: 0 passed, 0 failed, 1 skipped');
+    expect(info.message).toMatch(summary(0, 0, 1));
     expect(diagnosticsFor(FAILING).filter((m) => m.params.diagnostics.length > 0)).toEqual([]);
   });
 
   it('(m) runs real browser tests against the TodoMVC demo from the describe line', async () => {
     await runAtCursor(PASSING, L.todomvc);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info, 120_000);
-    expect(info.message).toBe('Playwright: 3 passed, 0 failed, 0 skipped');
+    expect(info.message).toMatch(summary(3, 0, 0));
   });
 
   it('(n) reports a real browser assertion failure with the received text', async () => {
@@ -184,7 +190,7 @@ describe('run file (US3)', () => {
   it('runs every test in the file', async () => {
     await client.execute(RUN_FILE, [{ uri: uriOf(PASSING) }]);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toBe('Playwright: 11 passed, 0 failed, 1 skipped');
+    expect(info.message).toMatch(summary(11, 0, 1));
   });
 
   it('offers no run actions in a non-test file such as the config', async () => {
@@ -203,7 +209,7 @@ describe('re-run last (US4)', () => {
     expect(actions.map((a: any) => a.title)).toEqual(['Playwright: Re-run last']);
     await client.execute(RERUN_LAST, [{ uri: uriOf(CONFIG) }]);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
-    expect(info.message).toBe('Playwright: 1 passed, 0 failed, 0 skipped');
+    expect(info.message).toMatch(summary(1, 0, 0));
     const log = client.messages('window/logMessage').map((m) => m.params.message).join('\n');
     expect(log).toContain('(rerun, test) tests/passing.spec.ts:3');
   });

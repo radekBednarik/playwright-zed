@@ -65,7 +65,7 @@ Lenses are refreshed via `workspace/codeLens/refresh` after each discovery compl
 | Notification | When | Payload |
 |--------------|------|---------|
 | `$/progress` (begin) | RunRequest enters `running` | token = request id, title `Playwright`, message `Running <n> test(s) in <file>` |
-| `$/progress` (end) | terminal state | message = `<expected> passed, <unexpected> failed, <skipped> skipped` or the error |
+| `$/progress` (end) | terminal state | message = `<expected> passed, <unexpected> failed, <skipped> skipped (<duration>s)` or the error; the duration is Playwright's own `stats.duration` |
 | `window/showMessage` | terminal state | Info on pass; Error on fail with the summary followed by the first failure's full error text (all lines, ANSI stripped) so multi-line hints such as Playwright's browser-install instructions survive; Error on process error with the attempted command and the underlying error; Warning on cancel |
 | `window/showMessage` | dirty target | Warning `<file> has unsaved changes; running the saved version` |
 | `window/showMessage` | first unsupported-version detection per workspace | Warning `Playwright <v> found; v1.38 or newer is required. Test running is disabled.` |

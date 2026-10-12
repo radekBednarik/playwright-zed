@@ -126,7 +126,7 @@ from a WSL path).
 
    | Check | Steps | Expected |
    |-------|-------|----------|
-   | Single test | cursor in `adds numbers`, **Run test at cursor** | progress, then "1 passed, 0 failed, 0 skipped" |
+   | Single test | cursor in `adds numbers`, **Run test at cursor** | progress, then "1 passed, 0 failed, 0 skipped (0.4s)"; the time is Playwright's own measurement |
    | Failure | `tests/failing.spec.ts`, run first test | error notification with "Expected: 3", red marker on the `expect` line |
    | Describe | cursor on `test.describe('math'`, **Run describe at cursor** | "2 passed" |
    | Duplicate titles | run each `same title` | "1 passed" each |

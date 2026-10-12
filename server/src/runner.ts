@@ -27,13 +27,14 @@ interface JsonSuite {
 }
 interface JsonRunReport {
   config?: { rootDir?: string };
-  stats?: Partial<RunCounts>;
+  stats?: Partial<RunCounts> & { duration?: number };
   suites?: JsonSuite[];
 }
 
 export interface ParsedRun {
   counts: RunCounts;
   failures: Failure[];
+  durationMs: number | null;
 }
 
 /** Extracts counts and failures from a `--reporter=json` run report. */
@@ -69,7 +70,8 @@ export function parseRunReport(json: unknown): ParsedRun {
     for (const child of suite.suites ?? []) walk(child);
   };
   for (const suite of report.suites ?? []) walk(suite);
-  return { counts, failures };
+  const durationMs = typeof report.stats?.duration === 'number' ? report.stats.duration : null;
+  return { counts, failures, durationMs };
 }
 
 /** 0 passed, 1 with a report failed, anything else is a run error. */
@@ -79,8 +81,10 @@ export function mapExitCode(code: number | null, hasReport: boolean): Exclude<Ru
   return 'error';
 }
 
-export function summarize(counts: RunCounts): string {
-  return `${counts.expected} passed, ${counts.unexpected} failed, ${counts.skipped} skipped`;
+/** `3 passed, 0 failed, 1 skipped (1.2s)`; the duration is Playwright's own measurement. */
+export function summarize(counts: RunCounts, durationMs: number | null = null): string {
+  const base = `${counts.expected} passed, ${counts.unexpected} failed, ${counts.skipped} skipped`;
+  return durationMs === null ? base : `${base} (${(durationMs / 1000).toFixed(1)}s)`;
 }
 
 export function emptyCounts(): RunCounts {
@@ -131,7 +135,7 @@ export class RunManager {
     if (this.active === entry) this.active = null;
 
     const rawOutput = `${outcome.stdout}${outcome.stderr ? `\n${outcome.stderr}` : ''}`;
-    const base = { request, rawOutput, command: outcome.command, failures: [] as Failure[], counts: emptyCounts() };
+    const base = { request, rawOutput, command: outcome.command, failures: [] as Failure[], counts: emptyCounts(), durationMs: null as number | null };
 
     if (outcome.cancelled) return { ...base, status: 'cancelled' };
     if (outcome.spawnError) return { ...base, status: 'error', errorMessage: outcome.spawnError };
@@ -142,6 +146,6 @@ export class RunManager {
       return { ...base, status, errorMessage: stripAnsi(detail) };
     }
     const parsed = parseRunReport(outcome.report);
-    return { ...base, status, counts: parsed.counts, failures: parsed.failures };
+    return { ...base, status, counts: parsed.counts, failures: parsed.failures, durationMs: parsed.durationMs };
   }
 }

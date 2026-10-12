@@ -12,6 +12,7 @@ describe('parseRunReport', () => {
     const parsed = parseRunReport(load('run-report-pass.json'));
     expect(parsed.counts).toEqual({ expected: 1, unexpected: 0, skipped: 0, flaky: 0 });
     expect(parsed.failures).toEqual([]);
+    expect(parsed.durationMs).toBeCloseTo(445.1, 0);
   });
 
   it('maps a failing spec to a failure at error.location with ANSI stripped', () => {
@@ -42,7 +43,7 @@ describe('parseRunReport', () => {
   });
 
   it('tolerates empty input', () => {
-    expect(parseRunReport(null)).toEqual({ counts: { expected: 0, unexpected: 0, skipped: 0, flaky: 0 }, failures: [] });
+    expect(parseRunReport(null)).toEqual({ counts: { expected: 0, unexpected: 0, skipped: 0, flaky: 0 }, failures: [], durationMs: null });
   });
 });
 
@@ -57,6 +58,7 @@ describe('mapExitCode and helpers', () => {
   it('strips ANSI and formats summaries', () => {
     expect(stripAnsi('\u001b[31mred\u001b[39m')).toBe('red');
     expect(summarize({ expected: 8, unexpected: 0, skipped: 1, flaky: 0 })).toBe('8 passed, 0 failed, 1 skipped');
+    expect(summarize({ expected: 8, unexpected: 0, skipped: 1, flaky: 0 }, 1234)).toBe('8 passed, 0 failed, 1 skipped (1.2s)');
   });
 });
 
