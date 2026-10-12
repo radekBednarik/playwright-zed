@@ -12,6 +12,23 @@ Corporation; the name is used only to describe what this extension works with. T
 contains no code from the Playwright projects and drives the Playwright installed in your
 own workspace through its public command line.
 
+## Project status
+
+**Work in progress.** Only the first slice is implemented: workspace detection and running a
+test, a `describe` group, or a file from the editor. The remaining upstream capabilities are
+listed with their status in [docs/parity.md](docs/parity.md). Expect rough edges, breaking
+changes between minor versions, and gaps compared to the VS Code extension. Bug reports and
+feedback are welcome in the issue tracker.
+
+## Built with AI assistance
+
+This extension is developed with AI assistance throughout: specification, planning, code,
+tests and documentation. The workflow is [GitHub Spec Kit](https://github.com/github/spec-kit)
+driven by [Claude Code](https://claude.com/claude-code) with the Claude models Fable and Opus.
+Every change is reviewed by the maintainer, and automated and manual verification is recorded
+per feature under `specs/`, but treat the code with the care you would give any young
+AI-assisted project.
+
 ## What it does today
 
 - Detects Playwright workspaces (any `playwright.config.{ts,js,mts,mjs,cts,cjs}` with
