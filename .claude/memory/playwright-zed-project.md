@@ -12,8 +12,8 @@ commit; all work is on branch `001-scaffold-run-at-cursor` (feature 001, spec-ki
 7 Rust tests, 78 vitest tests in 8 files (needs Chromium and network for the TodoMVC fixture tests).
 
 Feature 001 has no open tasks as of 2026-10-12: convergence Phases 8 and 9 done, all 23
-manual quickstart scenarios passed in Zed 1.23.2, server 0.1.0 on npm. Next steps: confirm
-Zed installs the server from npm without the dev override, make the repo public, tag
+manual quickstart scenarios passed in Zed 1.23.2, server 0.1.0 on npm. Zed installs the server from npm
+without the dev override (verified 2026-10-12). Next steps: make the repo public, tag
 v0.1.0, open the Zed registry PR per `docs/publishing.md`. Display name is "Playwright for
 Zed" with a non-affiliation notice (Microsoft trademark).
 

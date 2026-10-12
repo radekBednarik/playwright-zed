@@ -15,4 +15,7 @@ installed via rustup. Node 24 and cargo 1.99 are on PATH; `gh` is authenticated.
 that can see the Linux filesystem; the Windows Zed sees WSL files only through remoting.
 
 **How to apply:** run `~/.local/bin/zed --foreground` from WSL for extension log output; do not
-assume Zed on Windows can load the dev extension from the WSL path. See [[playwright-zed-project]].
+assume Zed on Windows can load the dev extension from the WSL path. The dev override
+`PLAYWRIGHT_ZED_SERVER_ENTRY` (now commented out in `~/.zshrc`, login shell is zsh) reaches
+the extension through Zed's own process environment, so testing the npm install path needs
+a fresh terminal and a full `zed: quit`; check `/proc/<zed pid>/environ` to be sure. See [[playwright-zed-project]].

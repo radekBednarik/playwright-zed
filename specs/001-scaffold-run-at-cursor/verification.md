@@ -179,5 +179,23 @@ capabilities: textDocumentSync, codeActionProvider, codeLensProvider, executeCom
 commands: playwright.runAtCursor, playwright.runFile, playwright.rerunLast
 ```
 
-Not yet verified: Zed installing the server from npm on its own (open a TypeScript project
-with `PLAYWRIGHT_ZED_SERVER_ENTRY` unset and check the Playwright server status).
+### Install path from npm (2026-10-12, 18:16 local)
+
+The owner quit Zed, started it from a fresh terminal without `PLAYWRIGHT_ZED_SERVER_ENTRY`,
+and opened `fixtures/sample-project`. Checks run from the agent session while Zed was up:
+
+```text
+$ tr '\0' '\n' < /proc/<zed pid>/environ | grep PLAYWRIGHT_ZED_SERVER_ENTRY
+(not set)
+
+$ grep '"version"' ~/.local/share/zed/extensions/work/playwright/node_modules/playwright-zed-language-server/package.json
+  "version": "0.1.0",
+
+$ ps -eo pid,lstart,args | grep playwright-zed-language-server
+67179 ... node /home/radek/.local/share/zed/extensions/work/playwright/node_modules/playwright-zed-language-server/bin/playwright-zed-language-server.js --stdio
+```
+
+The extension installed `playwright-zed-language-server@0.1.0` from npm into its work
+directory and started it from there; the owner confirmed lenses and runs work in that
+session. An earlier attempt at 18:12 was invalid: that Zed process still carried the override
+from the terminal it was launched from and ran the local `server/bin` build.
