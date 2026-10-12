@@ -85,7 +85,7 @@ see no Playwright affordances and no extension errors in the Zed log.
 - [X] T016 [US1] In `server/src/server.ts`, gate every `textDocument/codeLens` handler and every run action in `textDocument/codeAction` on `configForFile` returning a supported config and on the file being present in that config's discovered `tests`; otherwise return `[]`. The only exception is `Playwright: Re-run last` (US4), which is returned for any document in a workspace whose `lastRun` is set
 - [X] T017 [US1] In `server/src/server.ts` and `server/src/workspace.ts`, when a config resolves with `supported === false`, send one `showWarning` per workspace per session using `versionWarningShown` with the text `Playwright <v> found; v1.38 or newer is required. Test running is disabled.`; when no `@playwright/test` package resolves, treat the config as not a Playwright config and log it at info level
 - [X] T018 [US1] Write `README.md`: what the extension does, install from the Zed registry (future) and as a dev extension (`zed: install dev extension` on the repo root), the `"code_lens": "on"` setting, the development-only `PLAYWRIGHT_ZED_SERVER_ENTRY` override, supported Playwright versions, and a link to `docs/parity.md`
-- [ ] T019 [US1] Run quickstart scenarios 1 to 4 from `specs/001-scaffold-run-at-cursor/quickstart.md` in Zed, record each outcome with the command and observed result in `specs/001-scaffold-run-at-cursor/verification.md`, and set the `docs/parity.md` row `Playwright project detection and selection` to `partial`, primitive `lsp`, note `detects config and version; no project/browser picker yet`
+- [X] T019 [US1] Run quickstart scenarios 1 to 4 from `specs/001-scaffold-run-at-cursor/quickstart.md` in Zed, record each outcome with the command and observed result in `specs/001-scaffold-run-at-cursor/verification.md`, and set the `docs/parity.md` row `Playwright project detection and selection` to `partial`, primitive `lsp`, note `detects config and version; no project/browser picker yet`
 
 **Checkpoint**: Extension installs, recognises the fixture, stays idle elsewhere, version gate
 works.
@@ -115,7 +115,7 @@ and the full output in the language-server log.
 - [X] T025 [US2] Wire `playwright.runAtCursor` in `server/src/server.ts`: arguments `[{ uri, line }]` (0-based line converted to 1-based), resolve the project and location, warn `<file> has unsaved changes; running the saved version` when the document is dirty, set `workspace.lastRun`, call `clearDiagnostics` for the target file, `progressBegin`, `startRun`, then on completion `progressEnd` with `<expected> passed, <unexpected> failed, <skipped> skipped`, `showInfo` on `passed`, `showError` on `failed` with the summary followed by the first failure's `fullMessage` (all lines, so browser-install hints survive), `showError` on `error` with the attempted command line and the underlying error (FR-013), `showWarning` on `cancelled`, `publishFailures` per file, and `log` the command line, cwd and `rawOutput`; always return `null`
 - [X] T026 [US2] Add code actions in `server/src/server.ts`: for kind `test` return `Playwright: Run test at cursor`, for kind `describe` return `Playwright: Run describe at cursor`, each with kind `source.playwright` and a `command` of `playwright.runAtCursor` carrying `{ uri, line }`, ordered most specific first
 - [X] T027 [US2] Add code lenses in `server/src/server.ts`: one lens per `DiscoveredTest.line` titled `▶ Run test` and one per unique describe line titled `▶ Run describe`, each with a populated `playwright.runAtCursor` command whose `line` argument is 0-based (`test.line - 1`, `describeLine - 1`) because the command contract uses LSP line numbering while discovery stores Playwright's 1-based lines; confirm `workspace/codeLens/refresh` fires after every discovery
-- [ ] T028 [US2] Run quickstart scenarios 5 to 10 and 15 to 19 in Zed, append outcomes to `specs/001-scaffold-run-at-cursor/verification.md`, and set the `docs/parity.md` row `Run tests with a single click` to `partial`, primitive `lsp`, note `run at cursor, describe, file, re-run; no line highlighting, no step durations, extension-driven runs cannot reach the terminal panel (extension LSP adapters cannot schedule Zed tasks)`
+- [X] T028 [US2] Run quickstart scenarios 5 to 10 and 15 to 19 in Zed, append outcomes to `specs/001-scaffold-run-at-cursor/verification.md`, and set the `docs/parity.md` row `Run tests with a single click` to `partial`, primitive `lsp`, note `run at cursor, describe, file, re-run; no line highlighting, no step durations, extension-driven runs cannot reach the terminal panel (extension LSP adapters cannot schedule Zed tasks)`
 
 **Checkpoint**: Run at cursor works end to end with results visible in Zed.
 
@@ -137,7 +137,7 @@ actions.
 ### Implementation for User Story 3
 
 - [X] T030 [US3] Implement `playwright.runFile` in `server/src/server.ts` and `server/src/commands.ts`: arguments `[{ uri }]`, location kind `file` (no `:line`), trigger `file`, same reporting path as T025; add the code action `Playwright: Run file` after the cursor-specific actions for every discovered test file
-- [ ] T031 [US3] Run quickstart scenarios 11 and 12 in Zed and append outcomes to `specs/001-scaffold-run-at-cursor/verification.md`
+- [X] T031 [US3] Run quickstart scenarios 11 and 12 in Zed and append outcomes to `specs/001-scaffold-run-at-cursor/verification.md`
 
 **Checkpoint**: File-level runs work alongside cursor runs.
 
@@ -159,7 +159,7 @@ last`; the same test runs. In a fresh session the action is absent and the comma
 ### Implementation for User Story 4
 
 - [X] T033 [US4] Implement `playwright.rerunLast` in `server/src/server.ts`: arguments `[]` or `[{ uri }]`, repeat `workspace.lastRun` with trigger `rerun` through the T025 path, else `showInfo('Nothing to re-run yet')`; add the code action `Playwright: Re-run last` for any document in the workspace whenever `workspace.lastRun` is set, bypassing the test-file gate from T016
-- [ ] T034 [US4] Run quickstart scenarios 13 and 14 in Zed and append outcomes to `specs/001-scaffold-run-at-cursor/verification.md`
+- [X] T034 [US4] Run quickstart scenarios 13 and 14 in Zed and append outcomes to `specs/001-scaffold-run-at-cursor/verification.md`
 
 **Checkpoint**: All four stories work independently.
 
@@ -313,5 +313,6 @@ publish, owner approval) remain the record for that work and are not duplicated 
 
 - T046 to T050: done, 78 server tests (8 files) and 7 Rust tests pass, WASM build green;
   see `verification.md`.
-- Still open: T041 (npm publish, owner approval) and the manual Zed scenarios T019, T028,
-  T031, T034 (quickstart scenarios 1 to 23).
+- T019, T028, T031, T034: done on 2026-10-12, the owner ran quickstart scenarios 1 to 23 in
+  Zed 1.23.2 and reported all passing; recorded in `verification.md`.
+- Still open: T041 (npm publish, owner approval).

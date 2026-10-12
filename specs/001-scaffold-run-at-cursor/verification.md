@@ -86,7 +86,16 @@ Then follow `quickstart.md`. Record outcomes below.
 
 | # | Scenario | Outcome |
 |---|----------|---------|
-| 1 to 22 | see quickstart.md | pending |
+| 1 to 23 | see quickstart.md | pass, reported by the repository owner on 2026-10-12 (see below) |
+
+### Manual verification result (T019, T028, T031, T034)
+
+Performed by the repository owner on 2026-10-12 in Zed stable 1.23.2 (Linux build under
+WSL2 with WSLg), with the extension installed via `zed: install dev extension` from the
+repository root at commit `d35d4ef` and the server loaded through the
+`PLAYWRIGHT_ZED_SERVER_ENTRY` override. The owner reports every quickstart scenario, 1 to 23,
+as passing. The per-scenario commands and observations were not transcribed into this file;
+the owner's report is the record.
 
 ## Convergence pass (Phase 8, 2026-10-12)
 
@@ -144,5 +153,6 @@ file in a recognised workspace (T049). The Rust crate now matches the manifest c
 (`cdylib` only, unconditional `zed_extension_api`); `cargo test` on the host still passes
 without a `cfg` gate (T047).
 
-Still open: T041 (publish the server to npm, needs owner approval) and the manual Zed
-scenarios 1 to 23 (T019, T028, T031, T034).
+Still open: T041 (publish the server to npm, needs owner approval). The manual Zed scenarios
+1 to 23 (T019, T028, T031, T034) passed on 2026-10-12, see the manual verification section
+above.

@@ -11,10 +11,10 @@ commit; all work is on branch `001-scaffold-run-at-cursor` (feature 001, spec-ki
 (`server/`, npm name `playwright-zed-language-server`, not yet published). Automated suite:
 7 Rust tests, 78 vitest tests in 8 files (needs Chromium and network for the TodoMVC fixture tests).
 
-Open on 2026-10-12: T041 npm publish of the server (owner must approve, outward-facing);
-manual Zed scenarios T019/T028/T031/T034 (quickstart scenarios 1 to 23, record in
-`verification.md`). Convergence Phases 8 and 9 are done. The owner had installed the dev extension successfully and was testing
-runs when the session ended. Repo must become public before a Zed registry PR.
+Open on 2026-10-12: only T041, npm publish of the server (owner must approve,
+outward-facing). Convergence Phases 8 and 9 are done and the owner ran all 23 manual
+quickstart scenarios in Zed 1.23.2 with every one passing (recorded in `verification.md`).
+Repo must become public before a Zed registry PR.
 
 **Why:** the next session should not re-derive the branch layout or re-ask about publishing.
 
