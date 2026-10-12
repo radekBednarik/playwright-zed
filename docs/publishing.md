@@ -27,6 +27,10 @@ real version appears; it can be removed with `npm unpublish <package>@0.0.0-stag
 - `cargo test && cargo build --release --target wasm32-wasip2`.
 - Run the manual scenarios in `specs/001-scaffold-run-at-cursor/quickstart.md` as a dev
   extension at the commit you will submit. Zed's prerequisites require testing at that commit.
+- Verify the npm install path: run `zed: install dev extension` again after the pin bump (the
+  dev extension symlinks the repository and recompiles the Rust shell only on that command),
+  quit Zed, start it from a terminal where `PLAYWRIGHT_ZED_SERVER_ENTRY` is not exported, and
+  confirm `~/.local/share/zed/extensions/work/playwright/package.json` names the new version.
 - Tag the repository: `git tag v<x.y.z> && git push --tags`. The repository must be public and
   the submitted commit must be on a branch, not detached.
 

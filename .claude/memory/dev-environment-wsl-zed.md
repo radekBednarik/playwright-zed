@@ -18,4 +18,6 @@ that can see the Linux filesystem; the Windows Zed sees WSL files only through r
 assume Zed on Windows can load the dev extension from the WSL path. The dev override
 `PLAYWRIGHT_ZED_SERVER_ENTRY` (now commented out in `~/.zshrc`, login shell is zsh) reaches
 the extension through Zed's own process environment, so testing the npm install path needs
-a fresh terminal and a full `zed: quit`; check `/proc/<zed pid>/environ` to be sure. See [[playwright-zed-project]].
+a fresh terminal and a full `zed: quit`; check `/proc/<zed pid>/environ` to be sure. After a Rust change (for example a pin bump)
+`zed: install dev extension` must be rerun: the dev extension symlinks the repo, so
+`extension.toml` reads live but `extension.wasm` is only recompiled by that command. See [[playwright-zed-project]].

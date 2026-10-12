@@ -82,5 +82,29 @@ $ node smoke.js   (LSP initialize against the installed bin)
 commands: playwright.runAtCursor, playwright.runFile, playwright.rerunLast, playwright.enableDiscovery
 ```
 
-Not yet verified: Zed installing 0.2.0 on its own after `zed: install dev extension` with
-the new pin and no dev override.
+### Install path from npm (2026-10-12, 18:53 local)
+
+After `zed: install dev extension` recompiled the shell with the 0.2.0 pin (Zed log:
+`compiled Rust extension ... in 0.27s` at 18:52:32), the owner quit Zed and started it from a
+terminal without `PLAYWRIGHT_ZED_SERVER_ENTRY`. Checks from the agent session:
+
+```text
+$ tr '\0' '\n' < /proc/<zed pid>/environ | grep PLAYWRIGHT_ZED_SERVER_ENTRY
+(not set)
+
+$ cat ~/.local/share/zed/extensions/work/playwright/package.json
+{ "dependencies": { "playwright-zed-language-server": "0.2.0" } }
+
+$ grep -c enableDiscovery ~/.local/share/zed/extensions/work/playwright/node_modules/playwright-zed-language-server/dist/server.js
+3
+
+$ ps -eo pid,lstart,args | grep playwright-zed-language-server
+105780 18:53:02 node .../extensions/work/playwright/node_modules/playwright-zed-language-server/bin/playwright-zed-language-server.js --stdio
+```
+
+The shell upgraded the work directory from 0.1.0 to 0.2.0 on its own and started the new
+server. Two earlier attempts were invalid and are recorded here for the next release: one
+Zed process still carried the dev override from its launching terminal, and one ran a
+stale `extension.wasm` compiled before the pin bump (the dev extension symlinks the repo, so
+`extension.toml` reads live but the Rust code only recompiles on `zed: install dev
+extension`).

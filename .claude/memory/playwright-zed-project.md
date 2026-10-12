@@ -15,8 +15,8 @@ Feature 001 has no open tasks as of 2026-10-12: convergence Phases 8 and 9 done,
 manual quickstart scenarios passed in Zed 1.23.2, server 0.1.0 on npm. Feature 002
 (`specs/002-discovery-consent/`, branch `002-discovery-consent`) adds a per-workspace,
 per-session consent prompt before `--list` runs workspace code; all tasks done and manual scenarios passed; merged to `main` on 2026-10-12. Released as
-0.2.0 on npm the same day (tag `v0.2.0`, pin bumped); Zed's own install of 0.2.0 not yet
-verified. Next: Zed registry PR per `docs/publishing.md`, opened by the owner personally
+0.2.0 on npm the same day (tag `v0.2.0`, pin bumped); Zed's own install of 0.2.0 verified
+(2026-10-12 18:53). Next: Zed registry PR per `docs/publishing.md`, opened by the owner personally
 (Zed's AI policy forbids agent-driven contributions). Zed installs the server from npm
 without the dev override (verified 2026-10-12). Repo public and tag v0.1.0 pushed (on commit 312fe67 of
 the feature branch; `main` still has only the bootstrap commit). Next step: open the Zed
