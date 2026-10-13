@@ -5,7 +5,7 @@
 ```toml
 id = "playwright"
 name = "Playwright for Zed"
-version = "0.2.0"
+version = "0.3.0"
 schema_version = 1
 authors = ["Radek Bednarik <radek.bednarik@tesena.com>"]
 description = "Work in progress. Run Playwright end-to-end tests from Zed: run at cursor, run file, re-run last, with results in the editor. Community extension, not affiliated with or endorsed by Microsoft."
@@ -41,7 +41,7 @@ at the submitted commit.
 ```toml
 [package]
 name = "playwright-zed"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT"
 

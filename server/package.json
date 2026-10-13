@@ -1,6 +1,6 @@
 {
   "name": "playwright-zed-language-server",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Language server for the Playwright for Zed extension: discovers and runs Playwright tests in your workspace (community project, not affiliated with Microsoft)",
   "keywords": [
     "playwright",
