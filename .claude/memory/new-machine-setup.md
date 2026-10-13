@@ -5,7 +5,8 @@ metadata:
   type: project
 ---
 
-Bootstrap a fresh clone (verified set of commands, 2026-10-12):
+Bootstrap a fresh clone (verified set of commands, 2026-10-12). Server development needs
+Node ^22.12 or >=24 (vitest 5); the published server still supports Node >=20:
 
 ```sh
 rustup target add wasm32-wasip2
