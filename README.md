@@ -33,8 +33,9 @@ AI-assisted project.
 
 - Detects Playwright workspaces (any `playwright.config.{ts,js,mts,mjs,cts,cjs}` with
   `@playwright/test` v1.38 or newer resolvable next to it, monorepos included).
-- Asks once per workspace and editing session before running anything from the folder,
-  because test discovery executes the workspace's Playwright configuration and test files.
+- Runs nothing from a folder until it is trusted, because test discovery executes the
+  workspace's Playwright configuration and test files. On Zed 0.218 or newer, trusting the
+  folder in Zed is enough; older Zed releases get a question once per workspace and session.
 - Discovers tests through Playwright's own `--list` and shows **Run test** and
   **Run describe** code lenses above each test and group.
 - **Run test at cursor**, **Run describe at cursor**, **Run file** and **Re-run last** as
@@ -87,11 +88,26 @@ Use `"menu"` instead to list lenses inside the code action menu.
 
 ### Before the first run: test discovery
 
-When a folder with a Playwright configuration is opened, the Playwright server shows one
-notification: it names the folder, explains that discovery executes the workspace's
-Playwright configuration and test files, and offers **Run discovery** and **Not now**. Zed
-has no workspace-trust concept, so this question is the extension's substitute for the
-protection VS Code gives the upstream extension.
+Test discovery executes the workspace's Playwright configuration and test files, so it
+only runs in folders you trust.
+
+**Zed 0.218 or newer.** Zed asks whether you trust a folder (Restricted Mode) and starts
+language servers only after you do. That answer is the only question: the Playwright server
+discovers tests at once and Zed remembers the trust across restarts, much like Workspace
+Trust protects the upstream VS Code extension.
+
+- To revoke trust, run `workspace: clear trusted worktrees` (it clears every trusted folder
+  and restarts Zed).
+- `"session": { "trust_all_worktrees": true }` in your user settings makes discovery run in
+  every folder without asking, as turning off Workspace Trust does in VS Code.
+- Inside a dev container Zed applies no worktree trust, so discovery runs without a question
+  once you have chosen **Open in Container**.
+
+**Older Zed releases and other editors.** The Playwright server shows one notification: it
+names the folder, explains that discovery executes the workspace's Playwright configuration
+and test files, and offers **Run discovery** and **Not now**. The same question appears on
+any Zed release when a folder reaches the server only as a root URI rather than as a
+workspace folder.
 
 - **Run discovery** starts discovery at once; lenses and run actions appear and nothing
   asks again until Zed is restarted or the folder is closed.
@@ -163,8 +179,8 @@ from a WSL path).
    compiles the Rust crate; the first build takes about a minute.
 5. `zed: extensions` must list **Playwright for Zed 0.2.0**.
 6. `zed: open settings`, add `"code_lens": "on"`.
-7. A notification asks whether to run test discovery for `sample-project`; click
-   **Run discovery**. Open `tests/passing.spec.ts`. Expect `▶ Run test` above each test and
+7. Zed 0.218+ asks whether you trust the folder; trust it. (Older Zed instead shows the
+   Playwright notification for `sample-project`; click **Run discovery**.) Open `tests/passing.spec.ts`. Expect `▶ Run test` above each test and
    `▶ Run describe` above each group. Click the lightning bolt in the status bar, or run
    `dev: open language server logs`, pick **Playwright**: the log shows
    `discovered 15 test(s)`.
@@ -182,7 +198,8 @@ from a WSL path).
    | Re-run             | in `playwright.config.ts`, **Re-run last**                                             | previous selection runs again                                                                     |
    | Cancel             | start two runs back to back                                                            | "cancelled" warning, then the second result                                                       |
    | Unsaved            | edit without saving, run                                                               | "unsaved changes" warning, saved file runs                                                        |
-   | Declined discovery | restart Zed, open the fixture, click **Not now**                                       | no lenses; `ctrl-.` offers only **Playwright: Enable test discovery**; using it brings the lenses |
+   | Trust remembered   | restart Zed, open the fixture                                                          | no question; lenses appear; the log shows `Zed trusts <path>; test discovery enabled without asking` |
+   | Declined discovery | Zed before 0.218: restart Zed, open the fixture, click **Not now**                     | no lenses; `ctrl-.` offers only **Playwright: Enable test discovery**; using it brings the lenses |
    | No Playwright      | open a folder with a `.ts` file and no Playwright                                      | no question, no lenses, no actions, no warnings                                                   |
    | Old version        | copy the sample, set `@playwright/test` version to `1.37.1` in `node_modules`, open it | one warning naming 1.37.1 and 1.38, no actions                                                    |
 

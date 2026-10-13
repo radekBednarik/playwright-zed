@@ -93,6 +93,13 @@ export interface RunResult {
 /** Per-workspace, per-session answer to "run test discovery?" (feature 002). */
 export type DiscoveryDecision = 'pending' | 'enabled' | 'declined';
 
+/**
+ * Why a workspace is `enabled` (feature 003): `editor-trust` when created `enabled` because of
+ * the editor trust gate; `answer` after "Run discovery" or `playwright.enableDiscovery`; `null`
+ * while `pending` or `declined`.
+ */
+export type DiscoverySource = 'editor-trust' | 'answer' | null;
+
 export interface Workspace {
   rootUri: string;
   rootPath: string;
@@ -103,4 +110,10 @@ export interface Workspace {
   discovery: DiscoveryDecision;
   /** True once the question was sent, so it is asked at most once per session. */
   discoveryAsked: boolean;
+  discoverySource: DiscoverySource;
+  /**
+   * `true` for folders from `initialize.workspaceFolders` or `didChangeWorkspaceFolders`,
+   * `false` for the `rootUri` fallback.
+   */
+  fromWorkspaceFolders: boolean;
 }

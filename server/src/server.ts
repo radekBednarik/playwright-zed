@@ -17,6 +17,7 @@ import { ALL_COMMANDS, COMMAND_ENABLE_DISCOVERY, COMMAND_RERUN_LAST, COMMAND_RUN
 import { runList } from './discovery';
 import { DISCOVERY_NOT_NOW, DISCOVERY_RUN, Reporter } from './reporting';
 import { RunManager, summarize } from './runner';
+import { editorHasTrustGate } from './trust';
 import type { PlaywrightConfig, RunRequest, RunTrigger, TestLocation, Workspace } from './types';
 import { formatVersion } from './version';
 import { buildConfig, configForFile, findConfigs, isConfigFile, isUnderTestDirs } from './workspace';
@@ -36,7 +37,11 @@ const publishedFiles = new Map<string, Set<string>>();
 const savedVersion = new Map<string, number>();
 const dirtyUris = new Set<string>();
 /** Folders received in `initialize`, discovered after `initialized`. */
-const pendingFolders: WorkspaceFolder[] = [];
+const pendingFolders: { folder: WorkspaceFolder; fromWorkspaceFolders: boolean }[] = [];
+/** Feature 003: the client is a Zed release that starts this server only in trusted folders. */
+let editorTrustGate = false;
+/** Client name and version for log lines, from `initialize.params.clientInfo`. */
+let clientLabel = 'the editor';
 
 function toPath(uri: string): string | null {
   try {
@@ -136,12 +141,18 @@ async function discoverEnabled(ws: Workspace): Promise<void> {
 async function enableDiscovery(ws: Workspace): Promise<void> {
   if (ws.discovery === 'enabled') return;
   ws.discovery = 'enabled';
+  ws.discoverySource = 'answer';
   reporter.info(`playwright: test discovery enabled for ${ws.rootPath}`);
   await discoverEnabled(ws);
 }
 
 async function askForDiscovery(ws: Workspace): Promise<void> {
   const folderName = path.basename(ws.rootPath);
+  reporter.info(
+    editorTrustGate
+      ? `playwright: asking before discovery in ${ws.rootPath}; the folder was not reported as a workspace folder, so Zed's trust cannot be assumed for it`
+      : `playwright: asking before discovery in ${ws.rootPath}; ${clientLabel} is not known to gate language servers on folder trust`,
+  );
   let answer: string | null;
   try {
     answer = await reporter.askDiscovery(folderName, ws.rootPath);
@@ -181,7 +192,7 @@ function refuseNotEnabled(ws: Workspace): void {
   }
 }
 
-async function addWorkspace(folder: WorkspaceFolder): Promise<void> {
+async function addWorkspace(folder: WorkspaceFolder, fromWorkspaceFolders: boolean): Promise<void> {
   const rootPath = toPath(folder.uri);
   if (!rootPath) return;
   const ws: Workspace = {
@@ -192,7 +203,19 @@ async function addWorkspace(folder: WorkspaceFolder): Promise<void> {
     versionWarningShown: false,
     discovery: 'pending',
     discoveryAsked: false,
+    discoverySource: null,
+    fromWorkspaceFolders,
   };
+  // Zed 0.218+ starts this server only in trusted worktrees, so its trust stands in for the
+  // question; a rootUri fallback was never reported as a worktree (research R2, R3). Only
+  // clientInfo and the folder's origin decide, never anything inside the workspace.
+  if (editorTrustGate && fromWorkspaceFolders) {
+    ws.discovery = 'enabled';
+    ws.discoverySource = 'editor-trust';
+    reporter.info(
+      `playwright: Zed trusts ${rootPath}; test discovery enabled without asking (${clientLabel} starts language servers only in trusted folders)`,
+    );
+  }
   workspaces.set(rootPath, ws);
   await discoverWorkspace(ws);
 }
@@ -207,8 +230,13 @@ function removeWorkspace(folder: WorkspaceFolder): void {
 }
 
 connection.onInitialize((params: InitializeParams): InitializeResult => {
-  const folders: WorkspaceFolder[] = params.workspaceFolders ?? (params.rootUri ? [{ uri: params.rootUri, name: 'root' }] : []);
-  pendingFolders.push(...folders);
+  editorTrustGate = editorHasTrustGate(params.clientInfo);
+  if (params.clientInfo) clientLabel = `${params.clientInfo.name} ${params.clientInfo.version ?? ''}`.trim();
+  if (params.workspaceFolders) {
+    pendingFolders.push(...params.workspaceFolders.map((folder) => ({ folder, fromWorkspaceFolders: true })));
+  } else if (params.rootUri) {
+    pendingFolders.push({ folder: { uri: params.rootUri, name: 'root' }, fromWorkspaceFolders: false });
+  }
   return {
     capabilities: {
       textDocumentSync: { openClose: true, change: TextDocumentSyncKind.Incremental, save: { includeText: false } },
@@ -222,13 +250,13 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 
 connection.onInitialized(() => {
   void (async () => {
-    for (const folder of pendingFolders.splice(0)) await addWorkspace(folder);
+    for (const { folder, fromWorkspaceFolders } of pendingFolders.splice(0)) await addWorkspace(folder, fromWorkspaceFolders);
   })();
   try {
     connection.workspace.onDidChangeWorkspaceFolders((event) => {
       for (const folder of event.removed) removeWorkspace(folder);
       void (async () => {
-        for (const folder of event.added) await addWorkspace(folder);
+        for (const folder of event.added) await addWorkspace(folder, true);
       })();
     });
   } catch {
@@ -512,6 +540,8 @@ connection.onRequest(STATUS_REQUEST, () =>
     rootPath: ws.rootPath,
     discovery: ws.discovery,
     discoveryAsked: ws.discoveryAsked,
+    discoverySource: ws.discoverySource,
+    editorTrustGate,
     lastRun: ws.lastRun ? { id: ws.lastRun.id, location: ws.lastRun.location, trigger: ws.lastRun.trigger } : null,
     configs: ws.configs.map((c) => ({
       configPath: c.configPath,

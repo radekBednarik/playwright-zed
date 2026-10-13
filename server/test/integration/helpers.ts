@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createMessageConnection, ProgressType, StreamMessageReader, StreamMessageWriter, type MessageConnection } from 'vscode-jsonrpc/node';
@@ -23,6 +24,10 @@ export type DiscoveryAnswer = 'Run discovery' | 'Not now' | null;
 
 export interface StartOptions {
   answer?: DiscoveryAnswer;
+  /** Sent as `initialize.params.clientInfo` (feature 003); omitted by default. */
+  clientInfo?: { name: string; version?: string };
+  /** Sends only `rootUri`, no `workspaceFolders`, in `initialize` (feature 003 fallback root). */
+  rootUriOnly?: boolean;
 }
 
 export class TestClient {
@@ -62,7 +67,8 @@ export class TestClient {
     await conn.sendRequest('initialize', {
       processId: process.pid,
       rootUri: uriOf(folder),
-      workspaceFolders: folders.map((f) => ({ uri: uriOf(f), name: path.basename(f) })),
+      ...(options.rootUriOnly ? {} : { workspaceFolders: folders.map((f) => ({ uri: uriOf(f), name: path.basename(f) })) }),
+      ...(options.clientInfo ? { clientInfo: options.clientInfo } : {}),
       capabilities: {
         window: { workDoneProgress: true },
         workspace: { workspaceFolders: true, codeLens: { refreshSupport: true } },
@@ -169,3 +175,58 @@ export class TestClient {
 }
 
 export const MessageType = { Error: 1, Warning: 2, Info: 3, Log: 4 } as const;
+
+export const SPEC_SOURCE = `import { test, expect } from '@playwright/test';
+
+test('one', async ({ page }) => {
+  await page.setContent('<p id="o">one</p>');
+  await expect(page.locator('#o')).toHaveText('one');
+});
+`;
+
+/** A config that leaves evidence when Playwright loads it (feature 002 SC-001). */
+export function configSource(withMarker: boolean): string {
+  const marker = withMarker ? `writeFileSync(process.env.PW_ZED_MARKER as string, 'loaded');\n` : '';
+  return `import { writeFileSync } from 'node:fs';
+import { defineConfig } from '@playwright/test';
+
+${marker}export default defineConfig({
+  testDir: './tests',
+  reporter: 'list',
+  projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
+});
+`;
+}
+
+export interface TempProject {
+  dir: string;
+  spec: string;
+  marker: string;
+}
+
+const tempDirs: string[] = [];
+
+/** Registers a temp directory for removal by `removeTempProjects`. */
+export function trackTempDir(dir: string): void {
+  tempDirs.push(dir);
+}
+
+/** Temp project sharing the fixture's node_modules; sets PW_ZED_MARKER for the server to inherit. */
+export function tempProject(withMarker = true): TempProject {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zed-consent-'));
+  trackTempDir(dir);
+  fs.mkdirSync(path.join(dir, 'tests'));
+  fs.symlinkSync(path.join(FIXTURE, 'node_modules'), path.join(dir, 'node_modules'), 'dir');
+  fs.writeFileSync(path.join(dir, 'playwright.config.ts'), configSource(withMarker));
+  const spec = path.join(dir, 'tests/one.spec.ts');
+  fs.writeFileSync(spec, SPEC_SOURCE);
+  const marker = path.join(dir, 'config-loaded.marker');
+  process.env.PW_ZED_MARKER = marker;
+  return { dir, spec, marker };
+}
+
+/** Removes every tracked temp directory and the marker variable; call from `afterEach`. */
+export function removeTempProjects(): void {
+  for (const dir of tempDirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
+  delete process.env.PW_ZED_MARKER;
+}

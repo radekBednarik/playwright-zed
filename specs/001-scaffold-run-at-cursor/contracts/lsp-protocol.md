@@ -6,7 +6,11 @@ flag `--stdio`.
 ## Initialize
 
 `initializationOptions`: none required. The server reads `workspaceFolders` (falls back to
-`rootUri`).
+`rootUri`) and the optional `clientInfo` (feature 003): when `name` is `Zed`, `Zed Preview`,
+`Zed Nightly` or `Zed Dev` and the leading `major.minor.patch` of `version` is `>= 0.218.0`,
+the editor trust gate is present and folders from `workspaceFolders` or
+`didChangeWorkspaceFolders` start with discovery enabled. A `rootUri` fallback never does.
+See `specs/003-remember-discovery-consent/contracts/editor-trust.md`.
 
 Advertised `ServerCapabilities`:
 
@@ -74,9 +78,11 @@ Lenses are refreshed via `workspace/codeLens/refresh` after each discovery compl
 | `window/showMessage` | terminal state | Info on pass; Error on fail with the summary followed by the first failure's full error text (all lines, ANSI stripped) so multi-line hints such as Playwright's browser-install instructions survive; Error on process error with the attempted command and the underlying error; Warning on cancel |
 | `window/showMessage` | dirty target | Warning `<file> has unsaved changes; running the saved version` |
 | `window/showMessage` | first unsupported-version detection per workspace | Warning `Playwright <v> found; v1.38 or newer is required. Test running is disabled.` |
-| `window/showMessageRequest` | first supported config per workspace per session (feature 002) | Warning with actions `Run discovery` / `Not now`; discovery runs only after `Run discovery` |
+| `window/showMessageRequest` | first supported config per workspace per session (feature 002), unless the editor trust gate applies (feature 003) | Warning with actions `Run discovery` / `Not now`; discovery runs only after `Run discovery` |
 | `textDocument/publishDiagnostics` | run failed | one Diagnostic per Failure, source `playwright`, severity Error, message = title plus first error line; cleared (empty array) for every file touched by the next run and for a file as soon as it receives `didChange` |
 | `window/logMessage` | run start and end | exact command line, cwd, then full raw output |
+| `window/logMessage` | workspace enabled by the editor trust gate (feature 003) | `playwright: Zed trusts <path>; test discovery enabled without asking (<client> starts language servers only in trusted folders)` |
+| `window/logMessage` | before the discovery question (feature 003) | `playwright: asking before discovery in <path>; <reason>`, the reason naming the client without a trust gate or the `rootUri` fallback |
 
 ## Document tracking
 
@@ -87,7 +93,8 @@ a config's `testDirs` triggers rediscovery.
 ## Debug request (additive, not used by Zed)
 
 `playwright/status` with no parameters returns one entry per workspace:
-`{ rootPath, discovery: "pending" | "enabled" | "declined", discoveryAsked, lastRun: { id, location,
+`{ rootPath, discovery: "pending" | "enabled" | "declined", discoveryAsked, discoverySource:
+"editor-trust" | "answer" | null, editorTrustGate, lastRun: { id, location,
 trigger } | null, configs: [{ configPath, playwrightVersion, supported, rootDir, testDirs,
 discoveryState, testCount }] }`. Used by integration tests and for
 troubleshooting; it never changes server state.
