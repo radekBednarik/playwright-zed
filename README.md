@@ -102,13 +102,13 @@ protection VS Code gives the upstream extension.
   separately. Reading the installed Playwright version never executes workspace code, so
   the "version too old" warning can appear before you answer.
 
-| Action | How |
-|--------|-----|
-| Run the test under the cursor | `ctrl-.` then **Playwright: Run test at cursor**, or click the **▶ Run test** lens |
-| Run a whole describe | cursor on the `test.describe` line, same action, or **▶ Run describe** |
-| Run the whole file | `ctrl-.` then **Playwright: Run file** |
-| Repeat the last run | `ctrl-.` anywhere in the workspace, **Playwright: Re-run last** |
-| Enable discovery after "Not now" | `ctrl-.` in any file of that folder, **Playwright: Enable test discovery** |
+| Action                           | How                                                                                |
+| -------------------------------- | ---------------------------------------------------------------------------------- |
+| Run the test under the cursor    | `ctrl-.` then **Playwright: Run test at cursor**, or click the **▶ Run test** lens |
+| Run a whole describe             | cursor on the `test.describe` line, same action, or **▶ Run describe**             |
+| Run the whole file               | `ctrl-.` then **Playwright: Run file**                                             |
+| Repeat the last run              | `ctrl-.` anywhere in the workspace, **Playwright: Re-run last**                    |
+| Enable discovery after "Not now" | `ctrl-.` in any file of that folder, **Playwright: Enable test discovery**         |
 
 Notes:
 
@@ -130,7 +130,7 @@ add this task to `~/.config/zed/tasks.json`. Zed already recognises `test(` and
 ```json
 [
   {
-    "label": "Playwright: test at cursor",
+    "label": "Playwright: Run test at cursor with CLI output",
     "command": "npx",
     "args": ["playwright", "test", "$ZED_FILE:$ZED_ROW"],
     "cwd": "$ZED_WORKTREE_ROOT",
@@ -170,21 +170,21 @@ from a WSL path).
    `discovered 15 test(s)`.
 8. Run checks (`ctrl-.` opens the actions):
 
-   | Check | Steps | Expected |
-   |-------|-------|----------|
-   | Single test | cursor in `adds numbers`, **Run test at cursor** | progress, then "1 passed, 0 failed, 0 skipped (0.4s)"; the time is Playwright's own measurement |
-   | Failure | `tests/failing.spec.ts`, run first test | error notification with "Expected: 3", red marker on the `expect` line |
-   | Describe | cursor on `test.describe('math'`, **Run describe at cursor** | "2 passed" |
-   | Duplicate titles | run each `same title` | "1 passed" each |
-   | Real browser | cursor on `test.describe('todomvc'` in `passing.spec.ts`, **Run describe at cursor** | Chromium visits demo.playwright.dev, "3 passed" |
-   | Real failure | `failing.spec.ts`, run `expects a wrong heading` | error notification with `Expected: "tasks"` and `Received: "todos"` |
-   | File | **Run file** in `passing.spec.ts` | "11 passed, 0 failed, 1 skipped" |
-   | Re-run | in `playwright.config.ts`, **Re-run last** | previous selection runs again |
-   | Cancel | start two runs back to back | "cancelled" warning, then the second result |
-   | Unsaved | edit without saving, run | "unsaved changes" warning, saved file runs |
-   | Declined discovery | restart Zed, open the fixture, click **Not now** | no lenses; `ctrl-.` offers only **Playwright: Enable test discovery**; using it brings the lenses |
-   | No Playwright | open a folder with a `.ts` file and no Playwright | no question, no lenses, no actions, no warnings |
-   | Old version | copy the sample, set `@playwright/test` version to `1.37.1` in `node_modules`, open it | one warning naming 1.37.1 and 1.38, no actions |
+   | Check              | Steps                                                                                  | Expected                                                                                          |
+   | ------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+   | Single test        | cursor in `adds numbers`, **Run test at cursor**                                       | progress, then "1 passed, 0 failed, 0 skipped (0.4s)"; the time is Playwright's own measurement   |
+   | Failure            | `tests/failing.spec.ts`, run first test                                                | error notification with "Expected: 3", red marker on the `expect` line                            |
+   | Describe           | cursor on `test.describe('math'`, **Run describe at cursor**                           | "2 passed"                                                                                        |
+   | Duplicate titles   | run each `same title`                                                                  | "1 passed" each                                                                                   |
+   | Real browser       | cursor on `test.describe('todomvc'` in `passing.spec.ts`, **Run describe at cursor**   | Chromium visits demo.playwright.dev, "3 passed"                                                   |
+   | Real failure       | `failing.spec.ts`, run `expects a wrong heading`                                       | error notification with `Expected: "tasks"` and `Received: "todos"`                               |
+   | File               | **Run file** in `passing.spec.ts`                                                      | "11 passed, 0 failed, 1 skipped"                                                                  |
+   | Re-run             | in `playwright.config.ts`, **Re-run last**                                             | previous selection runs again                                                                     |
+   | Cancel             | start two runs back to back                                                            | "cancelled" warning, then the second result                                                       |
+   | Unsaved            | edit without saving, run                                                               | "unsaved changes" warning, saved file runs                                                        |
+   | Declined discovery | restart Zed, open the fixture, click **Not now**                                       | no lenses; `ctrl-.` offers only **Playwright: Enable test discovery**; using it brings the lenses |
+   | No Playwright      | open a folder with a `.ts` file and no Playwright                                      | no question, no lenses, no actions, no warnings                                                   |
+   | Old version        | copy the sample, set `@playwright/test` version to `1.37.1` in `node_modules`, open it | one warning naming 1.37.1 and 1.38, no actions                                                    |
 
 After a Rust change run `zed: install dev extension` again. After a server change run
 `npm run build` and `editor: restart language server`. Problems with the extension itself
