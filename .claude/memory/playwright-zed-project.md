@@ -13,11 +13,13 @@ Feature branches `001-scaffold-run-at-cursor` and `002-discovery-consent` were m
 deleted locally and on origin, as was `003-remember-discovery-consent` (PR #2,
 merged 2026-10-13); `main` is the only branch. A new feature starts with `/speckit-specify`, which creates `specs/<nnn>-<name>/` and a branch.
 
-Released: npm `playwright-zed-language-server` 0.1.0 and 0.2.0 (0.2.0 is `latest`; a public
+Released: npm `playwright-zed-language-server` 0.1.0, 0.2.0 and 0.3.0 (0.3.0 is `latest`,
+published 2026-10-13; a public
 `0.0.0-stage` placeholder from npm staged publishing also exists, harmless, removable with
 `npm unpublish playwright-zed-language-server@0.0.0-stage --otp=<code>` within 72 h of
-2026-10-12 16:07 UTC). Rust shell pins 0.2.0; `extension.toml` and `Cargo.toml` are 0.2.0;
-tags `v0.1.0`, `v0.2.0`. Zed installing 0.2.0 from npm on its own is verified. Display name
+2026-10-12 16:07 UTC). Rust shell pins 0.3.0; `extension.toml` and `Cargo.toml` are 0.3.0;
+tags `v0.1.0`, `v0.2.0`, `v0.3.0`. Zed installing 0.2.0 from npm on its own is verified; the
+0.3.0 npm install path in Zed has not been checked yet. Display name
 is "Playwright for Zed", id `playwright`, description starts with "Work in progress." and
 carries a non-affiliation notice (Playwright is a Microsoft trademark); READMEs disclose
 AI-assisted development (GitHub Spec Kit, Claude Code, models Fable and Opus).
@@ -39,9 +41,8 @@ Check a Dependabot PR's CI before merging: PR #1 (vitest 3 to 5, security bump o
 `@vitest/mocker`) was merged without CI and broke `npm install` (ERESOLVE on `@types/node`),
 fixed by raising `@types/node` to `^22.12.0`.
 
-Unreleased since 0.2.0: vitest 5, `@types/node` 22, server `engines: node >=22` (Node 20 is
-end of life) and feature 003. The next npm release carries the Zed worktree trust gate and the
-Node 22 requirement; mention both in the release notes. `ubuntu-latest` moves to Ubuntu 26 from 2026-10-19; if Chromium's
+0.3.0 carries feature 003 (Zed worktree trust gate) and server `engines: node >=22` (Node 20
+is end of life), plus vitest 5 and `@types/node` 22 on the dev side. `ubuntu-latest` moves to Ubuntu 26 from 2026-10-19; if Chromium's
 `--with-deps` install fails in CI after that, pin `runs-on: ubuntu-24.04`.
 
 **On hold by the owner's decision (2026-10-12):** the Zed registry PR. Not to be prepared
