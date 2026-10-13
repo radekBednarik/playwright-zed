@@ -8,6 +8,10 @@ test.fixme('fixme on purpose', async () => {
   expect(true).toBe(false);
 });
 
+test.fail('this must pass by pw runner', async () => {
+  expect(true).toBe(false)
+})
+
 // Real end-to-end failure against the public TodoMVC demo (network required).
 test.describe('todomvc', () => {
   test('expects a wrong heading', async ({ page }) => {
