@@ -127,3 +127,67 @@ CodeQL (actions, javascript-typescript, rust) pass
 ```
 
 T018 (merge) waits for the owner's OK.
+
+## Release (T019, T020)
+
+PR #3 was squash-merged by the owner on 2026-10-13 as `7dd3a65` (the repository ruleset
+"main" requires a review a PR author cannot give themselves; the owner used the admin bypass).
+
+```text
+$ git switch main && git pull
+$ # version = "0.4.0" in extension.toml and Cargo.toml; README listing line 0.4.0
+$ cargo test
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+$ cargo build --release --target wasm32-wasip2
+    Finished `release` profile [optimized] target(s) in 0.23s
+$ git commit -m "release: 0.4.0" && git tag v0.4.0 && git push origin main && git push origin v0.4.0
+$ git rev-parse v0.4.0
+8379546a32c3d7dd8a3df6c19ae4f74876b8cfdd
+$ git branch --contains v0.4.0
+* main
+$ grep PINNED_SERVER_VERSION src/lib.rs
+pub const PINNED_SERVER_VERSION: &str = "0.3.0";
+$ npm view playwright-zed-language-server@0.3.0 version
+0.3.0                                    (published 2026-10-13T07:06:28.176Z; dist-tag latest = 0.3.0)
+```
+
+## Registry clone and local validation (T025, T026, T027)
+
+Clone `../zed-extensions` (sibling of this repository), 2026-10-13, remote `origin` only
+(`https://github.com/zed-industries/extensions.git`), no push.
+
+```text
+$ git switch -c playwright-runner-lsp origin/main
+$ git submodule add https://github.com/radekBednarik/playwright-zed.git extensions/playwright-runner-lsp
+$ git -C extensions/playwright-runner-lsp checkout main && git -C extensions/playwright-runner-lsp reset --hard v0.4.0
+8379546a32c3d7dd8a3df6c19ae4f74876b8cfdd
+$ # appended [playwright-runner-lsp] submodule = "extensions/playwright-runner-lsp" version = "0.4.0"
+$ corepack pnpm@11 install --frozen-lockfile        Done in 5.7s using pnpm v11.28.5
+$ corepack pnpm@11 sort-extensions                   entry placed after [playdate], before [po] in both files
+$ git commit -m "Add playwright-runner-lsp extension"
+7466aac69aa29e49a558519329b0faeac3016fda
+ .gitmodules                      | 4 ++++
+ extensions.toml                  | 4 ++++
+ extensions/playwright-runner-lsp | 1 +
+
+$ corepack pnpm@11 sort-extensions && git diff --exit-code -- extensions.toml .gitmodules
+sort idempotent: clean
+$ RUSTUP_TOOLCHAIN=1.90 REF_NAME=playwright-runner-lsp corepack pnpm@11 package-extensions playwright-runner-lsp
+Extensions changed from main: playwright-runner-lsp
+Packaging 'playwright-runner-lsp'. Version: 0.4.0
+Checking out Git submodule at 'extensions/playwright-runner-lsp'
+(exit 0; validateExtensionsToml, validateGitmodules, licence match, id and version match, validateManifest all passed silently)
+$ cat output/manifest.json
+{"name":"Playwright Runner","version":"0.4.0","description":"Work in progress. Run Playwright end-to-end tests from Zed: run at cursor, run file, re-run last, with results in the editor. Community extension, not affiliated with or endorsed by Microsoft.","authors":["Radek Bednarik <radek.bednarik@tesena.com>"],"repository":"https://github.com/radekBednarik/playwright-zed","schema_version":1,"wasm_api_version":"0.7.0","provides":["language-servers"]}
+output/archive.tar.gz  97258 bytes
+$ rm -rf zed-extension build output scratch && git status --short
+(clean)
+```
+
+## Parity matrix (T037)
+
+`grep -n "Playwright for Zed" docs/parity.md` prints nothing; no row added, no change (FR-016).
+
+## Manual verification in Zed at v0.4.0 (T021 to T024)
+
+Pending: the owner runs quickstart step 5 in Zed 1.23.3 and reports; recorded here afterwards.

@@ -77,7 +77,7 @@ recognised, no validation rule from `validation.js` is violated.
 - [X] T015 [US2] Check the validator rules by hand against `extension.toml` and `LICENSE` and record the result table in `verification.md`: id matches `^[a-z0-9-]+$`, no `zed-` prefix, no `-zed` suffix, no `extension`; name no `Zed ` prefix, no ` Zed` suffix, no `extension`; version plain semver; `LICENSE` first line "MIT License" with copyright line; `schema_version = 1`; no `.gitattributes` with `filter=lfs`
 - [X] T016 [US2] Confirm the id is free and the PR slots are open: download https://raw.githubusercontent.com/zed-industries/extensions/main/extensions.toml and `grep -c '^\[playwright-runner-lsp\]'` (expect 0 before our PR); `gh pr list -R zed-industries/extensions --author radekBednarik --state open --json number` (expect fewer than 3); record both in `verification.md`
 - [X] T017 [US2] Commit the Phase 2 work (including the README, disclosure and AI-policy edits from T031, T033, T034, which must be done before this commit) on `004-zed-registry-submission` with a message in the project style ("feat: rename to playwright-runner-lsp for the Zed registry" plus body naming the registry name rule), push, open the PR to `main` with `gh pr create`; the PR body MUST carry what the constitution's workflow gates require: rename reason and registry rules found, "Parity matrix: no change" (FR-016), the `cargo test` and both WASM build output lines from T013, the server lint, build and vitest counts, the quickstart steps that apply on the branch (steps 1 to 3), and the licence and prerequisite self-check copied from `docs/publishing.md` with each item ticked or marked "at release"; this is the project's own PR, not the registry PR; wait for CI; record the PR number and CI result in `verification.md`
-- [ ] T018 [US2] After the owner's OK and green CI, merge the PR into `main` (`gh pr merge --squash --delete-branch` or the owner's preferred mode) and `git switch main && git pull`
+- [X] T018 [US2] After the owner's OK and green CI, merge the PR into `main` (`gh pr merge --squash --delete-branch` or the owner's preferred mode) and `git switch main && git pull`
 
 **Checkpoint**: `main` carries the rename and the 1.90 CI job; registry rules verified locally.
 
@@ -94,8 +94,8 @@ matches its contract.
 
 ### Release
 
-- [ ] T019 [US1] On `main`: set `version = "0.4.0"` in `extension.toml` and `Cargo.toml`, change the `README.md` dev-extension listing line to "**Playwright Runner 0.4.0**", run `cargo test && cargo build --release --target wasm32-wasip2`, commit "release: 0.4.0", tag `v0.4.0`, `git push && git push --tags`; record `git rev-parse v0.4.0` in `verification.md` section "Release"
-- [ ] T020 [US1] Confirm the tag is reachable from `main` (`git branch --contains v0.4.0` lists `main`) and that `src/lib.rs` still pins `PINNED_SERVER_VERSION = "0.3.0"`, which exists on npm (`npm view playwright-zed-language-server@0.3.0 version`); record both
+- [X] T019 [US1] On `main`: set `version = "0.4.0"` in `extension.toml` and `Cargo.toml`, change the `README.md` dev-extension listing line to "**Playwright Runner 0.4.0**", run `cargo test && cargo build --release --target wasm32-wasip2`, commit "release: 0.4.0", tag `v0.4.0`, `git push && git push --tags`; record `git rev-parse v0.4.0` in `verification.md` section "Release"
+- [X] T020 [US1] Confirm the tag is reachable from `main` (`git branch --contains v0.4.0` lists `main`) and that `src/lib.rs` still pins `PINNED_SERVER_VERSION = "0.3.0"`, which exists on npm (`npm view playwright-zed-language-server@0.3.0 version`); record both
 
 ### Manual verification in Zed at v0.4.0
 
@@ -106,9 +106,9 @@ matches its contract.
 
 ### Registry clone
 
-- [ ] T025 [US1] Prepare `../zed-extensions` exactly as in `specs/004-zed-registry-submission/contracts/registry-entry.md` "Preparation commands": clone `https://github.com/zed-industries/extensions.git`, branch `playwright-runner-lsp` from `origin/main`, `git submodule add https://github.com/radekBednarik/playwright-zed.git extensions/playwright-runner-lsp`, check out the submodule at `v0.4.0` on `main`, append the `[playwright-runner-lsp]` entry with `version = "0.4.0"`, `corepack pnpm@11 install --frozen-lockfile`, `corepack pnpm@11 sort-extensions`; do not run `git submodule update` for other submodules
-- [ ] T026 [US1] Run the local registry validation in `../zed-extensions` per the contract: copy the `zed-extension` binary from T003 to the clone root, `RUSTUP_TOOLCHAIN=1.90 REF_NAME=playwright-runner-lsp corepack pnpm@11 package-extensions playwright-runner-lsp`; expect "Packaging 'playwright-runner-lsp'. Version: 0.4.0" and no thrown error; then `git diff --exit-code -- extensions.toml .gitmodules` (clean); delete `zed-extension`, `build/`, `output/`, `scratch/` if present; `git status --short` must show only `extensions.toml`, `.gitmodules`, `extensions/playwright-runner-lsp`; record every output in `verification.md` section "Registry local validation"
-- [ ] T027 [US1] Commit in `../zed-extensions` on branch `playwright-runner-lsp` with message "Add playwright-runner-lsp extension"; record the commit SHA and `git show --stat HEAD` in `verification.md`; do not add any remote other than `origin` and do not push
+- [X] T025 [US1] Prepare `../zed-extensions` exactly as in `specs/004-zed-registry-submission/contracts/registry-entry.md` "Preparation commands": clone `https://github.com/zed-industries/extensions.git`, branch `playwright-runner-lsp` from `origin/main`, `git submodule add https://github.com/radekBednarik/playwright-zed.git extensions/playwright-runner-lsp`, check out the submodule at `v0.4.0` on `main`, append the `[playwright-runner-lsp]` entry with `version = "0.4.0"`, `corepack pnpm@11 install --frozen-lockfile`, `corepack pnpm@11 sort-extensions`; do not run `git submodule update` for other submodules
+- [X] T026 [US1] Run the local registry validation in `../zed-extensions` per the contract: copy the `zed-extension` binary from T003 to the clone root, `RUSTUP_TOOLCHAIN=1.90 REF_NAME=playwright-runner-lsp corepack pnpm@11 package-extensions playwright-runner-lsp`; expect "Packaging 'playwright-runner-lsp'. Version: 0.4.0" and no thrown error; then `git diff --exit-code -- extensions.toml .gitmodules` (clean); delete `zed-extension`, `build/`, `output/`, `scratch/` if present; `git status --short` must show only `extensions.toml`, `.gitmodules`, `extensions/playwright-runner-lsp`; record every output in `verification.md` section "Registry local validation"
+- [X] T027 [US1] Commit in `../zed-extensions` on branch `playwright-runner-lsp` with message "Add playwright-runner-lsp extension"; record the commit SHA and `git show --stat HEAD` in `verification.md`; do not add any remote other than `origin` and do not push
 
 ### Hand-over
 
@@ -148,7 +148,7 @@ the hand-over and the publishing doc.
 ## Phase 7: Polish and cross-cutting
 
 - [ ] T036 [P] Update `.claude/memory/playwright-zed-project.md`: feature 004 state "prepared, awaiting owner" with the registry clone path, branch, submodule SHA, tag `v0.4.0`, and the owner's remaining steps; add the state machine (prepared, pr-open, merged, closed) so later sessions record transitions
-- [ ] T037 [P] Update `docs/parity.md` only if any note references the old display name (grep); otherwise record "no change" in `verification.md` (FR-016: no new row)
+- [X] T037 [P] Update `docs/parity.md` only if any note references the old display name (grep); otherwise record "no change" in `verification.md` (FR-016: no new row)
 - [ ] T038 Run quickstart step 1 grep once more on `main` at the final commit and confirm it prints nothing; run `cargo test` and `cargo +1.90 build --release --target wasm32-wasip2` once more; append final outputs to `verification.md`
 - [ ] T039 Tell the owner, in the session summary, exactly which commands remain for them (fork, remote, push, PR), where the hand-over is, and that no PR text has been drafted
 

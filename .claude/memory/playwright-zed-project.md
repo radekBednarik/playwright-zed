@@ -59,10 +59,13 @@ because Zed's prerequisites want an `-lsp` suffix; irreversible after publicatio
 name "Playwright Runner". Submission release will be 0.4.0. State on 2026-10-13: spec, plan,
 research, data model, contracts, quickstart and tasks (39) are written and `/speckit-analyze`
 remediations applied; all committed on branch `004-zed-registry-submission`. Feature 004
-state: **in progress**. Phases 1 to 3 are done (T001 to T017: rename, 1.90 CI job, local
-registry checks, project PR #3 open with green CI on 2026-10-13). **Next: T018, merge PR #3
-after the owner's OK**, then T019 onward (release 0.4.0 on `main`, manual Zed verification,
-registry clone, hand-over). Progress is tracked by the `[X]` markers in
+state: **in progress**. Done on 2026-10-13: rename, 1.90 CI job, local registry checks, PR #3
+merged (squash, `7dd3a65`; the "main" ruleset needs the owner's admin bypass for self-authored
+PRs), release 0.4.0 tagged `v0.4.0` at `8379546` on `main`, registry clone `../zed-extensions`
+on branch `playwright-runner-lsp` with commit `7466aac` (submodule at v0.4.0, entry, sorted,
+`package-extensions` passed locally; remote `origin` only, nothing pushed). **Next: T021 to
+T024, the owner runs quickstart step 5 in Zed at v0.4.0** (uninstall old dev extension
+`playwright`, reinstall, scenarios, npm install path), then T028 to T030 hand-over. Progress is tracked by the `[X]` markers in
 `specs/004-zed-registry-submission/tasks.md` and in its `verification.md`. A fixture commit
 on `main` (11e68ae, `test.fail` case) had broken the integration tests; PR #3 fixes the
 expectations (16 tests).
