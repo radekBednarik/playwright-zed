@@ -1,5 +1,5 @@
-id = "playwright"
-name = "Playwright for Zed"
+id = "playwright-runner-lsp"
+name = "Playwright Runner"
 version = "0.3.0"
 schema_version = 1
 authors = ["Radek Bednarik <radek.bednarik@tesena.com>"]

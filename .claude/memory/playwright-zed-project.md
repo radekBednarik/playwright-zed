@@ -19,8 +19,9 @@ published 2026-10-13; a public
 `npm unpublish playwright-zed-language-server@0.0.0-stage --otp=<code>` within 72 h of
 2026-10-12 16:07 UTC). Rust shell pins 0.3.0; `extension.toml` and `Cargo.toml` are 0.3.0;
 tags `v0.1.0`, `v0.2.0`, `v0.3.0`. Zed installing 0.2.0 from npm on its own is verified; the
-0.3.0 npm install path in Zed has not been checked yet. Display name
-is "Playwright for Zed", id `playwright`, description starts with "Work in progress." and
+0.3.0 npm install path in Zed has not been checked yet. Through 0.3.0 the display name ended
+with " Zed" and the id was `playwright`; feature 004 renames them to "Playwright Runner" and
+`playwright-runner-lsp`. The description starts with "Work in progress." and
 carries a non-affiliation notice (Playwright is a Microsoft trademark); READMEs disclose
 AI-assisted development (GitHub Spec Kit, Claude Code, models Fable and Opus).
 
@@ -51,14 +52,15 @@ Zed's `AI_POLICY.md` forbids autonomous-agent contributions, so the owner forks
 `zed-industries/extensions`, pushes, opens the PR and writes every comment personally; the
 agent only prepares the submodule and `extensions.toml` entry locally, verifies, and hands
 over a fact sheet (no PR text). Found 2026-10-13 from the registry's validation scripts: the
-display name must not end with " Zed", so "Playwright for Zed" fails registry CI and must be
+display name must not end with " Zed", so the 0.3.0 display name fails registry CI and must be
 renamed; registry CI builds with Rust 1.90 on `wasm32-wasip2`. Owner decided 2026-10-13:
 id `playwright-runner-lsp` (replaces `playwright`; superseded `playwright-runner` the same day
 because Zed's prerequisites want an `-lsp` suffix; irreversible after publication) and display
 name "Playwright Runner". Submission release will be 0.4.0. State on 2026-10-13: spec, plan,
 research, data model, contracts, quickstart and tasks (39) are written and `/speckit-analyze`
-remediations applied; all committed on branch `004-zed-registry-submission`. Nothing
-implemented yet. **Resume with `/speckit-implement` on that branch, starting at T001.**
+remediations applied; all committed on branch `004-zed-registry-submission`. Feature 004
+state: **in progress** (`/speckit-implement` started 2026-10-13; progress is tracked by the
+`[X]` markers in `specs/004-zed-registry-submission/tasks.md` and in its `verification.md`).
 Research verified: `cargo +1.90 build --release --target wasm32-wasip2` passes with the
 committed lock file (Rust 1.90 installed via rustup on the WSL2 machine, install it elsewhere
 with `rustup toolchain install 1.90 --profile minimal --target wasm32-wasip2`); the registry's

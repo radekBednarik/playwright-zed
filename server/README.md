@@ -1,6 +1,6 @@
 # playwright-zed-language-server
 
-Language server behind the [Playwright for Zed](https://github.com/radekBednarik/playwright-zed)
+Language server behind the [Playwright Runner](https://github.com/radekBednarik/playwright-zed) Zed
 extension. The Zed extension installs this package from npm at runtime; you do not need to
 install it yourself.
 

@@ -52,7 +52,7 @@ export class Reporter {
    */
   askDiscovery(folderName: string, folderPath: string): Promise<DiscoveryAnswer | null> {
     const message =
-      `Playwright for Zed found a Playwright configuration in ${folderName} (${folderPath}). ` +
+      `Playwright Runner found a Playwright configuration in ${folderName} (${folderPath}). ` +
       'Run test discovery? Discovery executes this workspace\'s Playwright configuration and test files with your user account. ' +
       'You can enable it later with "Playwright: Enable test discovery" from the code actions menu.';
     return this.connection.window

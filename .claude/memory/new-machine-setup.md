@@ -22,7 +22,8 @@ it after every Rust change, otherwise `extension.wasm` stays stale). Settings:
 `PLAYWRIGHT_ZED_SERVER_ENTRY=<repo>/server/bin/playwright-zed-language-server.js` in the
 terminal that launches Zed; to test the npm install path, launch Zed from a terminal where
 it is not exported (check `/proc/<zed pid>/environ`) and look for the version in
-`~/.local/share/zed/extensions/work/playwright/package.json`. On opening
+`~/.local/share/zed/extensions/work/playwright-runner-lsp/package.json` (before the feature 004
+rename: `work/playwright/`). The dev extension is listed as "Playwright Runner". On opening
 `fixtures/sample-project`, Zed 0.218+ asks whether to trust the folder (feature 003; then no
 Playwright question); older Zed shows the discovery question (feature 002), click "Run discovery".
 

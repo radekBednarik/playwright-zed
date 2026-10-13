@@ -1,4 +1,4 @@
-# Playwright for Zed
+# Playwright Runner
 
 Zed extension that mirrors the Playwright VS Code extension. Rust/WASM shell at the root,
 Node language server in `server/`, sample project in `fixtures/sample-project/`.

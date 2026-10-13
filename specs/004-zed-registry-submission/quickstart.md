@@ -21,13 +21,13 @@ cargo test
 cargo build --release --target wasm32-wasip2
 cargo +1.90 build --release --target wasm32-wasip2 --target-dir target/rust190
 cd server && npm run lint && npm run build && npm test && cd ..
-grep -rn "Playwright for Zed" --exclude-dir=node_modules --exclude-dir=target --exclude-dir=.git --exclude-dir=dist . | grep -v '^./specs/00[123]' | grep -v '^./.specify/memory/constitution.md' | grep -v '^./specs/004'
+grep -rn "Playwright for Zed" --exclude-dir=node_modules --exclude-dir=target --exclude-dir=.git --exclude-dir=dist . | grep -vE '^(\./)?(specs/00[123]|specs/004|\.specify/memory/constitution\.md)'
 ```
 
 Expected: `cargo test` 7 passed; both builds finish; server lint and build exit 0; vitest
-108 passed (the discovery-question assertions updated to the new text); the grep prints
-nothing (every live mention renamed; historical specs and the constitution title are
-allowed to keep the old name).
+108 passed (the discovery-question assertion added to the trust test passes); the grep
+prints only the README uninstall note for the old dev extension (every other live mention
+renamed; historical specs and the constitution title are allowed to keep the old name).
 
 ## 2. Manifest and licence checks against the registry's rules
 
