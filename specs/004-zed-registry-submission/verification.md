@@ -293,10 +293,25 @@ at the exact submitted commit, so quickstart step 5 scenarios 2 and 4 are re-run
 
 ### Re-verification at b4c1116
 
-Pending.
+Owner, 2026-10-13, Zed 1.23.3: pulled `main`, reran `zed: install dev extension`, quit, started
+Zed without the override, opened the fixture: "work dir shows 0.4.0, PASS". Evidence collected
+by the agent afterwards:
+
+```text
+work/playwright-runner-lsp/node_modules/playwright-zed-language-server/package.json  "version":"0.4.0"
+index.json  playwright-runner-lsp  Playwright Runner 0.4.0  dev
+work/playwright  does not exist
+Zed process 77326 environ: 0 occurrences of PLAYWRIGHT_ZED_SERVER_ENTRY
+Zed.log 18:23:46 finished compiling extension .../playwright-runner-lsp
+Zed.log 18:24:04 starting language server process ... work/playwright-runner-lsp/node_modules/playwright-zed-language-server/bin/playwright-zed-language-server.js
+```
+
+Quickstart step 5 scenarios 2 and 4 pass at the submitted commit `b4c1116`; the scenario
+set of item 3 (features 001 and 003) was run at `8379546`, whose only difference is the pin.
 
 ## State
 
-Feature 004 state: **prepared, awaiting owner re-check in Zed at b4c1116, then fork, push, PR.** Follow-up states and who
+Feature 004 state: **prepared, awaiting owner** (fork, push, PR). Submitted commit `b4c1116`,
+server 0.4.0 on npm and pinned, registry clone commit `0aef1c49`. Follow-up states and who
 records them: `pr-open` (owner reports the PR number), `merged` (owner reports; T032 then
 verifies User Story 3 from a clean machine), `closed` (owner reports; fix and fresh PR).
