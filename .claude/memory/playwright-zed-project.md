@@ -10,7 +10,8 @@ carries feature 001 (`specs/001-scaffold-run-at-cursor/`,
 run at cursor, run file, re-run last) and feature 002 (`specs/002-discovery-consent/`, per
 workspace per session consent prompt before `playwright test --list` runs workspace code).
 Feature branches `001-scaffold-run-at-cursor` and `002-discovery-consent` were merged and
-deleted locally and on origin. Feature 003 lives on its own branch until merged (below). A new feature starts with `/speckit-specify`, which creates `specs/<nnn>-<name>/` and a branch.
+deleted locally and on origin, as was `003-remember-discovery-consent` (PR #2,
+merged 2026-10-13); `main` is the only branch. A new feature starts with `/speckit-specify`, which creates `specs/<nnn>-<name>/` and a branch.
 
 Released: npm `playwright-zed-language-server` 0.1.0 and 0.2.0 (0.2.0 is `latest`; a public
 `0.0.0-stage` placeholder from npm staged publishing also exists, harmless, removable with
@@ -21,8 +22,8 @@ is "Playwright for Zed", id `playwright`, description starts with "Work in progr
 carries a non-affiliation notice (Playwright is a Microsoft trademark); READMEs disclose
 AI-assisted development (GitHub Spec Kit, Claude Code, models Fable and Opus).
 
-Feature 003 (`specs/003-remember-discovery-consent/`, branch `003-remember-discovery-consent`,
-implemented 2026-10-13, all tasks done, owner confirmed it manually in Zed): Zed 0.218+
+Feature 003 (`specs/003-remember-discovery-consent/`, merged via PR #2 on 2026-10-13, owner
+confirmed it manually in Zed): Zed 0.218+
 (`clientInfo` name `Zed`/`Zed Preview`/`Zed Nightly`/`Zed Dev`) starts language servers only in
 trusted worktrees, so the server enables discovery without asking for every reported
 workspace folder; the feature 002 question stays for older Zed, other clients and `rootUri`
