@@ -61,7 +61,7 @@ with `git status`.
 
 ```sh
 gh repo fork zed-industries/extensions --clone=false      # personal account
-cd ../zed-extensions && git remote add fork https://github.com/radekBednarik/extensions.git
+cd ../zed-extensions && git remote add fork git@github.com:radekBednarik/extensions.git
 git push -u fork playwright-runner-lsp
 # open the PR on GitHub from radekBednarik:playwright-runner-lsp to zed-industries:main,
 # write title and body personally, tick the template checkbox

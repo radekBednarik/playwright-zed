@@ -35,7 +35,7 @@ Actions only the owner performs, in order:
 2. Done 2026-10-13: server 0.4.0 published and pinned.
 3. Fork `zed-industries/extensions` to the personal account (not an organisation):
    `gh repo fork zed-industries/extensions --clone=false`.
-4. In `../zed-extensions`: `git remote add fork https://github.com/radekBednarik/extensions.git`
+4. In `../zed-extensions`: `git remote add fork git@github.com:radekBednarik/extensions.git`
    and `git push -u fork playwright-runner-lsp`. The local commit message
    "Add playwright-runner-lsp extension" may be amended first.
 5. Open the PR from `radekBednarik:playwright-runner-lsp` to `zed-industries:main`. Write
