@@ -13,13 +13,13 @@ Feature branches `001-scaffold-run-at-cursor` and `002-discovery-consent` were m
 deleted locally and on origin, as was `003-remember-discovery-consent` (PR #2,
 merged 2026-10-13); `main` is the only branch. A new feature starts with `/speckit-specify`, which creates `specs/<nnn>-<name>/` and a branch.
 
-Released: npm `playwright-zed-language-server` 0.1.0, 0.2.0 and 0.3.0 (0.3.0 is `latest`,
-published 2026-10-13; a public
+Released: npm `playwright-zed-language-server` 0.1.0, 0.2.0, 0.3.0 and 0.4.0 (0.4.0 is `latest`,
+published 2026-10-13 16:20 UTC by the owner; 0.3.0 published 2026-10-13 07:06 UTC; a public
 `0.0.0-stage` placeholder from npm staged publishing also exists, harmless, removable with
 `npm unpublish playwright-zed-language-server@0.0.0-stage --otp=<code>` within 72 h of
-2026-10-12 16:07 UTC). Rust shell pins 0.3.0; `extension.toml` and `Cargo.toml` are 0.3.0;
-tags `v0.1.0`, `v0.2.0`, `v0.3.0`. Zed installing 0.2.0 from npm on its own is verified; the
-0.3.0 npm install path in Zed has not been checked yet. Through 0.3.0 the display name ended
+2026-10-12 16:07 UTC). Rust shell pins 0.4.0; `extension.toml` and `Cargo.toml` are 0.4.0;
+tags `v0.1.0`, `v0.2.0`, `v0.3.0`, `v0.4.0`. Zed installing 0.2.0 and 0.3.0 from npm on its own is
+verified (0.3.0 on 2026-10-13 at `8379546`); the 0.4.0 npm install path is re-checked at `b4c1116`. Through 0.3.0 the display name ended
 with " Zed" and the id was `playwright`; feature 004 renames them to "Playwright Runner" and
 `playwright-runner-lsp`. The description starts with "Work in progress." and
 carries a non-affiliation notice (Playwright is a Microsoft trademark); READMEs disclose
@@ -56,11 +56,13 @@ only facts (`owner-handover.md`, no PR text). Decisions 2026-10-13: id `playwrig
 rejects names ending in " Zed"). Registry CI builds with Rust 1.90 on `wasm32-wasip2`; the
 project CI has the same job.
 
-**State: prepared, awaiting owner** (2026-10-13). Release `v0.4.0` = `8379546` on `main`
-(server pin stays 0.3.0). Registry clone `../zed-extensions`, branch `playwright-runner-lsp`,
-commit `7466aac` (submodule at v0.4.0, entry, sorted, `package-extensions` passed locally;
-remote `origin` only, nothing pushed). Manual Zed verification passed at v0.4.0 (owner,
-Zed 1.23.3; npm install path verified). Owner's remaining steps are in
+**State: prepared, awaiting the owner's Zed re-check at `b4c1116`, then fork, push, PR**
+(2026-10-13). Release `v0.4.0` = `b4c1116` on `main` (re-pointed from `8379546` after the
+owner published server 0.4.0 and asked for lockstep; the pin is 0.4.0). Registry clone
+`../zed-extensions`, branch `playwright-runner-lsp`, commit `0aef1c49` (submodule at
+`b4c1116`, entry, sorted, `package-extensions` passed locally; remote `origin` only, nothing
+pushed). Manual Zed verification passed at `8379546` (owner, Zed 1.23.3; npm install path
+verified with server 0.3.0); quickstart step 5 scenarios 2 and 4 are re-run at `b4c1116`. Owner's remaining steps are in
 `specs/004-zed-registry-submission/owner-handover.md` Part 2: fork, add `fork` remote, push,
 PR in own words, record the PR number. State machine: prepared, pr-open, merged, closed; the
 owner reports transitions, the agent records them here and in the README (T032 after merge:

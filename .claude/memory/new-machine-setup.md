@@ -18,7 +18,7 @@ cd server && npm test        # 108 tests; TodoMVC cases need network
 
 Zed dev extension: `zed: install dev extension` on the repo root (symlinks the repo; rerun
 it after every Rust change, otherwise `extension.wasm` stays stale). Settings:
-`"code_lens": "on"`. To run the local server build instead of the npm 0.3.0 package, export
+`"code_lens": "on"`. To run the local server build instead of the npm package pinned in `src/lib.rs`, export
 `PLAYWRIGHT_ZED_SERVER_ENTRY=<repo>/server/bin/playwright-zed-language-server.js` in the
 terminal that launches Zed; to test the npm install path, launch Zed from a terminal where
 it is not exported (check `/proc/<zed pid>/environ`) and look for the version in
