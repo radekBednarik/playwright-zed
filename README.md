@@ -141,7 +141,7 @@ add this task to `~/.config/zed/tasks.json`. Zed already recognises `test(` and
 
 ## Manual testing
 
-Prerequisites: Rust with the `wasm32-wasip2` target, Node 20+, Zed 1.23+ on the same
+Prerequisites: Rust with the `wasm32-wasip2` target, Node 22.12+, Zed 1.23+ on the same
 machine as this clone (on WSL use a Linux Zed, the Windows one cannot load a dev extension
 from a WSL path).
 

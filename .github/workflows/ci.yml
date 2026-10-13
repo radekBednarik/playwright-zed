@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  extension:
+    name: Rust extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+      - run: cargo test
+      - run: cargo build --release --target wasm32-wasip2
+
+  server:
+    name: Language server (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: |
+            server/package-lock.json
+            fixtures/sample-project/package-lock.json
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+      - name: Install sample project and Chromium
+        working-directory: fixtures/sample-project
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Lint
+        working-directory: server
+        run: npm run lint
+      - name: Build
+        working-directory: server
+        run: npm run build
+      - name: Test
+        working-directory: server
+        run: npm test
