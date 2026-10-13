@@ -1,5 +1,9 @@
 # Contract: Zed Extension Manifest and Rust Surface
 
+> Superseded by feature 004 for `id` and `name`: see
+> `specs/004-zed-registry-submission/contracts/extension-manifest.md` (id `playwright-runner-lsp`,
+> name "Playwright Runner"). The rest of this contract still applies.
+
 ## extension.toml
 
 ```toml

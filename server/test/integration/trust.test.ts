@@ -115,6 +115,7 @@ describe('no trust gate, feature 002 applies (US3)', () => {
     await client.waitFor('window/showMessageRequest');
     await sleep(1_000);
     expect(client.prompts().length).toBe(1);
+    expect(client.prompts()[0].message).toMatch(/^Playwright Runner found a Playwright configuration in /);
     expect(fs.existsSync(project.marker)).toBe(false);
     await client.open(project.spec);
     expect(await client.codeLenses(project.spec)).toEqual([]);

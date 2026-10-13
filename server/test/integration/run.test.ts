@@ -6,7 +6,7 @@ const RUN_FILE = 'playwright.runFile';
 const RERUN_LAST = 'playwright.rerunLast';
 
 // 0-based lines of the fixture (1-based minus one)
-const L = { adds: 2, parens: 7, mathDescribe: 12, mathSame: 13, stringsSame: 25, loop: 36, skip: 38, todomvc: 43, failing: 2, fixme: 6, failingTodomvc: 11, imports: 0 };
+const L = { adds: 2, parens: 7, mathDescribe: 12, mathSame: 13, stringsSame: 25, loop: 36, skip: 38, todomvc: 43, failing: 2, fixme: 6, failingTodomvc: 15, imports: 0 };
 
 let client: TestClient;
 
@@ -151,7 +151,7 @@ describe('run at cursor (US2)', () => {
     expect(error.message).toContain('Received: "todos"');
     const published = diagnosticsFor(FAILING).filter((m) => m.params.diagnostics.length > 0);
     expect(published).toHaveLength(1);
-    expect(published[0].params.diagnostics[0].range.start.line).toBe(14);
+    expect(published[0].params.diagnostics[0].range.start.line).toBe(18);
   });
 
   it('(k) clears failure diagnostics as soon as the file is edited', async () => {

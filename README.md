@@ -1,7 +1,7 @@
-# Playwright for Zed
+# Playwright Runner
 
-Run and manage [Playwright](https://playwright.dev) end-to-end tests from the
-[Zed](https://zed.dev) editor. The goal is feature parity with the
+A [Zed](https://zed.dev) extension that runs and manages [Playwright](https://playwright.dev)
+end-to-end tests from the editor. The goal is feature parity with the
 [Playwright VS Code extension](https://github.com/microsoft/playwright-vscode), delivered
 through the surfaces Zed gives extensions. Progress per upstream capability is tracked in
 [docs/parity.md](docs/parity.md).
@@ -53,15 +53,19 @@ AI-assisted project.
 
 ## Install
 
-From the Zed extension registry: not yet available. The first release to
-`zed-industries/extensions` is pending, see [docs/publishing.md](docs/publishing.md). Once it
-is merged, search for **Playwright** in `zed: extensions`.
+**From the Zed extension registry.** Open `zed: extensions` and search for
+**Playwright Runner**. The listing is under review in the Zed extension registry
+(`zed-industries/extensions`); the submission process is described in
+[docs/publishing.md](docs/publishing.md). Until the review completes, install from source.
 
-From source, the current way to install:
+**From source.**
 
 1. `rustup target add wasm32-wasip2`
 2. `cd server && npm install && npm run build`
 3. In Zed, run `zed: install dev extension` and pick this repository's root.
+   If you installed a dev extension before 0.4.0, it is listed as "Playwright for Zed" with
+   the id `playwright`; uninstall it in `zed: extensions` first, otherwise two Playwright
+   language servers start on the same files.
 4. Optional, to use the local server build instead of the published npm package, set
    `PLAYWRIGHT_ZED_SERVER_ENTRY=<repo>/server/bin/playwright-zed-language-server.js`. The
    extension reads it from the shell environment Zed loads for the project, so either export
@@ -177,13 +181,13 @@ from a WSL path).
    ```
 4. `ctrl-shift-p`, run `zed: install dev extension`, choose the repository root. Zed
    compiles the Rust crate; the first build takes about a minute.
-5. `zed: extensions` must list **Playwright for Zed 0.3.0**.
+5. `zed: extensions` must list **Playwright Runner 0.3.0**.
 6. `zed: open settings`, add `"code_lens": "on"`.
 7. Zed 0.218+ asks whether you trust the folder; trust it. (Older Zed instead shows the
    Playwright notification for `sample-project`; click **Run discovery**.) Open `tests/passing.spec.ts`. Expect `▶ Run test` above each test and
    `▶ Run describe` above each group. Click the lightning bolt in the status bar, or run
    `dev: open language server logs`, pick **Playwright**: the log shows
-   `discovered 15 test(s)`.
+   `discovered 16 test(s)`.
 8. Run checks (`ctrl-.` opens the actions):
 
    | Check              | Steps                                                                                  | Expected                                                                                          |

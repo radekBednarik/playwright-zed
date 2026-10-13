@@ -9,7 +9,7 @@ here is unchanged.
 session, after config location and version gating, before any Playwright process:
 
 ```text
-Playwright for Zed found a Playwright configuration in <folder basename> (<absolute path>).
+Playwright Runner found a Playwright configuration in <folder basename> (<absolute path>).
 Run test discovery? Discovery executes this workspace's Playwright configuration and test
 files with your user account. You can enable it later with "Playwright: Enable test
 discovery" from the code actions menu.
