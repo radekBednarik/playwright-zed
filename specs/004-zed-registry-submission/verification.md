@@ -190,4 +190,73 @@ $ rm -rf zed-extension build output scratch && git status --short
 
 ## Manual verification in Zed at v0.4.0 (T021 to T024)
 
-Pending: the owner runs quickstart step 5 in Zed 1.23.3 and reports; recorded here afterwards.
+Run by the owner on 2026-10-13 in Zed 1.23.3 (`96a1b1b5389efff473fc2306f7f8c690f2e1a417`,
+Linux build in `~/.local/zed.app`, WSL2) at `v0.4.0` (`8379546`). Owner's report: the
+`PLAYWRIGHT_ZED_SERVER_ENTRY` override disabled, the 0.3.0 dev extension uninstalled, the 0.4.0
+dev extension installed, "All functionalities work. PASS". Evidence collected from the machine
+afterwards by the agent:
+
+| # | Spec ref | Check | Outcome |
+|---|----------|-------|---------|
+| 1 | US2-4 | `git describe --tags` at the verified commit | `v0.4.0` |
+| 2 | US3-2 prep | `~/.local/share/zed/extensions/index.json` | `playwright-runner-lsp` "Playwright Runner" 0.4.0, flagged dev; no `playwright` entry; `installed/` has `playwright-runner-lsp` and no `playwright`; Zed.log 18:05:32 "finished compiling extension .../playwright-runner-lsp" |
+| 3 | FR-008 | feature 001 scenarios 2, 5, 6, 7, 11, 13 and feature 003 sections 2 to 5 | PASS per the owner's report ("all functionalities work"); per-scenario notes were not taken, the owner's statement covers the set |
+| 4 | FR-009 | npm install path | Zed process 61925 environ contains no `PLAYWRIGHT_ZED_SERVER_ENTRY`; `work/playwright-runner-lsp/package.json` and `.../node_modules/playwright-zed-language-server/package.json` say 0.3.0; Zed.log 18:05:56 starts the server from `work/playwright-runner-lsp/node_modules/playwright-zed-language-server/bin/playwright-zed-language-server.js`; no `work/playwright/` directory exists |
+| 5 | Edge: old id | old and new dev extension side by side | skipped: the owner uninstalled the old extension before installing the new one, so the duplicate-server state was not observed; the README note rests on research R8 (Zed keys extensions by id and both would start a "Playwright" server) |
+
+Feature 002 question scenarios: skipped, Zed 0.218+ never shows the question; the renamed
+text is covered by the trust test assertion added in T006.
+
+## Hand-over self-check (T029, T035)
+
+`owner-handover.md` written from `contracts/owner-handover.md`. Checks:
+
+```text
+$ grep -nE "title:|body:" specs/004-zed-registry-submission/owner-handover.md
+(nothing)
+$ grep -rniE "dear maintainer|hi zed|hello zed|please merge|@zed-industries" specs/004-zed-registry-submission/
+(nothing)
+```
+
+Every paragraph re-read: none is addressed to maintainers or phrased as text to paste. Part 3
+carries the AI policy summary and item 7 of Part 2 covers replies. No registry-facing text
+exists under `specs/004-zed-registry-submission/`.
+
+## Publishing self-check (SC-002, copied from `docs/publishing.md`)
+
+- [x] id `playwright-runner-lsp`: lowercase letters, digits and hyphens only; no `zed-` prefix, no `-zed` suffix, no `extension` (T015 table)
+- [x] display name "Playwright Runner": no "Zed " prefix, no " Zed" suffix, no "extension" (T015 table; registry `validateManifest` passed in T026)
+- [x] `extension.toml` has id, name, version, schema_version (1), authors, description, repository (`extension.toml` at `8379546`)
+- [x] version plain `major.minor.patch`, equal in `extension.toml`, `Cargo.toml` and the registry entry at the submodule commit, higher than any previous registry version (0.4.0 everywhere; first registry version)
+- [x] `LICENSE` (MIT) at the extension root (T015; licence matcher in T026)
+- [x] no bundled language server, debug adapter or MCP server; only `npm:install` for `playwright-zed-language-server` (`extension.toml` capabilities)
+- [x] no slash commands or agent servers (`extension.toml` declares only `language_servers.playwright`)
+- [x] all user-facing text in English (README, description, server messages)
+- [x] no Git LFS (T015: no `.gitattributes`, `git lfs ls-files` empty)
+- [x] `cargo +1.90 build --release --target wasm32-wasip2` passes (T013, T038; CI job "Rust extension (registry toolchain 1.90)" on PR #3)
+- [x] registry `package-extensions` run locally passes (T026: "Packaging 'playwright-runner-lsp'. Version: 0.4.0", exit 0)
+- [x] `extensions.toml` and `.gitmodules` sorted with `corepack pnpm@11 sort-extensions` (T026: re-sort leaves no diff)
+- [x] submodule URL HTTPS, repository public, submodule commit tagged `v0.4.0` and on `main` (T025, T020)
+- [x] tested manually in Zed as a dev extension at the submitted commit; npm install path verified (T021 to T023, owner's report plus on-disk evidence)
+- [x] non-affiliation notice in the description and READMEs, no Playwright or Microsoft logo (`extension.toml` description, README, server README)
+- [x] fork under the personal account; fewer than three open registry PRs (0 open; fork is the owner's to-do item 3)
+- [x] AI policy: the owner writes the PR title, body and every comment; quoted AI output in a labelled quote block with the owner's commentary (hand-over Part 2 item 5 and 7, Part 3; `docs/publishing.md` "AI policy")
+- [x] respond to maintainer feedback within three weeks (hand-over Part 2 item 7)
+
+## Final checks on `main` (T038, at `3d90d87`, 2026-10-13)
+
+```text
+$ grep -rn "Playwright for Zed" ... | grep -vE '^(\./)?(specs/00[123]|specs/004|\.specify/memory/constitution\.md)'
+README.md:66:   If you installed a dev extension before 0.4.0, it is listed as "Playwright for Zed" with
+(the deliberate uninstall note only)
+$ cargo test
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+$ cargo +1.90 build --release --target wasm32-wasip2 --target-dir target/rust190
+    Finished `release` profile [optimized] target(s) in 0.23s
+```
+
+## State
+
+Feature 004 state: **prepared, awaiting owner** (fork, push, PR). Follow-up states and who
+records them: `pr-open` (owner reports the PR number), `merged` (owner reports; T032 then
+verifies User Story 3 from a clean machine), `closed` (owner reports; fix and fresh PR).

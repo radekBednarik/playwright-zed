@@ -99,10 +99,10 @@ matches its contract.
 
 ### Manual verification in Zed at v0.4.0
 
-- [ ] T021 [US1] In Zed (`~/.local/bin/zed --foreground`): `zed: extensions`, uninstall the old dev extension "Playwright for Zed" (id `playwright`); `zed: install dev extension` on the repository root at `v0.4.0`; confirm the listing shows "Playwright Runner 0.4.0" with the non-affiliation description and no "Playwright for Zed" entry; record quickstart step 5 scenario 2 in `verification.md`
-- [ ] T022 [US1] Run feature 001 quickstart scenarios 2 (listing and discovery: server running, lenses shown), 5 (run at cursor, passing), 6 (run at cursor, failing with diagnostic), 7 (run describe), 11 (run file), 13 (re-run last) and feature 003 quickstart sections 2 to 5 (trust gate: untrusted folder restricted, trusting enables discovery, restart keeps it, revoking restores the gate) against `fixtures/sample-project`, which together cover every capability FR-008 names; record each with outcome in the `verification.md` manual table (quickstart step 5 scenario 3), including `zed --version` and the date; record feature 002's question scenarios as "skipped: Zed 0.218+ never shows the question; renamed text covered by the server test from T006" (constitution V requires skipped checks stated with the reason)
-- [ ] T023 [US1] Verify the npm install path (quickstart step 5 scenario 4): `zed: quit`, start Zed from a shell where `PLAYWRIGHT_ZED_SERVER_ENTRY` is not exported (check `/proc/<pid>/environ`), open the fixture, confirm `~/.local/share/zed/extensions/work/playwright-runner-lsp/package.json` says `"version": "0.3.0"` and lenses appear; record
-- [ ] T024 [US1] Run quickstart step 5 scenario 5 (old and new dev extension side by side) once, record the observed duplicate language servers, uninstall the old one, record the final state
+- [X] T021 [US1] In Zed (`~/.local/bin/zed --foreground`): `zed: extensions`, uninstall the old dev extension "Playwright for Zed" (id `playwright`); `zed: install dev extension` on the repository root at `v0.4.0`; confirm the listing shows "Playwright Runner 0.4.0" with the non-affiliation description and no "Playwright for Zed" entry; record quickstart step 5 scenario 2 in `verification.md`
+- [X] T022 [US1] Run feature 001 quickstart scenarios 2 (listing and discovery: server running, lenses shown), 5 (run at cursor, passing), 6 (run at cursor, failing with diagnostic), 7 (run describe), 11 (run file), 13 (re-run last) and feature 003 quickstart sections 2 to 5 (trust gate: untrusted folder restricted, trusting enables discovery, restart keeps it, revoking restores the gate) against `fixtures/sample-project`, which together cover every capability FR-008 names; record each with outcome in the `verification.md` manual table (quickstart step 5 scenario 3), including `zed --version` and the date; record feature 002's question scenarios as "skipped: Zed 0.218+ never shows the question; renamed text covered by the server test from T006" (constitution V requires skipped checks stated with the reason)
+- [X] T023 [US1] Verify the npm install path (quickstart step 5 scenario 4): `zed: quit`, start Zed from a shell where `PLAYWRIGHT_ZED_SERVER_ENTRY` is not exported (check `/proc/<pid>/environ`), open the fixture, confirm `~/.local/share/zed/extensions/work/playwright-runner-lsp/package.json` says `"version": "0.3.0"` and lenses appear; record
+- [X] T024 [US1] Run quickstart step 5 scenario 5 (old and new dev extension side by side) once, record the observed duplicate language servers, uninstall the old one, record the final state
 
 ### Registry clone
 
@@ -112,9 +112,9 @@ matches its contract.
 
 ### Hand-over
 
-- [ ] T028 [US1] Write `specs/004-zed-registry-submission/owner-handover.md` following `contracts/owner-handover.md` exactly: header sentence stating it contains no PR title, body or reply text; Part 1 fact table with every row filled from `verification.md` and the commands listed in the contract; Part 2 owner to-do list items 1 to 8; Part 3 rules in force with source URLs and the snapshot date
-- [ ] T029 [US1] Self-check the hand-over per quickstart step 7: grep the file for "title:" and "body:" and read every paragraph to confirm none is addressed to maintainers or phrased as text to paste; fix and record the check in `verification.md`; then copy the full self-check list from `docs/publishing.md` into `verification.md` section "Publishing self-check" and tick every item with a one-line evidence reference (command output line, file, or scenario number), leaving no item unticked (SC-002)
-- [ ] T030 [US1] Commit `verification.md` and `owner-handover.md` on `main` ("docs: feature 004 verification and owner hand-over") and push
+- [X] T028 [US1] Write `specs/004-zed-registry-submission/owner-handover.md` following `contracts/owner-handover.md` exactly: header sentence stating it contains no PR title, body or reply text; Part 1 fact table with every row filled from `verification.md` and the commands listed in the contract; Part 2 owner to-do list items 1 to 8; Part 3 rules in force with source URLs and the snapshot date
+- [X] T029 [US1] Self-check the hand-over per quickstart step 7: grep the file for "title:" and "body:" and read every paragraph to confirm none is addressed to maintainers or phrased as text to paste; fix and record the check in `verification.md`; then copy the full self-check list from `docs/publishing.md` into `verification.md` section "Publishing self-check" and tick every item with a one-line evidence reference (command output line, file, or scenario number), leaving no item unticked (SC-002)
+- [X] T030 [US1] Commit `verification.md` and `owner-handover.md` on `main` ("docs: feature 004 verification and owner hand-over") and push
 
 **Checkpoint**: the owner can fork, push and open the PR with nothing else to prepare (SC-003).
 
@@ -141,16 +141,16 @@ the hand-over and the publishing doc.
 
 - [X] T033 [US4] Review the "Built with AI assistance" section of `README.md` against how the project is built at the submission commit (Spec Kit, Claude Code, models named) and correct any outdated model or tool name; keep the sentence that the maintainer reviews every change; do this before T013 and T017 so the submitted commit carries it (same file as T008 and T031, run after them)
 - [X] T034 [P] [US4] Before T013 and T017 (same commit as T010, different section): add an "AI policy" subsection to `docs/publishing.md` section 3 stating: the owner writes the PR title, body and every comment; the agent prepares and verifies locally only; quoted AI output on the registry goes in a labelled quote block with the owner's commentary; link https://github.com/zed-industries/extensions/blob/main/AI_POLICY.md
-- [ ] T035 [US4] Confirm the hand-over from T028 contains the policy summary in Part 3 and the to-do item 7 about replies; confirm no registry-facing text exists anywhere under `specs/004-zed-registry-submission/`; record in `verification.md`
+- [X] T035 [US4] Confirm the hand-over from T028 contains the policy summary in Part 3 and the to-do item 7 about replies; confirm no registry-facing text exists anywhere under `specs/004-zed-registry-submission/`; record in `verification.md`
 
 ---
 
 ## Phase 7: Polish and cross-cutting
 
-- [ ] T036 [P] Update `.claude/memory/playwright-zed-project.md`: feature 004 state "prepared, awaiting owner" with the registry clone path, branch, submodule SHA, tag `v0.4.0`, and the owner's remaining steps; add the state machine (prepared, pr-open, merged, closed) so later sessions record transitions
+- [X] T036 [P] Update `.claude/memory/playwright-zed-project.md`: feature 004 state "prepared, awaiting owner" with the registry clone path, branch, submodule SHA, tag `v0.4.0`, and the owner's remaining steps; add the state machine (prepared, pr-open, merged, closed) so later sessions record transitions
 - [X] T037 [P] Update `docs/parity.md` only if any note references the old display name (grep); otherwise record "no change" in `verification.md` (FR-016: no new row)
-- [ ] T038 Run quickstart step 1 grep once more on `main` at the final commit and confirm it prints nothing; run `cargo test` and `cargo +1.90 build --release --target wasm32-wasip2` once more; append final outputs to `verification.md`
-- [ ] T039 Tell the owner, in the session summary, exactly which commands remain for them (fork, remote, push, PR), where the hand-over is, and that no PR text has been drafted
+- [X] T038 Run quickstart step 1 grep once more on `main` at the final commit and confirm it prints nothing; run `cargo test` and `cargo +1.90 build --release --target wasm32-wasip2` once more; append final outputs to `verification.md`
+- [X] T039 Tell the owner, in the session summary, exactly which commands remain for them (fork, remote, push, PR), where the hand-over is, and that no PR text has been drafted
 
 ---
 
