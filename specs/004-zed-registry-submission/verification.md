@@ -255,8 +255,48 @@ $ cargo +1.90 build --release --target wasm32-wasip2 --target-dir target/rust190
     Finished `release` profile [optimized] target(s) in 0.23s
 ```
 
+## Server 0.4.0 and re-pointed tag (owner's decision, 2026-10-13)
+
+The owner wanted the server and the extension in lockstep, as `docs/publishing.md` section 1
+requires (npm first, then the pin). Sequence:
+
+```text
+$ cd server && npm version 0.4.0 --no-git-tag-version && npm run lint && npm run build && npm test
+lint exit 0, build exit 0, 108 passed (11 files), 43.99s
+$ npm pack --dry-run        24 files, 24.8 kB packed, 105.5 kB unpacked (bin/, dist/)
+commit b5cd40a "release(server): 0.4.0", pushed
+$ npm publish --access public --otp=<code>     (owner, own terminal)
++ playwright-zed-language-server@0.4.0          published 2026-10-13T16:20:01.764Z, dist-tag latest = 0.4.0
+$ # src/lib.rs: PINNED_SERVER_VERSION = "0.4.0"
+$ cargo test                                    7 passed
+$ cargo build --release --target wasm32-wasip2  Finished
+$ cargo +1.90 build --release --target wasm32-wasip2 --target-dir target/rust190   Finished
+commit b4c1116 "release: 0.4.0 pins server 0.4.0", pushed
+$ git tag -f v0.4.0 && git push --force origin v0.4.0
+ + 8379546...b4c1116 v0.4.0 -> v0.4.0 (forced update)
+```
+
+Re-pointing the tag was the owner's choice over releasing 0.4.1: the earlier tag was about
+one hour old, had no GitHub release object, no registry PR referenced it and the registry
+clone is local. Tags are not covered by the "main" ruleset.
+
+Registry clone updated: submodule fetched with `--tags --force`, reset to `v0.4.0` =
+`b4c1116c1680c69c0488662a0b02ea40543e5c80` (its `src/lib.rs` pins 0.4.0), clone commit
+amended to `0aef1c49` (same three paths); `sort-extensions` then `git diff --exit-code`
+clean; `package-extensions playwright-runner-lsp`: "Packaging 'playwright-runner-lsp'.
+Version: 0.4.0", exit 0, manifest unchanged (name "Playwright Runner", 0.4.0, provides
+language-servers), archive 97257 bytes; working tree clean after cleanup.
+
+The earlier manual verification was run at `8379546`. The registry's prerequisite is testing
+at the exact submitted commit, so quickstart step 5 scenarios 2 and 4 are re-run at
+`b4c1116` by the owner; the result is recorded below when reported.
+
+### Re-verification at b4c1116
+
+Pending.
+
 ## State
 
-Feature 004 state: **prepared, awaiting owner** (fork, push, PR). Follow-up states and who
+Feature 004 state: **prepared, awaiting owner re-check in Zed at b4c1116, then fork, push, PR.** Follow-up states and who
 records them: `pr-open` (owner reports the PR number), `merged` (owner reports; T032 then
 verifies User Story 3 from a clean machine), `closed` (owner reports; fix and fresh PR).
