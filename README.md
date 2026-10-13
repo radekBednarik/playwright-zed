@@ -55,7 +55,8 @@ AI-assisted project.
 
 **From the Zed extension registry.** Open `zed: extensions` and search for
 **Playwright Runner**. The listing is under review in the Zed extension registry
-(`zed-industries/extensions`); the submission process is described in
+([zed-industries/extensions#7975](https://github.com/zed-industries/extensions/pull/7975));
+the submission process is described in
 [docs/publishing.md](docs/publishing.md). Until the review completes, install from source.
 
 **From source.**

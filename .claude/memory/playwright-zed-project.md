@@ -56,7 +56,9 @@ only facts (`owner-handover.md`, no PR text). Decisions 2026-10-13: id `playwrig
 rejects names ending in " Zed"). Registry CI builds with Rust 1.90 on `wasm32-wasip2`; the
 project CI has the same job.
 
-**State: prepared, awaiting owner (fork, push, PR)**
+**State: pr-open** (registry PR https://github.com/zed-industries/extensions/pull/7975, opened by
+the owner 2026-10-13, all registry checks green; wait for maintainer review, owner answers
+within three weeks; on merge run T032, on close fix and open a fresh PR)
 (2026-10-13). Release `v0.4.0` = `b4c1116` on `main` (re-pointed from `8379546` after the
 owner published server 0.4.0 and asked for lockstep; the pin is 0.4.0). Registry clone
 `../zed-extensions`, branch `playwright-runner-lsp`, commit `0aef1c49` (submodule at

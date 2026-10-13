@@ -311,7 +311,10 @@ set of item 3 (features 001 and 003) was run at `8379546`, whose only difference
 
 ## State
 
-Feature 004 state: **prepared, awaiting owner** (fork, push, PR). Submitted commit `b4c1116`,
-server 0.4.0 on npm and pinned, registry clone commit `0aef1c49`. Follow-up states and who
+Feature 004 state: **pr-open**. Registry PR https://github.com/zed-industries/extensions/pull/7975,
+opened by the owner 2026-10-13T16:45Z from `radekBednarik/extensions:playwright-runner-lsp`
+(`0aef1c49`, 3 files, 9 additions), submitted commit `b4c1116`, server 0.4.0 pinned. Registry
+checks on the PR: package SUCCESS, Danger SUCCESS, CLA signed SUCCESS. Next transition: `merged`
+(T032) or `closed`. Follow-up states and who
 records them: `pr-open` (owner reports the PR number), `merged` (owner reports; T032 then
 verifies User Story 3 from a clean machine), `closed` (owner reports; fix and fresh PR).
