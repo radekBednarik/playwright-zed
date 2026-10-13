@@ -1,12 +1,12 @@
 ---
 name: playwright-zed-project
-description: State of the Playwright-for-Zed extension as of 2026-10-12 evening; what is released, what is deliberately on hold, open decisions, where the spec-kit artifacts live
+description: State of the Playwright-for-Zed extension as of 2026-10-13; what is released, what is deliberately on hold, open decisions, where the spec-kit artifacts live
 metadata:
   type: project
 ---
 
 Public repo https://github.com/radekBednarik/playwright-zed (made public 2026-10-12). All
-work is merged: `main` at `ee66cc4` carries feature 001 (`specs/001-scaffold-run-at-cursor/`,
+work is merged: `main` carries feature 001 (`specs/001-scaffold-run-at-cursor/`,
 run at cursor, run file, re-run last) and feature 002 (`specs/002-discovery-consent/`, per
 workspace per session consent prompt before `playwright test --list` runs workspace code).
 Feature branches `001-scaffold-run-at-cursor` and `002-discovery-consent` were merged and
@@ -25,6 +25,18 @@ AI-assisted development (GitHub Spec Kit, Claude Code, models Fable and Opus).
 No open tasks in either feature. Automated suite: 7 Rust tests, 88 vitest tests in 9 files
 (needs Chromium and network for the TodoMVC fixture tests). Every verification is recorded
 in the feature's `verification.md`.
+
+CI (added 2026-10-13, `.github/workflows/ci.yml`): runs on pushes to `main` and on every PR,
+including Dependabot's. Jobs: Rust (`cargo test`, wasm32-wasip2 build) and the server on
+Node 22 and 24 (`npm ci`, Chromium, lint, build, full vitest suite). Green on first run.
+Check a Dependabot PR's CI before merging: PR #1 (vitest 3 to 5, security bump of
+`@vitest/mocker`) was merged without CI and broke `npm install` (ERESOLVE on `@types/node`),
+fixed by raising `@types/node` to `^22.12.0`.
+
+Unreleased on `main` since 0.2.0: vitest 5, `@types/node` 22, and server `engines: node >=22`
+(Node 20 is end of life). The next npm release carries the Node 22 requirement; mention it in
+the release notes. `ubuntu-latest` moves to Ubuntu 26 from 2026-10-19; if Chromium's
+`--with-deps` install fails in CI after that, pin `runs-on: ubuntu-24.04`.
 
 **On hold by the owner's decision (2026-10-12):** the Zed registry PR. Not to be prepared
 until asked. When asked: Zed's `AI_POLICY.md` forbids autonomous-agent contributions, so the
