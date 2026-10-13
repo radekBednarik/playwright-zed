@@ -8,7 +8,7 @@
 
 List the extension in `zed-industries/extensions` without tripping any of the registry's
 automated or human-review rules and without violating its AI policy. Concretely: rename the
-extension to id `playwright-runner` and display name "Playwright Runner" (the current name
+extension to id `playwright-runner-lsp` and display name "Playwright Runner" (the current name
 fails the registry's manifest check), release 0.4.0 on `main` with a tag, prove the build on
 the registry's pinned Rust 1.90, prepare a registry fork clone with the submodule and entry
 and run the registry's own validation on it locally, verify the dev extension and the npm
@@ -87,7 +87,7 @@ specs/004-zed-registry-submission/
 ### Source Code (repository root)
 
 ```text
-extension.toml                   # id playwright-runner, name Playwright Runner, 0.4.0 at release
+extension.toml                   # id playwright-runner-lsp, name Playwright Runner, 0.4.0 at release
 Cargo.toml                       # version 0.4.0 at release
 src/lib.rs                       # unchanged (pin 0.3.0 stays)
 .github/workflows/ci.yml         # add Rust 1.90 job next to stable
@@ -103,9 +103,9 @@ specs/001-scaffold-run-at-cursor/contracts/extension-manifest.md   # superseded 
 specs/002-discovery-consent/contracts/discovery-consent.md         # question text
 
 ../zed-extensions/               # sibling clone of zed-industries/extensions (not in this repo)
-├── extensions.toml              # + [playwright-runner] entry, sorted
+├── extensions.toml              # + [playwright-runner-lsp] entry, sorted
 ├── .gitmodules                  # + submodule, sorted
-└── extensions/playwright-runner # submodule pinned to v0.4.0 on main
+└── extensions/playwright-runner-lsp # submodule pinned to v0.4.0 on main
 ```
 
 **Structure Decision**: no new source directories. The registry clone lives beside the

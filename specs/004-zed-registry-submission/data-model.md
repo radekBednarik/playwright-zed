@@ -8,7 +8,7 @@ docs as read on 2026-10-13.
 
 | Field | Value at submission | Validation |
 |-------|---------------------|------------|
-| `id` | `playwright-runner` | `^[a-z0-9-]+$`; not starting `zed-`; not ending `-zed`; not containing `extension`; must equal the `extensions.toml` table key |
+| `id` | `playwright-runner-lsp` | `^[a-z0-9-]+$`; not starting `zed-`; not ending `-zed`; not containing `extension`; must equal the `extensions.toml` table key |
 | `name` | `Playwright Runner` | not starting `Zed `; not ending ` Zed`; not containing `extension` (any case) |
 | `version` | `0.4.0` | plain `major.minor.patch`; equals `extensions.toml` `version` at the submodule commit; equals `Cargo.toml` `version` (project rule) |
 | `schema_version` | `1` | must be 1 when present |
@@ -18,14 +18,14 @@ docs as read on 2026-10-13.
 
 Derived: the built `manifest.json` carries `provides: ["language-servers"]`, which is what
 the prerequisite's "only provides a language server" reading is based on. The id choice
-`playwright-runner` is the owner's decision; see spec FR-003.
+`playwright-runner-lsp` is the owner's decision; see spec FR-003.
 
 ## Registry entry (in `../zed-extensions`)
 
 | Artefact | Content | Validation |
 |----------|---------|------------|
-| `extensions.toml` table | `[playwright-runner]` with `submodule = "extensions/playwright-runner"` and `version = "0.4.0"` | submodule name equals `extensions/<id>` and equals the submodule path; version rules as above; file sorted |
-| `.gitmodules` entry | path `extensions/playwright-runner`, url `https://github.com/radekBednarik/playwright-zed.git` | HTTPS scheme; file sorted |
+| `extensions.toml` table | `[playwright-runner-lsp]` with `submodule = "extensions/playwright-runner-lsp"` and `version = "0.4.0"` | submodule name equals `extensions/<id>` and equals the submodule path; version rules as above; file sorted |
+| `.gitmodules` entry | path `extensions/playwright-runner-lsp`, url `https://github.com/radekBednarik/playwright-zed.git` | HTTPS scheme; file sorted |
 | submodule gitlink | commit tagged `v0.4.0`, reachable from `main` | commit must be on a branch; no Git LFS in the submodule |
 
 Relationship: entry key equals manifest `id`; entry version equals manifest `version` at

@@ -77,11 +77,12 @@ requirements, publishing guide, updating and maintenance, FAQ).
 - Provide only functionality not already in the registry; the only Playwright-related entry
   today is `mcp-server-playwright`, which is an MCP server, not a test runner.
 - An extension that only provides a language server should carry the id suffix
-  `-language-server` or `-lsp`. The extension currently declares a language server and
-  nothing else, but the user-facing capability is running tests, and debugger and task
-  capabilities will follow. The owner settled the id as `playwright-runner` on 2026-10-13:
-  it states what the extension provides, as the prerequisites ask, and is not tied to the
-  language-server delivery mechanism. The registry has no entry with that id.
+  `-language-server` or `-lsp`. The extension declares a language server and nothing else
+  in its manifest, so the suffix applies. The owner settled the id as
+  `playwright-runner-lsp` on 2026-10-13 (superseding `playwright-runner`, chosen earlier
+  the same day): the `playwright-runner` stem states what the extension provides, as the
+  prerequisites ask, and the `-lsp` suffix follows the publishing prerequisites to the
+  letter. The registry has no entry with that id.
 - Language servers must not be bundled; they are downloaded or detected at runtime (this
   extension installs its server from npm, which complies).
 - Do not misuse the extension API to work around limitations.
@@ -110,6 +111,15 @@ requirements, publishing guide, updating and maintenance, FAQ).
 - No obligation to maintain, but bug reports should be answered in reasonable time. An
   owner can transfer or ask for removal. After six weeks without reply, others may fork and
   replace the extension.
+
+## Clarifications
+
+### Session 2026-10-13
+
+- Q: Which extension id is submitted to the registry, given that the Zed publishing
+  prerequisites ask language-server extensions to carry an `-lsp` or `-language-server`
+  suffix? → A: `playwright-runner-lsp` (replaces the earlier decision `playwright-runner`;
+  display name stays "Playwright Runner").
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -237,11 +247,11 @@ push and PR actions were done by the owner.
 
 ### Edge Cases
 
-- Maintainers ask for a different id, for example with an `-lsp` or `-language-server`
-  suffix. The id is renamed before merge, which also renames the submodule path and the
-  registry entry; the npm package name of the language server does not change.
+- Maintainers ask for a different id, for example the longer `-language-server` suffix
+  or a shorter stem. The id is renamed before merge, which also renames the submodule path
+  and the registry entry; the npm package name of the language server does not change.
 - A Zed user who installed the dev extension under the old id `playwright` later installs
-  `playwright-runner` from the registry. Both can coexist under different ids; the README
+  `playwright-runner-lsp` from the registry. Both can coexist under different ids; the README
   tells dev-extension users to uninstall the old one.
 - Maintainers ask for a different display name or object to using the Playwright trademark
   in the name. The display name can change at any time; the description already carries
@@ -277,10 +287,14 @@ push and PR actions were done by the owner.
   "Playwright Runner" (owner's decision, 2026-10-13). It passes the registry name rules,
   keeps "Playwright" recognisable to users migrating from VS Code, describes the test
   runner role, and does not imply affiliation with Microsoft.
-- **FR-003**: The extension id MUST be `playwright-runner` (owner's decision, 2026-10-13),
-  final before the PR is opened because ids cannot change after publication. The id
-  describes what the extension provides, as the prerequisites ask, without claiming to be
-  a language-server-only extension, so later debugger and task capabilities fit under it.
+- **FR-003**: The extension id MUST be `playwright-runner-lsp` (owner's decision,
+  2026-10-13, superseding `playwright-runner`), final before the PR is opened because ids
+  cannot change after publication. The stem describes what the extension provides, as the
+  prerequisites ask, and the `-lsp` suffix complies with the publishing prerequisite for
+  extensions whose manifest declares only a language server. It passes the automated id
+  rules (lowercase letters and hyphens, no `zed-` prefix, no `-zed` suffix, no
+  `extension`). Later debugger and task capabilities ship under the same id, since ids
+  cannot change.
 - **FR-004**: The submission MUST be a tagged release on `main` whose version is bumped
   from 0.3.0, because the display name and id changes alter the manifest and the registry
   needs a commit on a branch with matching version.
@@ -324,7 +338,7 @@ push and PR actions were done by the owner.
 - **FR-016**: The parity matrix MUST NOT gain a row for this feature; the README and the
   project memory MUST record the submission state (prepared, PR open, merged) so the next
   session does not redo or re-ask the work.
-- **FR-017**: Before the PR is opened the id `playwright-runner` MUST be confirmed absent
+- **FR-017**: Before the PR is opened the id `playwright-runner-lsp` MUST be confirmed absent
   from the registry's `extensions.toml`, and the owner MUST have fewer than three open PRs
   there.
 

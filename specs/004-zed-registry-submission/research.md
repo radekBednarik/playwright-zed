@@ -43,7 +43,7 @@ passed. Local verification was run on WSL2 with rustc 1.99 (default) and rustc 1
      The CLI writes `extension.wasm` into the source directory; it is gitignored.
   2. The registry's own scripts, inside the prepared fork clone:
      `corepack pnpm@11 install`, `corepack pnpm@11 sort-extensions`, then
-     `corepack pnpm@11 package-extensions playwright-runner` with `SHOULD_PUBLISH` unset.
+     `corepack pnpm@11 package-extensions playwright-runner-lsp` with `SHOULD_PUBLISH` unset.
      This runs `validateExtensionsToml`, `validateGitmodules`, `validateGitmodulesLocations`,
      the licence matcher, the id match between `extensions.toml` and `extension.toml`, the
      version match, and `validateManifest` (the display-name rules). It needs `origin/main`
@@ -61,9 +61,11 @@ passed. Local verification was run on WSL2 with rustc 1.99 (default) and rustc 1
 - **Finding**: `validateManifest` rejects names that start with `Zed `, end with ` Zed`, or
   contain `extension` (case-insensitive). "Playwright for Zed" ends with " Zed". The id
   rules (`^[a-z0-9-]+$`, no `zed-` prefix, no `-zed` suffix, no `extension`) pass for both
-  `playwright` and `playwright-runner`. The licence matcher recognises the root `LICENSE`
+  `playwright` and `playwright-runner-lsp`. The licence matcher recognises the root `LICENSE`
   as MIT. The description may contain the word "extension" (only `name` is checked).
-- **Decision**: id `playwright-runner`, display name "Playwright Runner" (owner, 2026-10-13).
+- **Decision**: id `playwright-runner-lsp`, display name "Playwright Runner" (owner, 2026-10-13;
+  the `-lsp` suffix follows the publishing prerequisite for language-server-only manifests and
+  supersedes `playwright-runner`, chosen earlier the same day).
   Rename scope, found by grep on 2026-10-13:
 
   | Location | Change |
@@ -72,8 +74,8 @@ passed. Local verification was run on WSL2 with rustc 1.99 (default) and rustc 1
   | `Cargo.toml` | `version` 0.4.0 (crate name `playwright-zed` stays; the CLI accepts any crate name) |
   | `README.md` | H1, project description, install section (registry first), dev-extension note about uninstalling the old `playwright` id, the "zed: extensions must list ..." line |
   | `CLAUDE.md` | H1 |
-  | `docs/publishing.md` | submodule path, entry, id-fallback paragraph, self-check list (FR-014), work dir path `work/playwright-runner` |
-  | `.claude/memory/*.md` | display name, id, `work/playwright-runner` path |
+  | `docs/publishing.md` | submodule path, entry, id-fallback paragraph, self-check list (FR-014), work dir path `work/playwright-runner-lsp` |
+  | `.claude/memory/*.md` | display name, id, `work/playwright-runner-lsp` path |
   | `server/package.json` `description`, `server/README.md` | name reference |
   | `server/src/reporting.ts` (discovery question text), `specs/002-discovery-consent/contracts/discovery-consent.md`, server tests asserting the text | "Playwright Runner found a Playwright configuration ..." |
   | `specs/001-scaffold-run-at-cursor/contracts/extension-manifest.md` | superseded note pointing at this feature's manifest contract |
@@ -97,13 +99,13 @@ passed. Local verification was run on WSL2 with rustc 1.99 (default) and rustc 1
 
 - **Decision**: clone the upstream registry as a sibling directory of this repository,
   `../zed-extensions` (outside this repo so it never ends up in this repo's git), on a
-  branch `playwright-runner` from `origin/main`, without `git submodule update` (the registry
+  branch `playwright-runner-lsp` from `origin/main`, without `git submodule update` (the registry
   has 1574 submodules; the publishing guide's init-and-update step is not needed for a PR,
   and `package-extensions` checks out only the changed submodule). Then:
 
   ```sh
-  git submodule add https://github.com/radekBednarik/playwright-zed.git extensions/playwright-runner
-  cd extensions/playwright-runner && git checkout v0.4.0 && git switch main  # commit on a branch
+  git submodule add https://github.com/radekBednarik/playwright-zed.git extensions/playwright-runner-lsp
+  cd extensions/playwright-runner-lsp && git checkout v0.4.0 && git switch main  # commit on a branch
   ```
 
   Add the `extensions.toml` entry, run `corepack pnpm@11 sort-extensions`, run the local
@@ -163,12 +165,12 @@ passed. Local verification was run on WSL2 with rustc 1.99 (default) and rustc 1
 ## R8. Users who installed the dev extension under the old id
 
 - **Finding**: Zed keys installed and dev extensions by id. A dev extension `playwright`
-  and a registry extension `playwright-runner` would both load and both start a
+  and a registry extension `playwright-runner-lsp` would both load and both start a
   language server named "Playwright" for the same files.
 - **Decision**: the README install section tells dev-extension users to uninstall the old
   `playwright` entry in `zed: extensions` before installing from the registry; the owner's
   machine does the same during the quickstart (reinstall the dev extension under the new
-  id, which also moves the work directory to `~/.local/share/zed/extensions/work/playwright-runner/`).
+  id, which also moves the work directory to `~/.local/share/zed/extensions/work/playwright-runner-lsp/`).
 
 ## R9. The "Work in progress." description prefix
 
@@ -189,4 +191,4 @@ passed. Local verification was run on WSL2 with rustc 1.99 (default) and rustc 1
   an empty list: zero open PRs, three slots free. No fork `radekBednarik/extensions` exists
   yet.
 - The registry's `extensions.toml` (downloaded 2026-10-13, 1574 entries) has no
-  `playwright-runner` entry; the only Playwright-related entry is `mcp-server-playwright`.
+  `playwright-runner-lsp` entry; the only Playwright-related entry is `mcp-server-playwright`.

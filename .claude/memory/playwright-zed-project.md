@@ -53,7 +53,8 @@ agent only prepares the submodule and `extensions.toml` entry locally, verifies,
 over a fact sheet (no PR text). Found 2026-10-13 from the registry's validation scripts: the
 display name must not end with " Zed", so "Playwright for Zed" fails registry CI and must be
 renamed; registry CI builds with Rust 1.90 on `wasm32-wasip2`. Owner decided 2026-10-13:
-id `playwright-runner` (replaces `playwright`; irreversible after publication) and display
+id `playwright-runner-lsp` (replaces `playwright`; superseded `playwright-runner` the same day
+because Zed's prerequisites want an `-lsp` suffix; irreversible after publication) and display
 name "Playwright Runner". Submission release will be 0.4.0. State on 2026-10-13: spec, plan,
 research, data model, contracts, quickstart and tasks (39) are written and `/speckit-analyze`
 remediations applied; all committed on branch `004-zed-registry-submission`. Nothing

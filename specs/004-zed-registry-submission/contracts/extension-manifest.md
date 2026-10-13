@@ -4,7 +4,7 @@ Supersedes the manifest contract of feature 001 for `id`, `name` and `version`. 
 else is unchanged.
 
 ```toml
-id = "playwright-runner"
+id = "playwright-runner-lsp"
 name = "Playwright Runner"
 version = "0.4.0"
 schema_version = 1
@@ -36,7 +36,7 @@ prerequisites):
 
 Side effects of the id change on the owner's machine: Zed's dev-extension work directory
 moves from `~/.local/share/zed/extensions/work/playwright/` to
-`~/.local/share/zed/extensions/work/playwright-runner/`; the old dev extension `playwright`
+`~/.local/share/zed/extensions/work/playwright-runner-lsp/`; the old dev extension `playwright`
 must be uninstalled in `zed: extensions` to avoid two language servers on the same files.
 
 The version `0.4.0` is set by the release commit on `main`, not on the feature branch; the

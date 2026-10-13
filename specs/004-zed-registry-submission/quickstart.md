@@ -33,7 +33,7 @@ allowed to keep the old name).
 
 ```sh
 grep -E '^(id|name|version)' extension.toml
-# id = "playwright-runner"   name = "Playwright Runner"   version = <current>
+# id = "playwright-runner-lsp"   name = "Playwright Runner"   version = <current>
 grep '^version' Cargo.toml   # same version
 head -3 LICENSE              # MIT License, copyright line
 ```
@@ -75,7 +75,7 @@ Expected: tag on `main`, SHA recorded for the fact sheet.
 | 1 | US2-4 | `git describe --tags` in the repo | `v0.4.0` exactly |
 | 2 | US3-2 prep | In Zed, `zed: extensions`, uninstall the dev extension "Playwright for Zed" (id `playwright`) if present; `zed: install dev extension` on the repo root | "Playwright Runner 0.4.0" listed, marked dev, description carries the non-affiliation notice; no "Playwright for Zed" entry remains |
 | 3 | FR-008 | Run feature 001 quickstart scenarios 2, 5, 6, 7, 11, 13 and feature 003 quickstart scenarios 1 to 4 | Same outcomes as recorded in those features' verification records |
-| 4 | FR-009 | `zed: quit`; start Zed from a terminal without `PLAYWRIGHT_ZED_SERVER_ENTRY`; open `fixtures/sample-project`; `cat ~/.local/share/zed/extensions/work/playwright-runner/package.json` | version `0.3.0` of `playwright-zed-language-server` installed from npm; run lenses appear; no `work/playwright/` directory in use |
+| 4 | FR-009 | `zed: quit`; start Zed from a terminal without `PLAYWRIGHT_ZED_SERVER_ENTRY`; open `fixtures/sample-project`; `cat ~/.local/share/zed/extensions/work/playwright-runner-lsp/package.json` | version `0.3.0` of `playwright-zed-language-server` installed from npm; run lenses appear; no `work/playwright/` directory in use |
 | 5 | Edge: old id | With the old `playwright` dev extension still installed, open a test file | Two "Playwright" language servers appear; uninstall the old one; one remains. Record this as the reason for the README note |
 
 Record the Zed release (`zed --version`) and date in `verification.md`.
@@ -86,18 +86,18 @@ Follow [contracts/registry-entry.md](contracts/registry-entry.md) "Preparation c
 "Local validation". Expected output lines to record:
 
 ```text
-Packaging 'playwright-runner'. Version: 0.4.0
+Packaging 'playwright-runner-lsp'. Version: 0.4.0
 ... finished compiling extension ...
 ```
 
 followed by no thrown error, `git diff --exit-code -- extensions.toml .gitmodules` clean,
 and `git status --short` showing only `extensions.toml`, `.gitmodules` and
-`extensions/playwright-runner` in the commit.
+`extensions/playwright-runner-lsp` in the commit.
 
 Also confirm:
 
 ```sh
-grep -c '^\[playwright-runner\]' extensions.toml      # 1
+grep -c '^\[playwright-runner-lsp\]' extensions.toml      # 1
 gh pr list -R zed-industries/extensions --author radekBednarik --state open   # fewer than 3
 ```
 
