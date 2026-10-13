@@ -33,7 +33,8 @@
 
 - Validated 2026-10-13. Two [NEEDS CLARIFICATION] markers (FR-002 display name, FR-003
   extension id) were resolved the same day by the owner: id `playwright-runner`, display name
-  "Playwright Runner". Revalidated after the update; all items pass.
+  "Playwright Runner". Revalidated after the update; all items pass. The id was superseded
+  later on 2026-10-13 by `playwright-runner-lsp` (see spec Clarifications); all items still pass.
 - The spec names external facts a user or reviewer sees (Rust 1.90 as the registry's pinned
   toolchain, file names in the registry such as `extensions.toml`); these are the subject of
   the feature, not implementation choices of this project.

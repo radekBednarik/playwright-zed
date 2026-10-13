@@ -394,3 +394,5 @@ push and PR actions were done by the owner.
 - The registry's review timeline (weeks to months) is outside the project's control;
   "done" for this feature means the PR is open and the owner has what they need to answer
   review, not that the PR is merged. Merge is tracked as a follow-up state in the memory.
+  In the constitution's terms the 0.4.0 release itself is complete only once the registry
+  entry is merged; the feature's done state is the hand-over, not the release.
