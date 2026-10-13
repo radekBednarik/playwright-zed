@@ -76,6 +76,26 @@ merges with `!`. Fixture commit 11e68ae (`test.fail` case, 16 tests) had broken 
 integration tests on `main`; fixed in PR #3. Session scratch (registry CLI binary) is not
 kept; re-download per `docs/publishing.md` section 2.
 
+**When maintainer feedback on PR #7975 arrives** (procedure agreed 2026-10-13): the owner
+pastes or points at the comment; the agent looks up facts and verifies claims locally; the
+owner writes the reply (AI policy; quoted agent output only in a labelled quote block with
+the owner's commentary). If a code or metadata change is requested: change it on `main`
+through the project's normal PR flow, release a new version (0.4.1 or higher; `v0.4.0` is
+now referenced by the registry PR and must never be moved again), publish the server first
+if it changed and bump the pin, verify in Zed at the new tag, then in `../zed-extensions`
+move the submodule to the new tag, set the new `version` in `extensions.toml`, run
+`corepack pnpm@11 sort-extensions` and the local `package-extensions` check, commit, and
+the owner pushes to the `fork` remote (SSH, `git@github.com:radekBednarik/extensions.git`),
+which updates the PR. If maintainers ask for a different id: it is renamed before merge
+(manifest, submodule path, entry, all docs), same release procedure. If the PR is closed
+without feedback: re-read the prerequisites, fix, the owner opens a fresh PR. On merge: run
+T032 (install from `zed: extensions` on a profile without the dev extension, feature 001
+scenario 5, time to passing run under 5 minutes), drop "under review" and the PR link from
+the README install section, set this state to `merged`; later updates follow
+`docs/publishing.md` section 4. Owner preference recorded 2026-10-13: server and extension
+are released in lockstep (same version, npm first, then the pin), do not plan a release that
+skips the server publish.
+
 **Why:** the next session on another machine must not re-derive the state, re-ask about
 publishing, or prepare the registry PR unasked.
 
