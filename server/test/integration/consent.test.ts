@@ -2,57 +2,14 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { CONFIG, FIXTURE, MessageType, PASSING, TestClient, uriOf } from './helpers';
+import { CONFIG, configSource, FIXTURE, MessageType, PASSING, removeTempProjects, SPEC_SOURCE, TestClient, tempProject, trackTempDir, uriOf } from './helpers';
 
 const RUN_AT_CURSOR = 'playwright.runAtCursor';
 const RUN_FILE = 'playwright.runFile';
 const ENABLE = 'playwright.enableDiscovery';
 const ENABLE_TITLE = 'Playwright: Enable test discovery';
 
-const SPEC_SOURCE = `import { test, expect } from '@playwright/test';
-
-test('one', async ({ page }) => {
-  await page.setContent('<p id="o">one</p>');
-  await expect(page.locator('#o')).toHaveText('one');
-});
-`;
-
-/** A config that leaves evidence when Playwright loads it (SC-001). */
-function configSource(withMarker: boolean): string {
-  const marker = withMarker ? `writeFileSync(process.env.PW_ZED_MARKER as string, 'loaded');\n` : '';
-  return `import { writeFileSync } from 'node:fs';
-import { defineConfig } from '@playwright/test';
-
-${marker}export default defineConfig({
-  testDir: './tests',
-  reporter: 'list',
-  projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
-});
-`;
-}
-
-interface TempProject {
-  dir: string;
-  spec: string;
-  marker: string;
-}
-
-const temps: string[] = [];
 const clients: TestClient[] = [];
-
-/** Temp project sharing the fixture's node_modules; sets PW_ZED_MARKER for the server to inherit. */
-function tempProject(withMarker = true): TempProject {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zed-consent-'));
-  temps.push(dir);
-  fs.mkdirSync(path.join(dir, 'tests'));
-  fs.symlinkSync(path.join(FIXTURE, 'node_modules'), path.join(dir, 'node_modules'), 'dir');
-  fs.writeFileSync(path.join(dir, 'playwright.config.ts'), configSource(withMarker));
-  const spec = path.join(dir, 'tests/one.spec.ts');
-  fs.writeFileSync(spec, SPEC_SOURCE);
-  const marker = path.join(dir, 'config-loaded.marker');
-  process.env.PW_ZED_MARKER = marker;
-  return { dir, spec, marker };
-}
 
 async function start(folders: string | string[], answer: 'Run discovery' | 'Not now' | null): Promise<TestClient> {
   const client = await TestClient.start(folders, { answer });
@@ -64,8 +21,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 afterEach(async () => {
   for (const client of clients.splice(0)) await client.stop();
-  for (const dir of temps.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
-  delete process.env.PW_ZED_MARKER;
+  removeTempProjects();
 });
 
 describe('nothing runs until the developer agrees (US1)', () => {
@@ -102,7 +58,7 @@ describe('nothing runs until the developer agrees (US1)', () => {
 
   it('(c) never asks in a folder without Playwright', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zed-plain-'));
-    temps.push(dir);
+    trackTempDir(dir);
     fs.writeFileSync(path.join(dir, 'index.ts'), 'export const x = 1;\n');
     const client = await start(dir, null);
     await sleep(500);

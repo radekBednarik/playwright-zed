@@ -10,6 +10,12 @@ the editor over the Language Server Protocol.
 
 Usage: `playwright-zed-language-server --stdio`.
 
+Test discovery executes the workspace's Playwright configuration and test files. Started by
+Zed 0.218 or newer (identified by `clientInfo`), the server relies on Zed's worktree trust:
+Zed starts it only in folders the user trusted, so discovery runs without a further question
+(revoke with `workspace: clear trusted worktrees`). With older Zed releases and other editors
+it asks once per workspace folder and session before running anything.
+
 This is an independent community project, not affiliated with, endorsed by, or maintained by
 Microsoft or the Playwright team. "Playwright" is a trademark of Microsoft Corporation. The
 package contains no Playwright code and does not bundle Playwright.
