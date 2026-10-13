@@ -114,4 +114,16 @@ Could not resolve to a Repository (no fork yet; the owner creates it)
 
 ## Project PR (T017, T018)
 
-Filled in below once the PR is open.
+PR #3 https://github.com/radekBednarik/playwright-zed/pull/3, branch
+`004-zed-registry-submission` at `b47cf66`, opened 2026-10-13 with the verification body the
+constitution's workflow gates require. CI on the PR, all pass:
+
+```text
+Rust extension                               pass  41s
+Rust extension (registry toolchain 1.90)     pass  41s
+Language server (Node 22)                    pass  1m44s
+Language server (Node 24)                    pass  1m28s
+CodeQL (actions, javascript-typescript, rust) pass
+```
+
+T018 (merge) waits for the owner's OK.

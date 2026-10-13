@@ -59,8 +59,13 @@ because Zed's prerequisites want an `-lsp` suffix; irreversible after publicatio
 name "Playwright Runner". Submission release will be 0.4.0. State on 2026-10-13: spec, plan,
 research, data model, contracts, quickstart and tasks (39) are written and `/speckit-analyze`
 remediations applied; all committed on branch `004-zed-registry-submission`. Feature 004
-state: **in progress** (`/speckit-implement` started 2026-10-13; progress is tracked by the
-`[X]` markers in `specs/004-zed-registry-submission/tasks.md` and in its `verification.md`).
+state: **in progress**. Phases 1 to 3 are done (T001 to T017: rename, 1.90 CI job, local
+registry checks, project PR #3 open with green CI on 2026-10-13). **Next: T018, merge PR #3
+after the owner's OK**, then T019 onward (release 0.4.0 on `main`, manual Zed verification,
+registry clone, hand-over). Progress is tracked by the `[X]` markers in
+`specs/004-zed-registry-submission/tasks.md` and in its `verification.md`. A fixture commit
+on `main` (11e68ae, `test.fail` case) had broken the integration tests; PR #3 fixes the
+expectations (16 tests).
 Research verified: `cargo +1.90 build --release --target wasm32-wasip2` passes with the
 committed lock file (Rust 1.90 installed via rustup on the WSL2 machine, install it elsewhere
 with `rustup toolchain install 1.90 --profile minimal --target wasm32-wasip2`); the registry's
