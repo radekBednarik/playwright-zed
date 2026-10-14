@@ -124,7 +124,7 @@ export class RunManager {
     const config: PlaywrightConfig = request.config;
     const handle = this.spawnFn({
       cli: config.playwrightCli,
-      args: buildRunArgs(request.location, config),
+      args: buildRunArgs(request.location, config, request.projects),
       cwd: config.configDir,
       env: { FORCE_COLOR: '0' },
       reportFile: reportFilePath('run', request.id),

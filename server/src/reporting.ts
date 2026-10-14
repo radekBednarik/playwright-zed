@@ -24,7 +24,7 @@ export class Reporter {
    * Starts a `$/progress` sequence whose token is the run request id, as the contract states.
    * Returns false when the client refuses to create the token; progress is then skipped.
    */
-  async progressBegin(token: string, testCount: number, file: string): Promise<boolean> {
+  async progressBegin(token: string, testCount: number, file: string, projects: string[] = []): Promise<boolean> {
     try {
       await this.connection.sendRequest(WorkDoneProgressCreateRequest.type, { token });
     } catch {
@@ -33,7 +33,7 @@ export class Reporter {
     void this.connection.sendProgress(WorkDoneProgress.type, token, {
       kind: 'begin',
       title: 'Playwright',
-      message: `Running ${testCount} test(s) in ${file}`,
+      message: `Running ${testCount} test(s) in ${file}${projects.length > 0 ? ` (${projects.join(', ')})` : ''}`,
     });
     return true;
   }

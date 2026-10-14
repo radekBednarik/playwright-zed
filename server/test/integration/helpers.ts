@@ -28,12 +28,28 @@ export interface StartOptions {
   clientInfo?: { name: string; version?: string };
   /** Sends only `rootUri`, no `workspaceFolders`, in `initialize` (feature 003 fallback root). */
   rootUriOnly?: boolean;
+  /**
+   * Directory passed to the server as `PLAYWRIGHT_ZED_STATE_DIR` (feature 005). A fresh temp
+   * directory is created (and removed in `stop`) when omitted; a directory given here is never
+   * removed by the client.
+   */
+  stateDir?: string;
+  /** Object answered to `workspace/configuration` and sent by `changeSettings` (feature 005). */
+  settings?: unknown;
+  /** Do not advertise `workspace.configuration` (feature 005: client without settings). */
+  noConfiguration?: boolean;
 }
 
 export class TestClient {
   readonly notifications: Message[] = [];
   readonly requests: Message[] = [];
-  private constructor(private readonly child: ChildProcess, readonly conn: MessageConnection) {}
+  private settings: unknown = {};
+  private constructor(
+    private readonly child: ChildProcess,
+    readonly conn: MessageConnection,
+    readonly stateDir: string,
+    private readonly ownsStateDir: boolean,
+  ) {}
 
   static async start(folderOrFolders: string | string[], options: StartOptions = {}): Promise<TestClient> {
     const answer: DiscoveryAnswer = options.answer === undefined ? 'Run discovery' : options.answer;
@@ -42,9 +58,15 @@ export class TestClient {
     if (!fs.existsSync(path.join(REPO_ROOT, 'server/dist/server.js'))) {
       throw new Error('server/dist is missing; run `npm run build` in server/ first');
     }
-    const child = spawn(process.execPath, [BIN, '--stdio'], { stdio: ['pipe', 'pipe', 'pipe'] });
+    const ownsStateDir = options.stateDir === undefined;
+    const stateDir = options.stateDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zed-state-'));
+    const child = spawn(process.execPath, [BIN, '--stdio'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...process.env, PLAYWRIGHT_ZED_STATE_DIR: stateDir },
+    });
     const conn = createMessageConnection(new StreamMessageReader(child.stdout!), new StreamMessageWriter(child.stdin!));
-    const client = new TestClient(child, conn);
+    const client = new TestClient(child, conn, stateDir, ownsStateDir);
+    client.settings = options.settings ?? {};
     child.stderr!.on('data', (chunk: Buffer) => process.stderr.write(`[server] ${chunk}`));
     conn.onNotification((method, params) => client.notifications.push({ method, params }));
     conn.onRequest((method, params) => {
@@ -53,6 +75,10 @@ export class TestClient {
         if (answer === null) return new Promise(() => {}); // dismissed: Zed never answers
         const actions = ((params as { actions?: { title: string }[] }).actions ?? []);
         return actions.find((a) => a.title === answer) ?? null;
+      }
+      if (method === 'workspace/configuration') {
+        const items = ((params as { items?: unknown[] }).items ?? []);
+        return items.map(() => client.settings);
       }
       if (method === 'window/workDoneProgress/create') {
         // vscode-jsonrpc routes `$/progress` to per-token handlers, not to the star handler.
@@ -71,7 +97,11 @@ export class TestClient {
       ...(options.clientInfo ? { clientInfo: options.clientInfo } : {}),
       capabilities: {
         window: { workDoneProgress: true },
-        workspace: { workspaceFolders: true, codeLens: { refreshSupport: true } },
+        workspace: {
+          workspaceFolders: true,
+          codeLens: { refreshSupport: true },
+          ...(options.noConfiguration ? {} : { configuration: true, didChangeConfiguration: { dynamicRegistration: false } }),
+        },
         textDocument: { codeAction: {}, codeLens: {}, publishDiagnostics: {} },
       },
     });
@@ -162,6 +192,12 @@ export class TestClient {
     return this.request<any[]>('playwright/status', {});
   }
 
+  /** Replaces the settings object and sends `workspace/didChangeConfiguration` (feature 005). */
+  async changeSettings(settings: unknown): Promise<void> {
+    this.settings = settings;
+    await this.notify('workspace/didChangeConfiguration', { settings });
+  }
+
   async stop(): Promise<void> {
     try {
       await this.request('shutdown', null);
@@ -171,6 +207,7 @@ export class TestClient {
     }
     this.conn.dispose();
     this.child.kill('SIGKILL');
+    if (this.ownsStateDir) fs.rmSync(this.stateDir, { recursive: true, force: true });
   }
 }
 

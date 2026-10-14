@@ -80,6 +80,9 @@ export function buildConfig(configPath: string): PlaywrightConfig | null {
     testDirs: [],
     tests: [],
     discoveryState: 'idle',
+    projects: [],
+    selection: { projects: [], source: 'single', updatedAt: null },
+    noticeKey: null,
   };
 }
 

@@ -10,6 +10,9 @@ const L = { adds: 2, parens: 7, mathDescribe: 12, mathSame: 13, stringsSame: 25,
 
 let client: TestClient;
 
+/** Feature 005 appends the project picker after the run actions; projects.test.ts covers it. */
+const notPicker = (title: string) => !title.startsWith('Playwright: [') && title !== 'Playwright: Select all projects';
+
 beforeAll(async () => {
   client = await TestClient.start(FIXTURE);
   await client.waitForDiscovery();
@@ -173,7 +176,8 @@ describe('run at cursor (US2)', () => {
     const atDescribe = await client.codeActions(PASSING, L.mathDescribe);
     expect(atDescribe[0].title).toBe('Playwright: Run describe at cursor');
     const atTop = await client.codeActions(PASSING, L.imports);
-    expect(atTop.map((a: any) => a.title)).toEqual(['Playwright: Run file', 'Playwright: Re-run last']);
+    // feature 005 appends the project picker entries after the run actions; they are tested in projects.test.ts
+    expect(atTop.map((a: any) => a.title).filter(notPicker)).toEqual(['Playwright: Run file', 'Playwright: Re-run last']);
     for (const a of [...atTest, ...atDescribe, ...atTop]) expect(a.kind).toBe('source.playwright');
   });
 
@@ -214,7 +218,7 @@ describe('re-run last (US4)', () => {
     await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
     client.clear();
     const actions = await client.codeActions(CONFIG, 0);
-    expect(actions.map((a: any) => a.title)).toEqual(['Playwright: Re-run last']);
+    expect(actions.map((a: any) => a.title).filter(notPicker)).toEqual(['Playwright: Re-run last']);
     await client.execute(RERUN_LAST, [{ uri: uriOf(CONFIG) }]);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
     expect(info.message).toMatch(summary(1, 0, 0));
@@ -226,7 +230,7 @@ describe('re-run last (US4)', () => {
     const fresh = await TestClient.start(FIXTURE);
     try {
       await fresh.waitForDiscovery();
-      expect((await fresh.codeActions(CONFIG, 0)).map((a: any) => a.title)).toEqual([]);
+      expect((await fresh.codeActions(CONFIG, 0)).map((a: any) => a.title).filter(notPicker)).toEqual([]);
       await fresh.execute(RERUN_LAST, []);
       const info = await fresh.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
       expect(info.message).toBe('Nothing to re-run yet');

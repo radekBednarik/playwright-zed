@@ -67,10 +67,11 @@ const config = {
   configDir: '/w',
   playwrightCli: '/w/node_modules/@playwright/test/cli.js',
   supported: true,
+  projects: ['chromium'],
 } as PlaywrightConfig;
 
 function request(id: string): RunRequest {
-  return { id, location: { kind: 'test', file: '/w/tests/a.spec.ts', line: 3 }, config, trigger: 'cursor', startedAt: new Date().toISOString(), dirty: false };
+  return { id, location: { kind: 'test', file: '/w/tests/a.spec.ts', line: 3 }, config, trigger: 'cursor', startedAt: new Date().toISOString(), dirty: false, projects: ['chromium'] };
 }
 
 const tempDirs: string[] = [];

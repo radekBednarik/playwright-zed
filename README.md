@@ -40,6 +40,9 @@ AI-assisted project.
   **Run describe** code lenses above each test and group.
 - **Run test at cursor**, **Run describe at cursor**, **Run file** and **Re-run last** as
   code actions (`ctrl-.` / `cmd-.`).
+- Picks the Playwright projects (browsers) to run in, one, several or all, from the same
+  menu; the choice is remembered per config across restarts, and a folder default can be
+  set in Zed settings (see "Projects" below).
 - Runs happen through the Playwright installed in your workspace, headless. Results arrive
   as a progress indicator, a pass/fail notification, an error marker on each failing line,
   and the full output in Zed's language server log (`dev: open language server logs`).
@@ -130,8 +133,15 @@ workspace folder.
 | Run the whole file               | `ctrl-.` then **Playwright: Run file**                                             |
 | Repeat the last run              | `ctrl-.` anywhere in the workspace, **Playwright: Re-run last**                    |
 | Enable discovery after "Not now" | `ctrl-.` in any file of that folder, **Playwright: Enable test discovery**         |
+| Choose the projects (browsers)   | `ctrl-.` in any file of the config, toggle **Playwright: [ ] <project>**            |
+| Run in every project             | `ctrl-.`, **Playwright: Select all projects**                                      |
 
 Notes:
+
+- After toggling a project or selecting all, a notification names the projects now
+  selected. Zed keeps the `ctrl-.` menu cached per cursor position, so reopening it at the
+  very same spot still shows the old `[x]` marks; move the cursor (another line is enough)
+  and the menu is refetched with the current state. See "Projects" below.
 
 - Runs use the file on disk. If the buffer has unsaved changes you get a warning and the
   saved version runs.
@@ -140,6 +150,57 @@ Notes:
   again.
 - With several configuration files, the one nearest to the test file is used.
 - Playwright below v1.38 produces a single warning and disables running.
+
+### Projects
+
+Playwright runs each test once per project of your `playwright.config.*`, and most projects
+name a browser. Like the VS Code extension, the runner starts with the **first project**
+selected; a configuration with a single project behaves exactly as before and shows no
+picker. In any file that belongs to a configuration with two or more projects, `ctrl-.`
+lists them as `Playwright: [x] chromium`, `Playwright: [ ] firefox`, and so on. Choosing an
+entry toggles that project; at least one stays selected. **Playwright: Select all projects**
+selects every one. Runs pass the selected projects to Playwright (no filter when all are
+selected), the run lenses show only tests that run in a selected project, and the progress
+message names the projects used.
+
+The choice is remembered per configuration file, outside the repository, in a small JSON
+file owned by your user:
+
+| OS      | Location                                                           |
+| ------- | ------------------------------------------------------------------ |
+| Linux   | `$XDG_STATE_HOME` or `~/.local/state/playwright-zed-language-server/` |
+| macOS   | `~/Library/Application Support/playwright-zed-language-server/`     |
+| Windows | `%LOCALAPPDATA%\playwright-zed-language-server\`                    |
+
+Set `PLAYWRIGHT_ZED_STATE_DIR` in the environment Zed starts from to move it. A project that
+disappears from the configuration is dropped from the selection with one notice; a new
+project stays unselected until you pick it.
+
+A team default for a folder can live in Zed settings (`.zed/settings.json` in the
+repository, or your user settings); it applies when you have not picked anything yet and
+changes take effect without a restart:
+
+```json
+{
+  "lsp": {
+    "playwright": {
+      "settings": {
+        "projects": ["chromium", "firefox"]
+      }
+    }
+  }
+}
+```
+
+Names the configuration does not define produce one warning listing the available projects.
+This setting is specific to the Zed extension; the upstream VS Code extension has no
+equivalent.
+
+Every toggle is confirmed by a notification naming the projects now selected. Zed caches
+the code action menu per cursor position and refetches it only when the cursor moves or the
+file changes, so reopening the menu at the very same spot right after a toggle still shows
+the old check marks; the notification shows the real state, and the next cursor move
+refreshes the menu.
 
 ## Terminal output (optional)
 

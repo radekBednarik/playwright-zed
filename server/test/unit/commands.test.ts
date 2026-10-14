@@ -78,6 +78,13 @@ describe('buildRunArgs', () => {
   it('omits the line for whole-file runs', () => {
     expect(buildRunArgs({ kind: 'file', file: FILE, line: null }, config)[1]).toBe('tests/passing.spec.ts');
   });
+  it('appends --project per selected project unless all are selected (feature 005)', () => {
+    const two = { ...config, projects: ['chromium', 'mobile'] };
+    expect(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, two, ['chromium']).slice(-2)).toEqual(['--project', 'chromium']);
+    expect(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, two, ['chromium', 'mobile'])).not.toContain('--project');
+    expect(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, { ...config, projects: ['chromium'] }, ['chromium'])).not.toContain('--project');
+    expect(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, two, ['Mobile Safari']).slice(-2)).toEqual(['--project', 'Mobile Safari']);
+  });
 });
 
 describe('countSelectedTests', () => {
@@ -86,5 +93,17 @@ describe('countSelectedTests', () => {
     expect(countSelectedTests(tests, { kind: 'test', file: FILE, line: 37 })).toBe(2);
     expect(countSelectedTests(tests, { kind: 'describe', file: FILE, line: 13 })).toBe(2);
     expect(countSelectedTests(tests, { kind: 'file', file: FILE, line: null })).toBe(9);
+  });
+  it('counts only specs that run in a selected project (feature 005)', () => {
+    const mixed: DiscoveredTest[] = [
+      { ...t(3, 'both'), projects: ['chromium', 'mobile'] },
+      { ...t(8, 'desktop only'), projects: ['chromium'] },
+      { ...t(14, 'mobile only', [13]), projects: ['mobile'] },
+    ];
+    const mobile = { projects: ['mobile'], source: 'chosen' as const, updatedAt: null };
+    expect(countSelectedTests(mixed, { kind: 'file', file: FILE, line: null }, mobile)).toBe(2);
+    expect(countSelectedTests(mixed, { kind: 'test', file: FILE, line: 8 }, mobile)).toBe(0);
+    expect(countSelectedTests(mixed, { kind: 'describe', file: FILE, line: 13 }, mobile)).toBe(1);
+    expect(countSelectedTests(mixed, { kind: 'file', file: FILE, line: null }, { projects: [''], source: 'single', updatedAt: null })).toBe(3);
   });
 });

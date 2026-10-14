@@ -61,5 +61,9 @@ the report is read only if it is a regular file (no symlink following).
 
 ## Out of scope for this feature (recorded for later rows)
 
-`--headed`, `--debug`, `--ui`, `--project`, `--trace`, `show-trace`, `codegen`,
-`--last-failed`.
+`--headed`, `--debug`, `--ui`, `--trace`, `show-trace`, `codegen`, `--last-failed`.
+
+`--project <name>` (one pair per selected project) was added by feature 005; see
+`specs/005-project-selection/contracts/project-selection.md`. The discovery report's
+`config.projects[].name` is read there as well, and spec entries that the JSON reporter
+repeats per project are merged into one DiscoveredTest.
