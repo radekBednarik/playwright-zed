@@ -97,7 +97,8 @@ are released in lockstep (same version, npm first, then the pin), do not plan a 
 skips the server publish.
 
 **Feature 005, project selection** (`specs/005-project-selection/`, branch
-`005-project-selection`, implemented 2026-10-14, not yet committed or merged): code action
+`005-project-selection`, implemented and committed 2026-10-14 as `3624328` + `f49d354`, owner
+verified all quickstart scenarios in Zed on 2026-10-14, not yet merged): code action
 picker `Playwright: [x] <project>` / `Playwright: Select all projects`, commands
 `playwright.toggleProject` and `playwright.selectAllProjects`, `--project` per selected
 project, first project selected by default (upstream parity, owner decision), per-user
@@ -107,10 +108,16 @@ default `lsp.playwright.settings.projects` forwarded by the shell's new
 `language_server_workspace_configuration`. No browser picker: Playwright rejects
 `--browser` when a config defines projects (owner decision 2026-10-14). The fixture has a
 second project `mobile` (Pixel 7, Chromium). Automated gate green (8 Rust tests, 152 vitest
-tests in 14 files). Pending: owner's manual Zed scenarios (quickstart sections 2 to 6,
-`verification.md`), then PR to `main`, then release 0.5.0 in lockstep (npm first, then the
-pin, which is still 0.4.0 on purpose; `extension.toml`, `Cargo.toml` and
-`server/package.json` already say 0.5.0). Registry PR #7975 stays at `v0.4.0`.
+tests in 14 files; 154 after the two owner findings below). Two findings during manual use,
+both fixed on the branch: Zed caches the code action menu per cursor position (refetched only
+on cursor move, buffer edit or server registration; `crates/editor/src/code_actions.rs`), so
+every selection change is confirmed by an Info notification and the quirk is documented
+(README, parity note); a Zed issue about it is the owner's to file. Failures of one test in
+several projects carry a `[<project>]` prefix in diagnostics and the error notification.
+Pending: PR from `005-project-selection` to `main` (owner merges with `!`), then release
+0.5.0 in lockstep (npm first, then the pin, which is still 0.4.0 on purpose; `extension.toml`,
+`Cargo.toml` and `server/package.json` already say 0.5.0; tag `v0.5.0`). Registry PR #7975
+stays at `v0.4.0` unless the owner decides to push the bump there.
 
 **Why:** the next session on another machine must not re-derive the state, re-ask about
 publishing, or prepare the registry PR unasked.

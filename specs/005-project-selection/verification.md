@@ -97,18 +97,20 @@ Test Files  14 passed (14)
       Tests  154 passed (154)
 ```
 
-## Manual verification in Zed (T032, T037): pending, owner's step
+## Manual verification in Zed (T032, T037): passed, owner, 2026-10-14
 
-Quickstart sections 2, 3, 4, 5 and 6 (`quickstart.md`) have not been run yet. They need the
-dev extension reinstalled after the Rust change (`zed: install dev extension`), Zed launched
-from a terminal that exports `PLAYWRIGHT_ZED_SERVER_ENTRY=<repo>/server/bin/playwright-zed-language-server.js`,
-and `"code_lens": "on"`. Record each scenario's outcome below before the PR is merged;
-constitution Principle V ties the parity row's `full` status to this record.
+The owner ran quickstart sections 2, 3, 4, 5 and 6 (`quickstart.md`) in Zed on 2026-10-14
+with the dev extension reinstalled after the Rust change (`zed: install dev extension`), Zed
+launched from a terminal exporting
+`PLAYWRIGHT_ZED_SERVER_ENTRY=<repo>/server/bin/playwright-zed-language-server.js`, the
+server built at commit `f49d354`, and `"code_lens": "on"`. All scenarios passed, including
+the two findings fixed along the way (T040 notification after each toggle, T041 project
+prefix in diagnostics). The parity row's `full` status rests on this record.
 
 | Section | Scenario | Outcome | Notes |
 |---------|----------|---------|-------|
-| 2 | Picker and run in two projects | pending | |
-| 3 | Memory across restart, dropped and restored project | pending | |
-| 4 | Settings default, unknown name warning, live change, chosen wins | pending | needs the reinstalled dev extension (Rust change) |
-| 5 | Lenses follow the selection on a scratch project | pending | |
-| 6 | Single-project config unchanged | pending | |
+| 2 | Picker and run in two projects | PASS | menu check marks at an unchanged cursor refresh on the next cursor move (Zed cache, T040); the notification names the selection at once |
+| 3 | Memory across restart, dropped and restored project | PASS | |
+| 4 | Settings default, unknown name warning, live change, chosen wins | PASS | exercised the shell's `language_server_workspace_configuration` |
+| 5 | Lenses follow the selection on a scratch project | PASS | |
+| 6 | Single-project config unchanged | PASS | |
