@@ -27,7 +27,7 @@ import {
 import { runList } from './discovery';
 import { allSelected, isTestSelected, parseProjectsSetting, resolveSelection, selectAll, toggleProject } from './selection';
 import { readSelections, stateDir, writeSelection } from './store';
-import { DISCOVERY_NOT_NOW, DISCOVERY_RUN, Reporter } from './reporting';
+import { DISCOVERY_NOT_NOW, DISCOVERY_RUN, Reporter, failureLabel } from './reporting';
 import { RunManager, summarize } from './runner';
 import { editorHasTrustGate } from './trust';
 import type { DiscoveredTest, PlaywrightConfig, ProjectSelection, RunRequest, RunTrigger, TestLocation, Workspace } from './types';
@@ -588,7 +588,7 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
     case 'failed': {
       reporter.progressEnd(request.id, progress, summarize(result.counts, result.durationMs));
       const first = result.failures[0];
-      reporter.showError(`Playwright: ${summarize(result.counts, result.durationMs)}${first ? `\n${first.title}: ${first.fullMessage}` : ''}`);
+      reporter.showError(`Playwright: ${summarize(result.counts, result.durationMs)}${first ? `\n${failureLabel(first)}: ${first.fullMessage}` : ''}`);
       const files = reporter.publishFailures(result.failures);
       if (files.length > 0) publishedFiles.set(ws.rootPath, new Set(files));
       return;

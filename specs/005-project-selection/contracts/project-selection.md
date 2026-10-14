@@ -53,6 +53,7 @@ selection change, in addition to after discovery.
 | `window/showMessage` Warning | settings name unknown names | `Playwright: setting "projects" names <names>, which <config> does not define; available: <names>` (once per distinct change) |
 | `window/showMessage` Warning | toggle refused | `Playwright: at least one project must stay selected` or `Playwright: <name> is not a project of <config>` |
 | `window/showMessage` Info | toggle or select all applied | `Playwright: projects for <config>: <names>` (Zed caches the code action menu per cursor position, so this is the immediate feedback) |
+| `textDocument/publishDiagnostics` | run failed, config with two or more projects | one Diagnostic per failing project entry of a spec, message `[<project>] <title>: <first error line>`; the Error notification's first failure carries the same prefix; single-project configs keep the unprefixed message |
 | `window/logMessage` | every selection change and reconcile | `playwright: projects for <config>: <names> (<source>)` |
 | `window/logMessage` | run start | the existing command line now shows `--project` flags |
 

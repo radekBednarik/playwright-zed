@@ -19,14 +19,14 @@ interface JsonSpec {
   line: number;
   column: number;
   ok?: boolean;
-  tests?: { results?: JsonResult[] }[];
+  tests?: { projectName?: string; status?: string; results?: JsonResult[] }[];
 }
 interface JsonSuite {
   specs?: JsonSpec[];
   suites?: JsonSuite[];
 }
 interface JsonRunReport {
-  config?: { rootDir?: string };
+  config?: { rootDir?: string; projects?: { name?: string }[] };
   stats?: Partial<RunCounts> & { duration?: number };
   suites?: JsonSuite[];
 }
@@ -37,10 +37,16 @@ export interface ParsedRun {
   durationMs: number | null;
 }
 
-/** Extracts counts and failures from a `--reporter=json` run report. */
+/**
+ * Extracts counts and failures from a `--reporter=json` run report. A spec carries one
+ * `tests[]` entry per project it ran in (and the reporter may repeat the spec per project),
+ * so failures are collected per failing project entry; the project name is kept when the
+ * config defines two or more projects, so the editor can tell the failures apart.
+ */
 export function parseRunReport(json: unknown): ParsedRun {
   const report = (json ?? {}) as JsonRunReport;
   const rootDir = report.config?.rootDir ?? '';
+  const multiProject = (report.config?.projects?.length ?? 0) > 1;
   const counts: RunCounts = {
     expected: report.stats?.expected ?? 0,
     unexpected: report.stats?.unexpected ?? 0,
@@ -52,20 +58,25 @@ export function parseRunReport(json: unknown): ParsedRun {
   const walk = (suite: JsonSuite) => {
     for (const spec of suite.specs ?? []) {
       if (spec.ok !== false) continue;
-      const result = (spec.tests ?? [])
-        .flatMap((t) => t.results ?? [])
-        .find((r) => r.error) ?? (spec.tests ?? []).flatMap((t) => t.results ?? []).at(-1);
-      const rawMessage = result?.error?.message ?? 'Test failed without an error message';
-      const fullMessage = stripAnsi(rawMessage).trim();
-      const loc = result?.error?.location;
-      failures.push({
-        file: loc?.file ?? path.resolve(rootDir, spec.file),
-        line: loc?.line ?? spec.line,
-        column: loc?.column ?? spec.column,
-        title: spec.title,
-        message: fullMessage.split('\n')[0] ?? fullMessage,
-        fullMessage,
-      });
+      const entries = spec.tests ?? [];
+      // Only the project entries that actually failed; a spec is `ok: false` as soon as one did.
+      const failing = entries.filter((t) => (t.results ?? []).some((r) => r.error) || t.status === 'unexpected');
+      for (const entry of failing.length > 0 ? failing : entries.slice(-1)) {
+        const results = entry.results ?? [];
+        const result = results.find((r) => r.error) ?? results.at(-1);
+        const rawMessage = result?.error?.message ?? 'Test failed without an error message';
+        const fullMessage = stripAnsi(rawMessage).trim();
+        const loc = result?.error?.location;
+        failures.push({
+          file: loc?.file ?? path.resolve(rootDir, spec.file),
+          line: loc?.line ?? spec.line,
+          column: loc?.column ?? spec.column,
+          title: spec.title,
+          project: multiProject && entry.projectName ? entry.projectName : null,
+          message: fullMessage.split('\n')[0] ?? fullMessage,
+          fullMessage,
+        });
+      }
     }
     for (const child of suite.suites ?? []) walk(child);
   };

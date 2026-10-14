@@ -94,6 +94,8 @@ export interface Failure {
   line: number;
   column: number;
   title: string;
+  /** Project the failing attempt ran in; null when the config has fewer than two projects (feature 005). */
+  project: string | null;
   /** ANSI-stripped first line of the error. */
   message: string;
   /** ANSI-stripped complete error text. */

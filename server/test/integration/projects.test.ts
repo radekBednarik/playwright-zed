@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { CONFIG, FIXTURE, MessageType, PASSING, SPEC_SOURCE, TestClient, configSource, removeTempProjects, trackTempDir, uriOf } from './helpers';
+import { CONFIG, FAILING, FIXTURE, MessageType, PASSING, SPEC_SOURCE, TestClient, configSource, removeTempProjects, trackTempDir, uriOf } from './helpers';
 
 const TOGGLE = 'playwright.toggleProject';
 const SELECT_ALL = 'playwright.selectAllProjects';
@@ -113,6 +113,20 @@ describe('project selection in the fixture (US1)', () => {
     await client.execute(TOGGLE, [{ uri: uriOf(PASSING), project: 'nope' }]);
     const warning = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Warning);
     expect(warning.message).toContain('nope is not a project of playwright.config.ts');
+  });
+
+  it('(i) names the project in each diagnostic and in the error notification', async () => {
+    // both projects are still selected after (f)
+    await client.execute(RUN_AT_CURSOR, [{ uri: uriOf(FAILING), line: 2 }]);
+    const error = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Error);
+    expect(error.message).toContain('2 failed');
+    expect(error.message).toContain('[chromium] fails on purpose: ');
+    const published = client.messages('textDocument/publishDiagnostics').filter((m) => m.params.uri === uriOf(FAILING) && m.params.diagnostics.length > 0);
+    const messages = published.flatMap((m) => m.params.diagnostics.map((d: any) => d.message as string)).sort();
+    expect(messages).toHaveLength(2);
+    expect(messages[0]).toMatch(/^\[chromium\] fails on purpose: /);
+    expect(messages[1]).toMatch(/^\[mobile\] fails on purpose: /);
+    expect(published.flatMap((m) => m.params.diagnostics.map((d: any) => d.range.start.line))).toEqual([3, 3]);
   });
 
   it('(h) offers the picker from the config file but not outside the workspace', async () => {

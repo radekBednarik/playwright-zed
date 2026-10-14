@@ -147,7 +147,8 @@ Notes:
   saved version runs.
 - Starting a run while one is in progress cancels the first one.
 - A failing test leaves an error marker at the failing line until you edit the file or run
-  again.
+  again. With two or more projects, each failing project gets its own marker and the
+  message starts with the project in brackets, for example `[mobile] adds numbers: ...`.
 - With several configuration files, the one nearest to the test file is used.
 - Playwright below v1.38 produces a single warning and disables running.
 

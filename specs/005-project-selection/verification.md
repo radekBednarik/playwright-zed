@@ -83,6 +83,20 @@ Test Files  14 passed (14)
       Tests  152 passed (152)
 ```
 
+## Owner finding during manual use (T041)
+
+A test failing in both projects showed two identical diagnostics. The JSON run report lists
+one `tests[]` entry per project (and repeats the spec per project), and the parser took one
+failure per spec. Now every failing project entry yields a Failure with its `project`, and
+diagnostics and the error notification carry a `[<project>]` prefix when the config defines
+two or more projects; single-project configs are unchanged (SC-004).
+
+```text
+$ cd server && npx vitest run
+Test Files  14 passed (14)
+      Tests  154 passed (154)
+```
+
 ## Manual verification in Zed (T032, T037): pending, owner's step
 
 Quickstart sections 2, 3, 4, 5 and 6 (`quickstart.md`) have not been run yet. They need the

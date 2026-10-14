@@ -12,6 +12,11 @@ import { pathToFileURL } from 'node:url';
 import type { Failure } from './types';
 
 export const DIAGNOSTIC_SOURCE = 'playwright';
+
+/** `[project] title` when the failure belongs to one of several projects, else the title. */
+export function failureLabel(failure: Pick<Failure, 'title' | 'project'>): string {
+  return failure.project ? `[${failure.project}] ${failure.title}` : failure.title;
+}
 export const DISCOVERY_RUN = 'Run discovery';
 export const DISCOVERY_NOT_NOW = 'Not now';
 export type DiscoveryAnswer = typeof DISCOVERY_RUN | typeof DISCOVERY_NOT_NOW;
@@ -87,7 +92,7 @@ export class Reporter {
         range: { start: { line, character }, end: { line, character: character + 1 } },
         severity: DiagnosticSeverity.Error,
         source: DIAGNOSTIC_SOURCE,
-        message: `${failure.title}: ${failure.message}`,
+        message: `${failureLabel(failure)}: ${failure.message}`,
       };
       const list = byFile.get(failure.file) ?? [];
       list.push(diagnostic);
