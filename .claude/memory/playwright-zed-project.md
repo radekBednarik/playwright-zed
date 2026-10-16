@@ -114,10 +114,15 @@ on cursor move, buffer edit or server registration; `crates/editor/src/code_acti
 every selection change is confirmed by an Info notification and the quirk is documented
 (README, parity note); a Zed issue about it is the owner's to file. Failures of one test in
 several projects carry a `[<project>]` prefix in diagnostics and the error notification.
-Pending: PR from `005-project-selection` to `main` (owner merges with `!`), then release
+Closed out 2026-10-16: all tasks ticked (T032/T037 were recorded as PASS but unticked;
+`/speckit-analyze` and `/speckit-converge` run, one contract row added as T042), fresh gate
+green (8 Rust, 154 vitest). **PR #4** (https://github.com/radekBednarik/playwright-zed/pull/4)
+opened 2026-10-16 from `005-project-selection` to `main`; owner merges with `!`. Then release
 0.5.0 in lockstep (npm first, then the pin, which is still 0.4.0 on purpose; `extension.toml`,
 `Cargo.toml` and `server/package.json` already say 0.5.0; tag `v0.5.0`). Registry PR #7975
-stays at `v0.4.0` unless the owner decides to push the bump there.
+stays at `v0.4.0` unless the owner decides to push the bump there. Note: the gitignored
+`.specify/feature.json` pins the feature dir for speckit scripts; set
+`SPECIFY_FEATURE_DIRECTORY=specs/<nnn>-<name>` when it points at an older feature.
 
 **Why:** the next session on another machine must not re-derive the state, re-ask about
 publishing, or prepare the registry PR unasked.
