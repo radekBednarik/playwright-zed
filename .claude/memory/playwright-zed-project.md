@@ -168,9 +168,29 @@ still prefer `partial` because the executing mark is a label, not a line backgro
 verified all 10 quickstart scenarios in Zed 1.24.2 on 2026-10-16 (recorded in
 `verification.md`, T035 ticked, all 36 tasks done, not yet committed). Committed as `c2591f6`, pushed,
 **PR #8** (https://github.com/radekBednarik/playwright-zed/pull/8) opened 2026-10-16; parity row
-stays `full` (owner decision 2026-10-16). Next: CI green, owner merges with
-`! gh pr merge 8 --squash --admin --delete-branch`, then a lockstep 0.6.0 release (MINOR, server
-first, then the pin), then the registry PR bump.
+stays `full` (owner decision 2026-10-16). CI green on PR #8 (all six checks, 2026-10-16
+evening). **State at end of 2026-10-16: PR #8 open, awaiting the owner's merge.** Resume
+procedure for the next session: (1) owner merges with `! gh pr merge 8 --squash --admin
+--delete-branch`, then `git checkout main && git pull && git branch -D 006-single-click-run-parity`
+locally; (2) lockstep release 0.6.0 (MINOR, a parity row moved to `full`): release branch, bump
+`server/package.json` to 0.6.0, owner publishes the server from their own terminal
+(`npm publish --otp=<code>` in `server/`), then bump `PINNED_SERVER_VERSION` in `src/lib.rs`,
+`extension.toml` and `Cargo.toml` to 0.6.0, `cargo test`, wasm build, release PR, merge, tag
+`v0.6.0` on the merge commit; (3) npm install path check in Zed (fresh terminal without
+`PLAYWRIGHT_ZED_SERVER_ENTRY`, `zed: install dev extension` rerun, look for 0.6.0 in
+`~/.local/share/zed/extensions/work/playwright-runner-lsp/package.json`), record in
+`specs/006-single-click-run-parity/verification.md`; (4) registry bump in `../zed-extensions`
+(stage the submodule at `v0.6.0` first, `version = "0.6.0"` in `extensions.toml`,
+`corepack pnpm@11 sort-extensions`, local `package-extensions` with Rust 1.90), owner pushes
+to `fork`, which updates registry PR #7975 (still no maintainer feedback as of 2026-10-16).
+Also pending from earlier: the 0.5.1 registry bump commit `b3be8f7` in `../zed-extensions` was
+prepared but, as far as recorded, not yet pushed by the owner; check `git -C ../zed-extensions
+log fork/playwright-runner-lsp..playwright-runner-lsp` before preparing 0.6.0 on top.
+`.specify/feature.json` points at `specs/006-single-click-run-parity`; a new feature starts
+with `/speckit-specify` (the Spec Kit 1.1.2 script creates the directory, the branch is made by
+hand). The sparse Zed source clone used for research lived in the session scratchpad and is
+gone; re-clone with `git clone --branch v1.24.2 --depth 1 --filter=blob:none --sparse` if
+Zed source evidence is needed again.
 Note: `create-new-feature.sh` in Spec Kit 1.1.2 no longer creates the git branch; it was
 created by hand.
 
