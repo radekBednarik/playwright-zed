@@ -118,13 +118,14 @@ Closed out 2026-10-16: all tasks ticked (T032/T037 were recorded as PASS but unt
 `/speckit-analyze` and `/speckit-converge` run, one contract row added as T042), fresh gate
 green (8 Rust, 154 vitest). **PR #4** (https://github.com/radekBednarik/playwright-zed/pull/4)
 merged by the owner with `! gh pr merge 4 --squash --admin --delete-branch` on 2026-10-16,
-CI green on the PR. **Release 0.5.0 in progress** (2026-10-16): the owner published server
-0.5.0 to npm (lockstep, npm first); the pin in `src/lib.rs` is bumped to 0.5.0 on `main`
-locally with `cargo test`, the wasm build and the Rust 1.90 registry build green. Left: npm
-propagation (registry still answered 0.4.0 minutes after publish), owner verifies the npm
-install path in Zed (reinstall dev extension, fresh terminal without the override, check
-`work/playwright-runner-lsp/package.json` says 0.5.0), record it in
-`specs/005-project-selection/verification.md`, push `main`, tag `v0.5.0`, push the tag. Registry PR #7975
+CI green on the PR. **Released 0.5.0** (2026-10-16): owner published server 0.5.0 to npm, pin bumped to 0.5.0,
+npm install path verified (Zed 1.24.2 started the server from the work directory, the
+installed binary discovered the fixture and ran a test, record in
+`specs/005-project-selection/verification.md`), tag `v0.5.0`. Gotcha found on the way:
+`~/.bashrc:157` still exports `PLAYWRIGHT_ZED_SERVER_ENTRY` (the zshrc copy is commented out),
+and Zed re-reads the login shell, so an npm-path check from a bash-launched Zed needs
+`SHELL=/bin/sh` or that line commented out. The Linux Zed is now 1.24.2.
+Registry PR #7975
 stays at `v0.4.0` unless the owner decides to push the bump there. Note: the gitignored
 `.specify/feature.json` pins the feature dir for speckit scripts; set
 `SPECIFY_FEATURE_DIRECTORY=specs/<nnn>-<name>` when it points at an older feature.

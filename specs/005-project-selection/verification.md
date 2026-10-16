@@ -114,3 +114,39 @@ prefix in diagnostics). The parity row's `full` status rests on this record.
 | 4 | Settings default, unknown name warning, live change, chosen wins | PASS | exercised the shell's `language_server_workspace_configuration` |
 | 5 | Lenses follow the selection on a scratch project | PASS | |
 | 6 | Single-project config unchanged | PASS | |
+
+## Release 0.5.0: npm install path (2026-10-16)
+
+The owner published `playwright-zed-language-server@0.5.0` (npm answered 0.5.0 about ten
+minutes later). The pin in `src/lib.rs` was bumped to 0.5.0 on `main`; `cargo test` (8 passed),
+`cargo build --release --target wasm32-wasip2` and the Rust 1.90 registry build all passed.
+
+Verification of the install path, same machine as above, Zed 1.24.2 (Linux, WSLg):
+`extension.wasm` rebuilt from the bumped source, the work directory
+`~/.local/share/zed/extensions/work/playwright-runner-lsp` removed, Zed started on the fixture
+from an environment without `PLAYWRIGHT_ZED_SERVER_ENTRY` (note: Zed re-reads the login
+shell's environment, and `~/.bashrc` still exports the override, so the check ran with
+`SHELL=/bin/sh`). `Zed.log` shows the server started from the work directory:
+
+```text
+[lsp] starting language server process. binary path: ".../node", args:
+["/home/radek/.local/share/zed/extensions/work/playwright-runner-lsp/node_modules/playwright-zed-language-server/bin/playwright-zed-language-server.js", "--stdio"]
+$ grep version ~/.local/share/zed/extensions/work/playwright-runner-lsp/node_modules/playwright-zed-language-server/package.json
+  "version": "0.5.0",
+```
+
+The installed binary was then driven over stdio with `clientInfo` `Zed` (a throwaway script
+using `vscode-jsonrpc`, not kept) on `fixtures/sample-project`:
+
+```text
+prompts: 0 (Zed trust gate, no consent question)
+discovered tests: 16 | projects: ["chromium","mobile"] | selected: ["chromium"] | source: default
+lenses in passing.spec.ts: 14 (2:▶ Run test, 7:▶ Run test, ...)
+code actions: Playwright: Run test at cursor | Playwright: Run file | Playwright: [x] chromium | Playwright: [ ] mobile | Playwright: Select all projects
+playwright.runAtCursor passing.spec.ts line 2:
+  playwright: run 1 (cursor, test) tests/passing.spec.ts:3 projects: chromium
+  Playwright: 1 passed, 0 failed, 0 skipped (0.6s)
+```
+
+PASS. Tag `v0.5.0` follows this record. Not repeated here: the full quickstart in the Zed
+UI, which the owner ran on 2026-10-14 against the same server source.
