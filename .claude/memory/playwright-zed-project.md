@@ -166,9 +166,11 @@ Playwright's `step.duration` then goes negative; the server clamps to 0 and the 
 test checks the longest step only. Parity row moved to `full` in `docs/parity.md` (owner may
 still prefer `partial` because the executing mark is a label, not a line background). Owner
 verified all 10 quickstart scenarios in Zed 1.24.2 on 2026-10-16 (recorded in
-`verification.md`, T035 ticked, all 36 tasks done, not yet committed). Next: PR from the
-branch (CI green, owner merges with `! gh pr merge --squash --admin --delete-branch`), then a
-lockstep 0.6.0 release (MINOR, server first, then the pin), then the registry PR bump.
+`verification.md`, T035 ticked, all 36 tasks done, not yet committed). Committed as `c2591f6`, pushed,
+**PR #8** (https://github.com/radekBednarik/playwright-zed/pull/8) opened 2026-10-16; parity row
+stays `full` (owner decision 2026-10-16). Next: CI green, owner merges with
+`! gh pr merge 8 --squash --admin --delete-branch`, then a lockstep 0.6.0 release (MINOR, server
+first, then the pin), then the registry PR bump.
 Note: `create-new-feature.sh` in Spec Kit 1.1.2 no longer creates the git branch; it was
 created by hand.
 
