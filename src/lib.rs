@@ -11,7 +11,7 @@
 pub const SERVER_PACKAGE: &str = "playwright-zed-language-server";
 
 /// Server version this shell was built against. Bump together with `server/package.json`.
-pub const PINNED_SERVER_VERSION: &str = "0.4.0";
+pub const PINNED_SERVER_VERSION: &str = "0.5.0";
 
 /// Environment variable that points at a local server entry during development.
 pub const DEV_SERVER_ENTRY_VAR: &str = "PLAYWRIGHT_ZED_SERVER_ENTRY";

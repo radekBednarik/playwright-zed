@@ -96,9 +96,9 @@ the README install section, set this state to `merged`; later updates follow
 are released in lockstep (same version, npm first, then the pin), do not plan a release that
 skips the server publish.
 
-**Feature 005, project selection** (`specs/005-project-selection/`, branch
-`005-project-selection`, implemented and committed 2026-10-14 as `3624328` + `f49d354`, owner
-verified all quickstart scenarios in Zed on 2026-10-14, not yet merged): code action
+**Feature 005, project selection** (`specs/005-project-selection/`, merged to `main` via
+PR #4 on 2026-10-16 as squash commit `00c9668`, branch deleted locally and on origin; owner
+verified all quickstart scenarios in Zed on 2026-10-14): code action
 picker `Playwright: [x] <project>` / `Playwright: Select all projects`, commands
 `playwright.toggleProject` and `playwright.selectAllProjects`, `--project` per selected
 project, first project selected by default (upstream parity, owner decision), per-user
@@ -117,9 +117,14 @@ several projects carry a `[<project>]` prefix in diagnostics and the error notif
 Closed out 2026-10-16: all tasks ticked (T032/T037 were recorded as PASS but unticked;
 `/speckit-analyze` and `/speckit-converge` run, one contract row added as T042), fresh gate
 green (8 Rust, 154 vitest). **PR #4** (https://github.com/radekBednarik/playwright-zed/pull/4)
-opened 2026-10-16 from `005-project-selection` to `main`; owner merges with `!`. Then release
-0.5.0 in lockstep (npm first, then the pin, which is still 0.4.0 on purpose; `extension.toml`,
-`Cargo.toml` and `server/package.json` already say 0.5.0; tag `v0.5.0`). Registry PR #7975
+merged by the owner with `! gh pr merge 4 --squash --admin --delete-branch` on 2026-10-16,
+CI green on the PR. **Release 0.5.0 in progress** (2026-10-16): the owner published server
+0.5.0 to npm (lockstep, npm first); the pin in `src/lib.rs` is bumped to 0.5.0 on `main`
+locally with `cargo test`, the wasm build and the Rust 1.90 registry build green. Left: npm
+propagation (registry still answered 0.4.0 minutes after publish), owner verifies the npm
+install path in Zed (reinstall dev extension, fresh terminal without the override, check
+`work/playwright-runner-lsp/package.json` says 0.5.0), record it in
+`specs/005-project-selection/verification.md`, push `main`, tag `v0.5.0`, push the tag. Registry PR #7975
 stays at `v0.4.0` unless the owner decides to push the bump there. Note: the gitignored
 `.specify/feature.json` pins the feature dir for speckit scripts; set
 `SPECIFY_FEATURE_DIRECTORY=specs/<nnn>-<name>` when it points at an older feature.
