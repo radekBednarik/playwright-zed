@@ -20,8 +20,20 @@ This is an independent community project, not affiliated with, endorsed by, or m
 Microsoft or the Playwright team. "Playwright" is a trademark of Microsoft Corporation. The
 package contains no Playwright code and does not bundle Playwright.
 
+Project selection: in a configuration with two or more projects the server offers one code
+action per project (`Playwright: [x] chromium`, `Playwright: [ ] firefox`, ...) backed by the
+command `playwright.toggleProject` (`[{ uri, project }]`), plus `Playwright: Select all
+projects` (`playwright.selectAllProjects`, `[{ uri }]`). Runs pass `--project <name>` per
+selected project unless every project is selected. The choice is stored per configuration
+file in `project-selection.json` under the user's state directory (`$XDG_STATE_HOME` or
+`~/.local/state`, `~/Library/Application Support`, `%LOCALAPPDATA%`, subdirectory
+`playwright-zed-language-server`; override with `PLAYWRIGHT_ZED_STATE_DIR`). Clients that
+support `workspace/configuration` may answer with `{ "projects": ["chromium", "firefox"] }`
+as a default for configurations without a stored choice; `workspace/didChangeConfiguration`
+with the same shape applies live.
+
 **Work in progress.** This is the first slice of the extension (detection, run at cursor,
-run file, re-run last). Expect breaking changes between minor versions; the extension pins the
+run file, re-run last, project selection). Expect breaking changes between minor versions; the extension pins the
 exact server version it was built against.
 
 **Built with AI assistance.** The server, like the rest of the extension, is developed with

@@ -96,6 +96,34 @@ the README install section, set this state to `merged`; later updates follow
 are released in lockstep (same version, npm first, then the pin), do not plan a release that
 skips the server publish.
 
+**Feature 005, project selection** (`specs/005-project-selection/`, branch
+`005-project-selection`, implemented and committed 2026-10-14 as `3624328` + `f49d354`, owner
+verified all quickstart scenarios in Zed on 2026-10-14, not yet merged): code action
+picker `Playwright: [x] <project>` / `Playwright: Select all projects`, commands
+`playwright.toggleProject` and `playwright.selectAllProjects`, `--project` per selected
+project, first project selected by default (upstream parity, owner decision), per-user
+memory in `project-selection.json` under the platform state directory (override
+`PLAYWRIGHT_ZED_STATE_DIR`; owner decision, Zed offers no store), and a `zed-only` folder
+default `lsp.playwright.settings.projects` forwarded by the shell's new
+`language_server_workspace_configuration`. No browser picker: Playwright rejects
+`--browser` when a config defines projects (owner decision 2026-10-14). The fixture has a
+second project `mobile` (Pixel 7, Chromium). Automated gate green (8 Rust tests, 152 vitest
+tests in 14 files; 154 after the two owner findings below). Two findings during manual use,
+both fixed on the branch: Zed caches the code action menu per cursor position (refetched only
+on cursor move, buffer edit or server registration; `crates/editor/src/code_actions.rs`), so
+every selection change is confirmed by an Info notification and the quirk is documented
+(README, parity note); a Zed issue about it is the owner's to file. Failures of one test in
+several projects carry a `[<project>]` prefix in diagnostics and the error notification.
+Closed out 2026-10-16: all tasks ticked (T032/T037 were recorded as PASS but unticked;
+`/speckit-analyze` and `/speckit-converge` run, one contract row added as T042), fresh gate
+green (8 Rust, 154 vitest). **PR #4** (https://github.com/radekBednarik/playwright-zed/pull/4)
+opened 2026-10-16 from `005-project-selection` to `main`; owner merges with `!`. Then release
+0.5.0 in lockstep (npm first, then the pin, which is still 0.4.0 on purpose; `extension.toml`,
+`Cargo.toml` and `server/package.json` already say 0.5.0; tag `v0.5.0`). Registry PR #7975
+stays at `v0.4.0` unless the owner decides to push the bump there. Note: the gitignored
+`.specify/feature.json` pins the feature dir for speckit scripts; set
+`SPECIFY_FEATURE_DIRECTORY=specs/<nnn>-<name>` when it points at an older feature.
+
 **Why:** the next session on another machine must not re-derive the state, re-ask about
 publishing, or prepare the registry PR unasked.
 

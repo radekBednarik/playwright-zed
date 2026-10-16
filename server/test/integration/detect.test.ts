@@ -29,6 +29,10 @@ describe('workspace detection (US1)', () => {
       expect(config.testDirs).toEqual([path.join(FIXTURE, 'tests')]);
       expect(config.discoveryState).toBe('idle');
       expect(config.testCount).toBe(16);
+      // feature 005: two projects, first one selected by default
+      expect(config.projects).toEqual(['chromium', 'mobile']);
+      expect(config.selectedProjects).toEqual(['chromium']);
+      expect(config.selectionSource).toBe('default');
       expect(status[0]).toMatchObject({ discovery: 'enabled', discoveryAsked: true });
       const prompts = client.prompts();
       expect(prompts).toHaveLength(1);

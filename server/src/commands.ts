@@ -1,11 +1,21 @@
 import * as path from 'node:path';
-import type { DiscoveredTest, PlaywrightConfig, TestLocation } from './types';
+import { isTestSelected, projectArgs } from './selection';
+import type { DiscoveredTest, PlaywrightConfig, ProjectSelection, TestLocation } from './types';
 
 export const COMMAND_RUN_AT_CURSOR = 'playwright.runAtCursor';
 export const COMMAND_RUN_FILE = 'playwright.runFile';
 export const COMMAND_RERUN_LAST = 'playwright.rerunLast';
 export const COMMAND_ENABLE_DISCOVERY = 'playwright.enableDiscovery';
-export const ALL_COMMANDS = [COMMAND_RUN_AT_CURSOR, COMMAND_RUN_FILE, COMMAND_RERUN_LAST, COMMAND_ENABLE_DISCOVERY];
+export const COMMAND_TOGGLE_PROJECT = 'playwright.toggleProject';
+export const COMMAND_SELECT_ALL_PROJECTS = 'playwright.selectAllProjects';
+export const ALL_COMMANDS = [
+  COMMAND_RUN_AT_CURSOR,
+  COMMAND_RUN_FILE,
+  COMMAND_RERUN_LAST,
+  COMMAND_ENABLE_DISCOVERY,
+  COMMAND_TOGGLE_PROJECT,
+  COMMAND_SELECT_ALL_PROJECTS,
+];
 
 /**
  * Resolves what the cursor points at (data-model "TestLocation").
@@ -45,16 +55,24 @@ export function resolveTestLocation(tests: DiscoveredTest[], file: string, curso
   return { kind: 'file', file, line: null };
 }
 
-/** CLI arguments for a run, per contracts/playwright-cli.md. */
-export function buildRunArgs(location: TestLocation, config: PlaywrightConfig): string[] {
+/**
+ * CLI arguments for a run, per contracts/playwright-cli.md and feature 005's
+ * contracts/project-selection.md: `--project <name>` per selected project unless every
+ * project of the config is selected.
+ */
+export function buildRunArgs(location: TestLocation, config: PlaywrightConfig, projects: string[] = []): string[] {
   let target = path.relative(config.configDir, location.file);
   if (location.kind !== 'file' && location.line !== null) target = `${target}:${location.line}`;
-  return ['test', target, '-c', config.configPath, '--reporter=list,json'];
+  return ['test', target, '-c', config.configPath, '--reporter=list,json', ...projectArgs(projects, config.projects ?? [])];
 }
 
-/** Number of discovered tests a location selects, used for progress messages. */
-export function countSelectedTests(tests: DiscoveredTest[], location: TestLocation): number {
-  const inFile = tests.filter((t) => t.file === location.file);
+/**
+ * Number of discovered specs a location selects, used for progress messages. With a selection,
+ * only specs that run in at least one selected project count; the count never multiplies by
+ * the number of projects.
+ */
+export function countSelectedTests(tests: DiscoveredTest[], location: TestLocation, selection?: ProjectSelection): number {
+  const inFile = tests.filter((t) => t.file === location.file && (!selection || isTestSelected(t, selection)));
   if (location.kind === 'file') return inFile.length;
   if (location.kind === 'test') return inFile.filter((t) => t.line === location.line).length;
   return inFile.filter((t) => t.describeLines.includes(location.line as number)).length;

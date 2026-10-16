@@ -44,8 +44,28 @@ describe('parseListReport', () => {
   });
 
   it('tolerates an empty or malformed report', () => {
-    expect(parseListReport(null)).toEqual({ rootDir: '', testDirs: [], tests: [] });
+    expect(parseListReport(null)).toEqual({ rootDir: '', testDirs: [], projects: [], tests: [] });
     expect(parseListReport({ suites: [] }).tests).toEqual([]);
+  });
+
+  it('merges the per-project spec entries of one test into one DiscoveredTest (feature 005)', () => {
+    const spec = (project: string) => ({ title: 'adds', file: 'a.spec.ts', line: 3, column: 5, tests: [{ projectName: project }] });
+    const two = {
+      config: { rootDir: '/r', projects: [{ name: 'chromium', testDir: '/r' }, { name: 'mobile', testDir: '/r' }] },
+      suites: [{ title: 'a.spec.ts', file: 'a.spec.ts', line: 0, column: 0, specs: [spec('chromium'), spec('mobile'), { ...spec('mobile'), title: 'other' }] }],
+    };
+    const parsed = parseListReport(two);
+    expect(parsed.tests).toHaveLength(2);
+    expect(parsed.tests[0]).toMatchObject({ title: 'adds', projects: ['chromium', 'mobile'] });
+    expect(parsed.tests[1]).toMatchObject({ title: 'other', projects: ['mobile'] });
+  });
+
+  it('lists the project names in report order (feature 005)', () => {
+    expect(parsed.projects).toEqual(['chromium']);
+    const two = { config: { rootDir: '/r', projects: [{ name: 'chromium', testDir: '/r/tests' }, { name: 'mobile', testDir: '/r/tests' }] }, suites: [] };
+    expect(parseListReport(two).projects).toEqual(['chromium', 'mobile']);
+    expect(parseListReport({ config: { rootDir: '/r', projects: [{ testDir: '/r' }] }, suites: [] }).projects).toEqual(['']);
+    expect(parseListReport({ suites: [] }).projects).toEqual([]);
   });
 });
 
@@ -60,6 +80,9 @@ function fakeConfig(): PlaywrightConfig {
     testDirs: [],
     tests: [],
     discoveryState: 'idle',
+    projects: [],
+    selection: { projects: [], source: 'single', updatedAt: null },
+    noticeKey: null,
   };
 }
 

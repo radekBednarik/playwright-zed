@@ -13,12 +13,24 @@ import {
   WorkspaceFolder,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { ALL_COMMANDS, COMMAND_ENABLE_DISCOVERY, COMMAND_RERUN_LAST, COMMAND_RUN_AT_CURSOR, COMMAND_RUN_FILE, countSelectedTests, resolveTestLocation } from './commands';
+import {
+  ALL_COMMANDS,
+  COMMAND_ENABLE_DISCOVERY,
+  COMMAND_RERUN_LAST,
+  COMMAND_RUN_AT_CURSOR,
+  COMMAND_RUN_FILE,
+  COMMAND_SELECT_ALL_PROJECTS,
+  COMMAND_TOGGLE_PROJECT,
+  countSelectedTests,
+  resolveTestLocation,
+} from './commands';
 import { runList } from './discovery';
-import { DISCOVERY_NOT_NOW, DISCOVERY_RUN, Reporter } from './reporting';
+import { allSelected, isTestSelected, parseProjectsSetting, resolveSelection, selectAll, toggleProject } from './selection';
+import { readSelections, stateDir, writeSelection } from './store';
+import { DISCOVERY_NOT_NOW, DISCOVERY_RUN, Reporter, failureLabel } from './reporting';
 import { RunManager, summarize } from './runner';
 import { editorHasTrustGate } from './trust';
-import type { PlaywrightConfig, RunRequest, RunTrigger, TestLocation, Workspace } from './types';
+import type { DiscoveredTest, PlaywrightConfig, ProjectSelection, RunRequest, RunTrigger, TestLocation, Workspace } from './types';
 import { formatVersion } from './version';
 import { buildConfig, configForFile, findConfigs, isConfigFile, isUnderTestDirs } from './workspace';
 
@@ -42,6 +54,12 @@ const pendingFolders: { folder: WorkspaceFolder; fromWorkspaceFolders: boolean }
 let editorTrustGate = false;
 /** Client name and version for log lines, from `initialize.params.clientInfo`. */
 let clientLabel = 'the editor';
+/** Feature 005: the `projects` default from the editor settings, null when absent. */
+let settingsDefault: string[] | null = null;
+/** True when the client answers `workspace/configuration` (feature 005 settings default). */
+let clientSupportsConfiguration = false;
+/** Avoids repeating the malformed-setting warning for the same value. */
+let invalidSettingWarned = false;
 
 function toPath(uri: string): string | null {
   try {
@@ -80,7 +98,56 @@ async function discoverConfig(config: PlaywrightConfig): Promise<void> {
     reporter.showWarning(`Playwright: test discovery failed for ${path.basename(config.configPath)}; see the language server log for the command and error.`);
   } else {
     reporter.info(`playwright: discovered ${config.tests.length} test(s) via ${config.configPath}`);
+    reconcileSelection(config);
   }
+}
+
+/**
+ * Feature 005: reconciles the project selection with the reported project list after
+ * discovery (data-model.md "Reconciliation"): the remembered choice from the per-user store,
+ * else the settings default, else the first project. Notices are shown once per distinct
+ * change; the store is never written here.
+ */
+function reconcileSelection(config: PlaywrightConfig): void {
+  const stored = readStoredSelection(config.configPath);
+  const { selection, notice } = resolveSelection(config.projects, stored?.projects ?? null, settingsDefault, stored?.updatedAt ?? null);
+  config.selection = selection;
+  logSelection(config);
+  const key = `${notice.dropped.join(',')}|${notice.unknown.join(',')}`;
+  const changed = key !== config.noticeKey;
+  config.noticeKey = key;
+  if (!changed) return;
+  const name = path.basename(config.configPath);
+  const names = selection.projects.join(', ');
+  if (notice.dropped.length > 0) {
+    reporter.showInfo(`Playwright: project(s) ${notice.dropped.join(', ')} no longer exist in ${name}; selection is now ${names}`);
+  }
+  if (notice.unknown.length > 0) {
+    reporter.showWarning(
+      `Playwright: setting "projects" names ${notice.unknown.join(', ')} which ${name} does not define; available: ${config.projects.join(', ')}`,
+    );
+  }
+}
+
+function readStoredSelection(configPath: string): { projects: string[]; updatedAt: string } | null {
+  try {
+    return readSelections(stateDir())[configPath] ?? null;
+  } catch (error) {
+    reporter.log(`playwright: could not read ${stateDir()}: ${(error as Error).message}`);
+    return null;
+  }
+}
+
+function persistSelection(config: PlaywrightConfig): void {
+  try {
+    writeSelection(stateDir(), config.configPath, config.selection.projects);
+  } catch (error) {
+    reporter.log(`playwright: could not remember the project selection in ${stateDir()}: ${(error as Error).message}`);
+  }
+}
+
+function logSelection(config: PlaywrightConfig): void {
+  reporter.info(`playwright: projects for ${config.configPath}: ${config.selection.projects.join(', ')} (${config.selection.source})`);
 }
 
 async function discoverWorkspace(ws: Workspace): Promise<void> {
@@ -231,6 +298,7 @@ function removeWorkspace(folder: WorkspaceFolder): void {
 
 connection.onInitialize((params: InitializeParams): InitializeResult => {
   editorTrustGate = editorHasTrustGate(params.clientInfo);
+  clientSupportsConfiguration = params.capabilities.workspace?.configuration === true;
   if (params.clientInfo) clientLabel = `${params.clientInfo.name} ${params.clientInfo.version ?? ''}`.trim();
   if (params.workspaceFolders) {
     pendingFolders.push(...params.workspaceFolders.map((folder) => ({ folder, fromWorkspaceFolders: true })));
@@ -250,8 +318,12 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 
 connection.onInitialized(() => {
   void (async () => {
+    await loadSettings();
     for (const { folder, fromWorkspaceFolders } of pendingFolders.splice(0)) await addWorkspace(folder, fromWorkspaceFolders);
   })();
+  connection.onDidChangeConfiguration((change) => {
+    void applySettings(change.settings);
+  });
   try {
     connection.workspace.onDidChangeWorkspaceFolders((event) => {
       for (const folder of event.removed) removeWorkspace(folder);
@@ -263,6 +335,53 @@ connection.onInitialized(() => {
     // client does not support workspace folder notifications
   }
 });
+
+// ---------------------------------------------------------------------------
+// Editor settings (feature 005): the `projects` default
+// ---------------------------------------------------------------------------
+
+/** Asks the client for the whole settings object once; clients without support have no default. */
+async function loadSettings(): Promise<void> {
+  if (!clientSupportsConfiguration) return;
+  try {
+    const value = (await connection.workspace.getConfiguration()) as unknown;
+    await applySettings(value);
+  } catch (error) {
+    reporter.log(`playwright: could not read the editor settings: ${(error as Error).message}`);
+  }
+}
+
+/**
+ * Applies `{ projects: [...] }` from `workspace/configuration` or `didChangeConfiguration`.
+ * Configs whose selection came from the default or from settings are re-resolved; remembered
+ * and chosen selections keep.
+ */
+async function applySettings(value: unknown): Promise<void> {
+  const raw = value && typeof value === 'object' ? (value as { projects?: unknown }).projects : undefined;
+  const parsed = parseProjectsSetting(raw);
+  if (parsed.invalid) {
+    if (!invalidSettingWarned) reporter.showWarning('Playwright: setting "projects" must be a list of project names');
+    invalidSettingWarned = true;
+  } else {
+    invalidSettingWarned = false;
+  }
+  const before = JSON.stringify(settingsDefault);
+  settingsDefault = parsed.projects;
+  if (before === JSON.stringify(settingsDefault)) return;
+  reporter.info(`playwright: settings default projects: ${settingsDefault ? settingsDefault.join(', ') : 'none'}`);
+  let changed = false;
+  for (const ws of workspaces.values()) {
+    if (ws.discovery !== 'enabled') continue;
+    for (const config of ws.configs) {
+      if (!config.supported || config.projects.length === 0) continue;
+      if (config.selection.source !== 'default' && config.selection.source !== 'settings') continue;
+      const previous = JSON.stringify(config.selection.projects);
+      reconcileSelection(config);
+      if (previous !== JSON.stringify(config.selection.projects)) changed = true;
+    }
+  }
+  if (changed) await reporter.refreshCodeLenses();
+}
 
 // ---------------------------------------------------------------------------
 // Document tracking: dirty flag and diagnostics clearing on edit
@@ -347,6 +466,24 @@ function testFileContext(uri: string): { ws: Workspace | null; ctx: TestFileCont
   return { ws, ctx: { ws, config, file } };
 }
 
+/** Tests of `config` in `file` that run in at least one selected project (feature 005). */
+function selectedTests(config: PlaywrightConfig, file: string): DiscoveredTest[] {
+  return config.tests.filter((t) => t.file === file && isTestSelected(t, config.selection));
+}
+
+/**
+ * The config that owns any served document under its directory, when the workspace's discovery
+ * is enabled. Used for the project picker, which need not be opened from a test file.
+ */
+function configForDocument(uri: string): { ws: Workspace; config: PlaywrightConfig } | null {
+  const file = toPath(uri);
+  if (!file) return null;
+  const ws = workspaceForFile(file);
+  if (!ws || ws.discovery !== 'enabled') return null;
+  const config = configForFile(ws, file);
+  return config ? { ws, config } : null;
+}
+
 function action(title: string, command: string, args: unknown[]): CodeAction {
   return { title, kind: CODE_ACTION_KIND as CodeActionKind, command: { title, command, arguments: args } };
 }
@@ -359,12 +496,23 @@ connection.onCodeAction((params) => {
   const actions: CodeAction[] = [];
   if (ctx) {
     const line0 = params.range.start.line;
-    const location = resolveTestLocation(ctx.config.tests, ctx.file, line0 + 1);
+    const location = resolveTestLocation(selectedTests(ctx.config, ctx.file), ctx.file, line0 + 1);
     if (location.kind === 'test') actions.push(action('Playwright: Run test at cursor', COMMAND_RUN_AT_CURSOR, [{ uri, line: line0 }]));
     else if (location.kind === 'describe') actions.push(action('Playwright: Run describe at cursor', COMMAND_RUN_AT_CURSOR, [{ uri, line: line0 }]));
     actions.push(action('Playwright: Run file', COMMAND_RUN_FILE, [{ uri }]));
   }
   if (ws?.lastRun) actions.push(action('Playwright: Re-run last', COMMAND_RERUN_LAST, [{ uri }]));
+  // Feature 005: the project picker, one entry per project, from any served file of the config.
+  const owner = configForDocument(uri);
+  if (owner && owner.config.projects.length >= 2) {
+    for (const name of owner.config.projects) {
+      const on = owner.config.selection.projects.includes(name);
+      actions.push(action(`Playwright: [${on ? 'x' : ' '}] ${name}`, COMMAND_TOGGLE_PROJECT, [{ uri, project: name }]));
+    }
+    if (!allSelected(owner.config.selection, owner.config.projects)) {
+      actions.push(action('Playwright: Select all projects', COMMAND_SELECT_ALL_PROJECTS, [{ uri }]));
+    }
+  }
   return actions;
 });
 
@@ -375,8 +523,7 @@ connection.onCodeLens((params) => {
   const lenses: CodeLens[] = [];
   const testLines = new Set<number>();
   const describeLines = new Set<number>();
-  for (const test of ctx.config.tests) {
-    if (test.file !== ctx.file) continue;
+  for (const test of selectedTests(ctx.config, ctx.file)) {
     testLines.add(test.line);
     for (const d of test.describeLines) describeLines.add(d);
   }
@@ -395,23 +542,32 @@ connection.onCodeLens((params) => {
 // ---------------------------------------------------------------------------
 
 async function startRun(ws: Workspace, location: TestLocation, config: PlaywrightConfig, trigger: RunTrigger): Promise<void> {
+  const displayFile = path.relative(config.configDir, location.file);
+  const target = location.line === null ? displayFile : `${displayFile}:${location.line}`;
+  const multiProject = config.projects.length >= 2;
+  // Count of discovered specs in the target that run in a selected project (feature 005).
+  const count = countSelectedTests(config.tests, location, config.selection);
+  if (count === 0 && multiProject) {
+    reporter.showWarning(
+      `Playwright: no tests in ${target} run in the selected project(s) ${config.selection.projects.join(', ')}; change the selection from the code actions menu.`,
+    );
+    return;
+  }
+
   const manager = managerFor(ws);
   const uri = pathToFileURL(location.file).toString();
   const dirty = dirtyUris.has(uri);
-  const request: RunRequest = { id: manager.nextId(), location, config, trigger, startedAt: new Date().toISOString(), dirty };
+  const request: RunRequest = { id: manager.nextId(), location, config, trigger, startedAt: new Date().toISOString(), dirty, projects: [...config.selection.projects] };
   ws.lastRun = request;
 
-  const displayFile = path.relative(config.configDir, location.file);
   if (dirty) reporter.showWarning(`${displayFile} has unsaved changes; running the saved version`);
 
   const previouslyPublished = publishedFiles.get(ws.rootPath) ?? new Set<string>();
   reporter.clearDiagnostics(new Set([location.file, ...previouslyPublished]));
   publishedFiles.delete(ws.rootPath);
 
-  const count = countSelectedTests(config.tests, location);
-  const progress = await reporter.progressBegin(request.id, count, displayFile);
-  const target = location.line === null ? displayFile : `${displayFile}:${location.line}`;
-  reporter.log(`playwright: run ${request.id} (${trigger}, ${location.kind}) ${target}`);
+  const progress = await reporter.progressBegin(request.id, count, displayFile, multiProject ? request.projects : []);
+  reporter.log(`playwright: run ${request.id} (${trigger}, ${location.kind}) ${target} projects: ${request.projects.join(', ')}`);
 
   const result = await manager.start(request);
   reporter.log(`playwright: run ${request.id} command: ${result.command}\nplaywright: run ${request.id} cwd: ${config.configDir}\n${result.rawOutput.trimEnd()}`);
@@ -432,7 +588,7 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
     case 'failed': {
       reporter.progressEnd(request.id, progress, summarize(result.counts, result.durationMs));
       const first = result.failures[0];
-      reporter.showError(`Playwright: ${summarize(result.counts, result.durationMs)}${first ? `\n${first.title}: ${first.fullMessage}` : ''}`);
+      reporter.showError(`Playwright: ${summarize(result.counts, result.durationMs)}${first ? `\n${failureLabel(first)}: ${first.fullMessage}` : ''}`);
       const files = reporter.publishFailures(result.failures);
       if (files.length > 0) publishedFiles.set(ws.rootPath, new Set(files));
       return;
@@ -471,7 +627,7 @@ async function runAtCursor(uri: string, line0: number): Promise<void> {
   if (gated) return refuseNotEnabled(gated);
   const { ctx } = testFileContext(uri);
   if (!ctx) return notPlaywright(uri);
-  const location = resolveTestLocation(ctx.config.tests, ctx.file, line0 + 1);
+  const location = resolveTestLocation(selectedTests(ctx.config, ctx.file), ctx.file, line0 + 1);
   await startRun(ctx.ws, location, ctx.config, 'cursor');
 }
 
@@ -503,8 +659,48 @@ async function rerunLast(uri?: string): Promise<void> {
   await startRun(ws, location, config, 'rerun');
 }
 
+/**
+ * Feature 005: applies a new selection, logs it, remembers it, refreshes lenses and confirms
+ * the new state in a notification. The notification matters in Zed: its code action menu is
+ * cached per cursor position and refetched only when the cursor moves or the buffer changes
+ * (`crates/editor/src/code_actions.rs`), so reopening the menu at the same spot still shows
+ * the check marks from before the toggle.
+ */
+async function applySelectionChange(config: PlaywrightConfig, selection: ProjectSelection): Promise<void> {
+  config.selection = selection;
+  logSelection(config);
+  persistSelection(config);
+  reporter.showInfo(`Playwright: projects for ${path.basename(config.configPath)}: ${selection.projects.join(', ')}`);
+  await reporter.refreshCodeLenses();
+}
+
+async function toggleProjectCommand(uri: string, project: string): Promise<void> {
+  const gated = gatedWorkspace(uri);
+  if (gated) return refuseNotEnabled(gated);
+  const owner = configForDocument(uri);
+  if (!owner) return notPlaywright(uri);
+  const result = toggleProject(owner.config.selection, owner.config.projects, project);
+  if (!result.ok) {
+    reporter.showWarning(
+      result.refusal === 'last'
+        ? 'Playwright: at least one project must stay selected'
+        : `Playwright: ${project} is not a project of ${path.basename(owner.config.configPath)}`,
+    );
+    return;
+  }
+  await applySelectionChange(owner.config, result.selection);
+}
+
+async function selectAllProjectsCommand(uri: string): Promise<void> {
+  const gated = gatedWorkspace(uri);
+  if (gated) return refuseNotEnabled(gated);
+  const owner = configForDocument(uri);
+  if (!owner) return notPlaywright(uri);
+  await applySelectionChange(owner.config, selectAll(owner.config.projects));
+}
+
 connection.onExecuteCommand(async (params) => {
-  const arg = (params.arguments?.[0] ?? {}) as { uri?: string; line?: number };
+  const arg = (params.arguments?.[0] ?? {}) as { uri?: string; line?: number; project?: string };
   try {
     switch (params.command) {
       case COMMAND_RUN_AT_CURSOR:
@@ -517,6 +713,14 @@ connection.onExecuteCommand(async (params) => {
         break;
       case COMMAND_RERUN_LAST:
         await rerunLast(arg.uri);
+        break;
+      case COMMAND_TOGGLE_PROJECT:
+        if (typeof arg.uri === 'string' && typeof arg.project === 'string') await toggleProjectCommand(arg.uri, arg.project);
+        else reporter.showError('Playwright: toggle project needs a document and a project name');
+        break;
+      case COMMAND_SELECT_ALL_PROJECTS:
+        if (typeof arg.uri === 'string') await selectAllProjectsCommand(arg.uri);
+        else reporter.showError('Playwright: select all projects needs a document');
         break;
       case COMMAND_ENABLE_DISCOVERY: {
         const file = typeof arg.uri === 'string' ? toPath(arg.uri) : null;
@@ -551,6 +755,9 @@ connection.onRequest(STATUS_REQUEST, () =>
       testDirs: c.testDirs,
       discoveryState: c.discoveryState,
       testCount: c.tests.length,
+      projects: c.projects,
+      selectedProjects: c.selection.projects,
+      selectionSource: c.selection.source,
     })),
   })),
 );

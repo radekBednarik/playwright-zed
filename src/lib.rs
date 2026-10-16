@@ -32,6 +32,15 @@ pub fn server_entry(workdir: &str) -> String {
     )
 }
 
+/// Feature 005: the `lsp.playwright.settings` object is forwarded to the server as its
+/// workspace configuration. Only a JSON object is meaningful there; anything else (a user
+/// typo such as `"settings": 5`) is dropped so the server sees "no settings".
+pub fn forward_settings(
+    settings: Option<zed_extension_api::serde_json::Value>,
+) -> Option<zed_extension_api::serde_json::Value> {
+    settings.filter(|value| value.is_object())
+}
+
 /// Extracts the development override from a shell environment, ignoring empty values.
 pub fn dev_server_entry_from_env(env: &[(String, String)]) -> Option<String> {
     env.iter()
@@ -73,6 +82,16 @@ mod tests {
     }
 
     #[test]
+    fn settings_are_forwarded_only_when_they_are_an_object() {
+        use zed_extension_api::serde_json::json;
+        assert_eq!(forward_settings(None), None);
+        assert_eq!(forward_settings(Some(json!(5))), None);
+        assert_eq!(forward_settings(Some(json!(["chromium"]))), None);
+        let object = json!({ "projects": ["chromium", "mobile"] });
+        assert_eq!(forward_settings(Some(object.clone())), Some(object));
+    }
+
+    #[test]
     fn dev_override_is_read_from_shell_env() {
         let env = vec![
             ("PATH".to_string(), "/usr/bin".to_string()),
@@ -94,8 +113,8 @@ mod tests {
 
 mod extension {
     use super::{
-        dev_server_entry_from_env, server_entry, version_differs, PINNED_SERVER_VERSION,
-        SERVER_PACKAGE,
+        dev_server_entry_from_env, forward_settings, server_entry, version_differs,
+        PINNED_SERVER_VERSION, SERVER_PACKAGE,
     };
     use std::fs;
     use zed_extension_api::{self as zed, LanguageServerId, LanguageServerInstallationStatus, Result};
@@ -205,6 +224,18 @@ mod extension {
                 args: vec![entry, "--stdio".to_string()],
                 env: Vec::new(),
             })
+        }
+
+        /// Feature 005: `lsp.playwright.settings` from the user's or the project's Zed
+        /// settings becomes the server's `workspace/configuration` answer and is pushed
+        /// again through `workspace/didChangeConfiguration` whenever it changes.
+        fn language_server_workspace_configuration(
+            &mut self,
+            _language_server_id: &LanguageServerId,
+            worktree: &zed::Worktree,
+        ) -> Result<Option<zed::serde_json::Value>> {
+            let settings = zed::settings::LspSettings::for_worktree("playwright", worktree)?;
+            Ok(forward_settings(settings.settings))
         }
     }
 

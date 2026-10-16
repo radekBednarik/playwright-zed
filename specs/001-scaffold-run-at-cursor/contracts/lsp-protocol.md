@@ -99,6 +99,13 @@ trigger } | null, configs: [{ configPath, playwrightVersion, supported, rootDir,
 discoveryState, testCount }] }`. Used by integration tests and for
 troubleshooting; it never changes server state.
 
+## Feature 005 additions
+
+Commands `playwright.toggleProject` and `playwright.selectAllProjects`, the project picker
+code actions, lens filtering by selection, the `workspace/configuration` and
+`workspace/didChangeConfiguration` intake, new notifications and the extra `playwright/status`
+fields are specified in `specs/005-project-selection/contracts/project-selection.md`.
+
 ## Implementation notes
 
 - `window/showMessage` is sent explicitly as a notification. The `vscode-languageserver`

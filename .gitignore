@@ -12,6 +12,7 @@ server/dist/
 fixtures/sample-project/test-results/
 fixtures/sample-project/playwright-report/
 fixtures/sample-project/blob-report/
+fixtures/sample-project/.zed/
 
 # Editors / OS
 .DS_Store

@@ -72,6 +72,9 @@ describe('buildConfig', () => {
       testDirs: [],
       tests: [],
       discoveryState: 'idle',
+      projects: [],
+      selection: { projects: [], source: 'single', updatedAt: null },
+      noticeKey: null,
     });
   });
   it('marks old versions unsupported', () => {
@@ -96,6 +99,9 @@ describe('configForFile', () => {
       testDirs: [path.join(configDir, 'tests')],
       tests: [],
       discoveryState: 'idle',
+      projects: [],
+      selection: { projects: [], source: 'single', updatedAt: null },
+      noticeKey: null,
     };
   }
   it('chooses the nearest config (longest configDir prefix)', () => {

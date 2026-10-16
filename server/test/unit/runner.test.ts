@@ -31,6 +31,36 @@ describe('parseRunReport', () => {
     expect(f.fullMessage).toContain('Received: 2');
   });
 
+  it('reports one failure per failing project and names it only for multi-project configs (feature 005)', () => {
+    const result = (status: string, message?: string) => ({ status, ...(message ? { error: { message, location: { file: '/r/tests/a.spec.ts', line: 4, column: 17 } } } : {}) });
+    const spec = (projectEntries: unknown[]) => ({ title: 'fails', file: 'tests/a.spec.ts', line: 3, column: 5, ok: false, tests: projectEntries });
+    const two = {
+      config: { rootDir: '/r', projects: [{ name: 'chromium' }, { name: 'mobile' }] },
+      stats: { expected: 0, unexpected: 2, skipped: 0, flaky: 0, duration: 10 },
+      suites: [{ specs: [spec([
+        { projectName: 'chromium', status: 'unexpected', results: [result('failed', 'Error: desktop broke')] },
+        { projectName: 'mobile', status: 'unexpected', results: [result('failed', 'Error: mobile broke')] },
+      ])] }],
+    };
+    const parsed = parseRunReport(two);
+    expect(parsed.failures.map((f) => [f.project, f.message])).toEqual([
+      ['chromium', 'Error: desktop broke'],
+      ['mobile', 'Error: mobile broke'],
+    ]);
+
+    const onlyMobileFailed = { ...two, suites: [{ specs: [spec([
+      { projectName: 'chromium', status: 'expected', results: [result('passed')] },
+      { projectName: 'mobile', status: 'unexpected', results: [result('failed', 'Error: mobile broke')] },
+    ])] }] };
+    expect(parseRunReport(onlyMobileFailed).failures.map((f) => f.project)).toEqual(['mobile']);
+
+    const single = { ...two, config: { rootDir: '/r', projects: [{ name: 'chromium' }] }, suites: [{ specs: [spec([
+      { projectName: 'chromium', status: 'unexpected', results: [result('failed', 'Error: broke')] },
+    ])] }] };
+    expect(parseRunReport(single).failures.map((f) => f.project)).toEqual([null]);
+    expect(parseRunReport(load('run-report-fail.json')).failures[0].project).toBeNull();
+  });
+
   it('keeps every line of a multi-line error in fullMessage', () => {
     const parsed = parseRunReport(load('run-report-no-browser.json'));
     const f = parsed.failures[0];
@@ -67,10 +97,11 @@ const config = {
   configDir: '/w',
   playwrightCli: '/w/node_modules/@playwright/test/cli.js',
   supported: true,
+  projects: ['chromium'],
 } as PlaywrightConfig;
 
 function request(id: string): RunRequest {
-  return { id, location: { kind: 'test', file: '/w/tests/a.spec.ts', line: 3 }, config, trigger: 'cursor', startedAt: new Date().toISOString(), dirty: false };
+  return { id, location: { kind: 'test', file: '/w/tests/a.spec.ts', line: 3 }, config, trigger: 'cursor', startedAt: new Date().toISOString(), dirty: false, projects: ['chromium'] };
 }
 
 const tempDirs: string[] = [];

@@ -23,6 +23,21 @@ export interface DiscoveredTest {
 
 export type DiscoveryState = 'idle' | 'running' | 'error';
 
+/**
+ * How the current project selection came about (feature 005): `single` for configs with fewer
+ * than two projects, `default` for the first project, `settings` from the editor settings,
+ * `remembered` from the per-user store, `chosen` after a toggle in this session.
+ */
+export type SelectionSource = 'single' | 'default' | 'settings' | 'remembered' | 'chosen';
+
+export interface ProjectSelection {
+  /** Selected project names in config order; never empty when the config has projects. */
+  projects: string[];
+  source: SelectionSource;
+  /** Set for `chosen` and `remembered`, else null. */
+  updatedAt: string | null;
+}
+
 export interface PlaywrightConfig {
   configPath: string;
   configDir: string;
@@ -35,6 +50,12 @@ export interface PlaywrightConfig {
   tests: DiscoveredTest[];
   discoveryState: DiscoveryState;
   discoveryError?: string;
+  /** Project names from the last successful `--list`, in config order; empty until discovery ran. */
+  projects: string[];
+  /** Reconciled after every discovery and after every toggle (feature 005). */
+  selection: ProjectSelection;
+  /** Key of the last reconcile notice shown for this config, so a repeat is not shown again. */
+  noticeKey: string | null;
 }
 
 export type LocationKind = 'test' | 'describe' | 'file';
@@ -55,6 +76,8 @@ export interface RunRequest {
   trigger: RunTrigger;
   startedAt: string;
   dirty: boolean;
+  /** Copy of `config.selection.projects` at start (feature 005). */
+  projects: string[];
 }
 
 export type RunStatus = 'queued' | 'running' | 'passed' | 'failed' | 'cancelled' | 'error';
@@ -71,6 +94,8 @@ export interface Failure {
   line: number;
   column: number;
   title: string;
+  /** Project the failing attempt ran in; null when the config has fewer than two projects (feature 005). */
+  project: string | null;
   /** ANSI-stripped first line of the error. */
   message: string;
   /** ANSI-stripped complete error text. */
