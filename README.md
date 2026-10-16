@@ -14,8 +14,9 @@ own workspace through its public command line.
 
 ## Project status
 
-**Work in progress.** Only the first slice is implemented: workspace detection and running a
-test, a `describe` group, or a file from the editor. The remaining upstream capabilities are
+**Work in progress.** Only the first slice is implemented: workspace detection, running a
+test, a `describe` group, or a file from the editor, and picking the Playwright projects
+(browsers) a run uses. The remaining upstream capabilities are
 listed with their status in [docs/parity.md](docs/parity.md). Expect rough edges, breaking
 changes between minor versions, and gaps compared to the VS Code extension. Bug reports and
 feedback are welcome in the issue tracker.
