@@ -24,3 +24,6 @@ Thumbs.db
 
 # Zed dev-extension build output
 /extension.wasm
+
+# Feature 006 integration test: temporary dist copy without the step reporter
+server/.dist-nostep-*/

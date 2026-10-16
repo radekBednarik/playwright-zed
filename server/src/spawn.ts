@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import type { StepEvent } from './types';
 
 export interface SpawnOptions {
   /** Node binary; defaults to the one running this server. */
@@ -12,6 +13,10 @@ export interface SpawnOptions {
   env?: Record<string, string>;
   /** Where Playwright's JSON reporter writes; read and deleted after exit. */
   reportFile: string;
+  /** Feature 006: where the step reporter appends events; polled while the process runs. */
+  stepFile?: string;
+  /** Feature 006: receives each parsed step event in order. */
+  onStepEvent?: (event: StepEvent) => void;
 }
 
 export interface SpawnOutcome {
@@ -48,6 +53,68 @@ export function reportFilePath(prefix: string, id: string): string {
   return path.join(dir, `${prefix}-${id}.json`);
 }
 
+/** The step reporter's file lives next to the JSON report, in the same owner-only directory. */
+export function stepFilePath(reportFile: string, id: string): string {
+  return path.join(path.dirname(reportFile), `steps-${id}.jsonl`);
+}
+
+export const STEP_POLL_MS = 200;
+
+/**
+ * Tails a JSON-lines file written by the step reporter: every `intervalMs` the bytes appended
+ * since the last read are split into lines, each complete line is parsed and delivered in
+ * order, a partial trailing line waits for its rest, malformed lines are dropped (the only
+ * expected case is a line cut by the final read of a killed process). `stop()` reads once more
+ * and then delivers nothing further.
+ */
+export function pollStepFile(file: string, onEvent: (event: StepEvent) => void, intervalMs = STEP_POLL_MS): { stop(): void } {
+  let offset = 0;
+  let pending = Buffer.alloc(0);
+  let stopped = false;
+
+  const tick = () => {
+    if (stopped) return;
+    let fd: number | null = null;
+    try {
+      const size = fs.statSync(file).size;
+      if (size <= offset) return;
+      fd = fs.openSync(file, 'r');
+      const chunk = Buffer.alloc(size - offset);
+      const read = fs.readSync(fd, chunk, 0, chunk.length, offset);
+      offset += read;
+      pending = Buffer.concat([pending, chunk.subarray(0, read)]);
+    } catch {
+      return;
+    } finally {
+      if (fd !== null) fs.closeSync(fd);
+    }
+    const lastNewline = pending.lastIndexOf(0x0a);
+    if (lastNewline < 0) return;
+    const complete = pending.subarray(0, lastNewline).toString('utf8');
+    pending = pending.subarray(lastNewline + 1);
+    for (const line of complete.split('\n')) {
+      if (!line.trim()) continue;
+      let event: StepEvent;
+      try {
+        event = JSON.parse(line) as StepEvent;
+      } catch {
+        continue;
+      }
+      if (event && typeof event.type === 'string') onEvent(event);
+    }
+  };
+
+  const timer = setInterval(tick, intervalMs);
+  return {
+    stop() {
+      if (stopped) return;
+      clearInterval(timer);
+      tick();
+      stopped = true;
+    },
+  };
+}
+
 function readReport(file: string): unknown | null {
   try {
     const stat = fs.lstatSync(file);
@@ -75,7 +142,9 @@ export function runPlaywright(options: SpawnOptions): SpawnHandle {
   const node = options.node ?? process.execPath;
   const argv = [options.cli, ...options.args];
   const command = [node, ...argv].map(quote).join(' ');
-  const env = { ...process.env, ...(options.env ?? {}), PLAYWRIGHT_JSON_OUTPUT_FILE: options.reportFile };
+  const env: NodeJS.ProcessEnv = { ...process.env, ...(options.env ?? {}), PLAYWRIGHT_JSON_OUTPUT_FILE: options.reportFile };
+  const stepFile = options.stepFile && options.onStepEvent ? options.stepFile : null;
+  if (stepFile) env.PLAYWRIGHT_ZED_STEP_FILE = stepFile;
 
   let cancelled = false;
   let killTimer: NodeJS.Timeout | null = null;
@@ -85,6 +154,8 @@ export function runPlaywright(options: SpawnOptions): SpawnHandle {
     stdio: ['ignore', 'pipe', 'pipe'],
     detached: process.platform !== 'win32',
   });
+
+  const poller = stepFile ? pollStepFile(stepFile, options.onStepEvent as (event: StepEvent) => void) : null;
 
   const stdout: Buffer[] = [];
   const stderr: Buffer[] = [];
@@ -108,6 +179,7 @@ export function runPlaywright(options: SpawnOptions): SpawnHandle {
     });
     child.on('close', (code, signal) => {
       if (killTimer) clearTimeout(killTimer);
+      poller?.stop();
       const report = readReport(options.reportFile);
       removeReportDir(options.reportFile);
       resolve({

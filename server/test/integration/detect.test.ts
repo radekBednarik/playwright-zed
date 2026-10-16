@@ -15,7 +15,7 @@ afterAll(() => {
 });
 
 describe('workspace detection (US1)', () => {
-  it('recognises the fixture, gates on version and discovers all 16 tests', async () => {
+  it('recognises the fixture, gates on version and discovers all 17 tests', async () => {
     const client = await TestClient.start(FIXTURE);
     try {
       await client.waitForDiscovery();
@@ -28,7 +28,7 @@ describe('workspace detection (US1)', () => {
       expect(config.playwrightVersion).toMatch(/^1\.(3[8-9]|[4-9]\d)\./);
       expect(config.testDirs).toEqual([path.join(FIXTURE, 'tests')]);
       expect(config.discoveryState).toBe('idle');
-      expect(config.testCount).toBe(16);
+      expect(config.testCount).toBe(17);
       // feature 005: two projects, first one selected by default
       expect(config.projects).toEqual(['chromium', 'mobile']);
       expect(config.selectedProjects).toEqual(['chromium']);

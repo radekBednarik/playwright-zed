@@ -7,6 +7,7 @@ import {
   createConnection,
   InitializeParams,
   InitializeResult,
+  InlayHint,
   ProposedFeatures,
   TextDocuments,
   TextDocumentSyncKind,
@@ -20,8 +21,10 @@ import {
   COMMAND_RUN_AT_CURSOR,
   COMMAND_RUN_FILE,
   COMMAND_SELECT_ALL_PROJECTS,
+  COMMAND_SHOW_LAST_RUN_OUTPUT,
   COMMAND_TOGGLE_PROJECT,
   countSelectedTests,
+  resolveStepReporterPath,
   resolveTestLocation,
 } from './commands';
 import { runList } from './discovery';
@@ -29,8 +32,10 @@ import { allSelected, isTestSelected, parseProjectsSetting, resolveSelection, se
 import { readSelections, stateDir, writeSelection } from './store';
 import { DISCOVERY_NOT_NOW, DISCOVERY_RUN, Reporter, failureLabel } from './reporting';
 import { RunManager, summarize } from './runner';
+import { applyEvent, clearFile, createMarks, endRun, hintsFor, startRun as beginMarks } from './marks';
+import { formatRunLog, runLogFor, writeRunLog } from './output';
 import { editorHasTrustGate } from './trust';
-import type { DiscoveredTest, PlaywrightConfig, ProjectSelection, RunRequest, RunTrigger, TestLocation, Workspace } from './types';
+import type { DiscoveredTest, PlaywrightConfig, ProjectSelection, RunRequest, RunResult, RunTrigger, TestLocation, Workspace } from './types';
 import { formatVersion } from './version';
 import { buildConfig, configForFile, findConfigs, isConfigFile, isUnderTestDirs } from './workspace';
 
@@ -60,6 +65,12 @@ let settingsDefault: string[] | null = null;
 let clientSupportsConfiguration = false;
 /** Avoids repeating the malformed-setting warning for the same value. */
 let invalidSettingWarned = false;
+/** Feature 006: the client opens files on `window/showDocument` (Zed does). */
+let clientShowsDocuments = false;
+/** Feature 006: the client requests `textDocument/inlayHint`; marks are pointless otherwise. */
+let clientRequestsInlayHints = false;
+/** Feature 006: the step reporter next to the built server files, or why it is unavailable. */
+const stepReporter = resolveStepReporterPath();
 
 function toPath(uri: string): string | null {
   try {
@@ -267,6 +278,8 @@ async function addWorkspace(folder: WorkspaceFolder, fromWorkspaceFolders: boole
     rootPath,
     configs: [],
     lastRun: null,
+    marks: createMarks(),
+    outputFile: null,
     versionWarningShown: false,
     discovery: 'pending',
     discoveryAsked: false,
@@ -299,6 +312,8 @@ function removeWorkspace(folder: WorkspaceFolder): void {
 connection.onInitialize((params: InitializeParams): InitializeResult => {
   editorTrustGate = editorHasTrustGate(params.clientInfo);
   clientSupportsConfiguration = params.capabilities.workspace?.configuration === true;
+  clientShowsDocuments = params.capabilities.window?.showDocument?.support === true;
+  clientRequestsInlayHints = params.capabilities.textDocument?.inlayHint !== undefined;
   if (params.clientInfo) clientLabel = `${params.clientInfo.name} ${params.clientInfo.version ?? ''}`.trim();
   if (params.workspaceFolders) {
     pendingFolders.push(...params.workspaceFolders.map((folder) => ({ folder, fromWorkspaceFolders: true })));
@@ -310,6 +325,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
       textDocumentSync: { openClose: true, change: TextDocumentSyncKind.Incremental, save: { includeText: false } },
       codeActionProvider: { codeActionKinds: [CODE_ACTION_KIND] },
       codeLensProvider: { resolveProvider: false },
+      inlayHintProvider: { resolveProvider: false },
       executeCommandProvider: { commands: ALL_COMMANDS },
       workspace: { workspaceFolders: { supported: true, changeNotifications: true } },
     },
@@ -317,6 +333,8 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 });
 
 connection.onInitialized(() => {
+  if (stepReporter.path === null) reporter.log(`playwright: step reporter unavailable (${stepReporter.reason}); step marks and durations are disabled`);
+  if (!clientRequestsInlayHints) reporter.log('playwright: client does not request inlay hints; step marks will not be shown');
   void (async () => {
     await loadSettings();
     for (const { folder, fromWorkspaceFolders } of pendingFolders.splice(0)) await addWorkspace(folder, fromWorkspaceFolders);
@@ -399,6 +417,12 @@ documents.onDidChangeContent((event) => {
   dirtyUris.add(uri);
   const file = toPath(uri);
   if (!file) return;
+  // Feature 006: the lines may have moved, so the file's step marks go.
+  const marked = workspaceForFile(file);
+  if (marked && (marked.marks.active.has(file) || marked.marks.finished.has(file))) {
+    clearFile(marked.marks, file);
+    reporter.refreshInlayHints();
+  }
   for (const [root, files] of publishedFiles) {
     if (files.delete(file)) {
       reporter.clearDiagnosticsForUri(uri);
@@ -502,6 +526,8 @@ connection.onCodeAction((params) => {
     actions.push(action('Playwright: Run file', COMMAND_RUN_FILE, [{ uri }]));
   }
   if (ws?.lastRun) actions.push(action('Playwright: Re-run last', COMMAND_RERUN_LAST, [{ uri }]));
+  // Feature 006: the run log, opened through window/showDocument.
+  if (ws?.lastRun && ws.outputFile && clientShowsDocuments) actions.push(action('Playwright: Show last run output', COMMAND_SHOW_LAST_RUN_OUTPUT, [{ uri }]));
   // Feature 005: the project picker, one entry per project, from any served file of the config.
   const owner = configForDocument(uri);
   if (owner && owner.config.projects.length >= 2) {
@@ -537,6 +563,36 @@ connection.onCodeLens((params) => {
   return lenses;
 });
 
+/**
+ * Feature 006: one inlay hint per marked line of the document (contracts/run-feedback.md
+ * section 2). Documents outside every workspace, closed documents and files without marks
+ * answer an empty list.
+ */
+connection.languages.inlayHint.on((params): InlayHint[] => {
+  const uri = params.textDocument.uri;
+  const file = toPath(uri);
+  const doc = documents.get(uri);
+  if (!file || !doc) return [];
+  const ws = workspaceForFile(file);
+  if (!ws) return [];
+  const lineLengths = doc.getText().split('\n').map((line) => line.replace(/\r$/, '').length);
+  return hintsFor(ws.marks, file, lineLengths, params.range).map((hint) => ({
+    position: { line: hint.line, character: hint.character },
+    label: hint.label,
+    paddingLeft: true,
+  }));
+});
+
+/** Writes the run log, logging instead of failing when the state directory is unusable. */
+function writeLog(ws: Workspace, request: RunRequest, result: RunResult | null, finishedAt: string | null): void {
+  if (!ws.outputFile) return;
+  try {
+    writeRunLog(ws.outputFile, formatRunLog(request, result, finishedAt));
+  } catch (error) {
+    reporter.log(`playwright: run ${request.id} could not write the run log ${ws.outputFile}: ${(error as Error).message}`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Commands
 // ---------------------------------------------------------------------------
@@ -559,6 +615,11 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
   const dirty = dirtyUris.has(uri);
   const request: RunRequest = { id: manager.nextId(), location, config, trigger, startedAt: new Date().toISOString(), dirty, projects: [...config.selection.projects] };
   ws.lastRun = request;
+  // Feature 006: marks and the run log belong to the newest run only (current run id guard).
+  beginMarks(ws.marks, request.id);
+  reporter.refreshInlayHints();
+  ws.outputFile = runLogFor(ws.rootPath);
+  writeLog(ws, request, null, null);
 
   if (dirty) reporter.showWarning(`${displayFile} has unsaved changes; running the saved version`);
 
@@ -568,9 +629,25 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
 
   const progress = await reporter.progressBegin(request.id, count, displayFile, multiProject ? request.projects : []);
   reporter.log(`playwright: run ${request.id} (${trigger}, ${location.kind}) ${target} projects: ${request.projects.join(', ')}`);
+  if (stepReporter.path === null) reporter.log(`playwright: run ${request.id} step reporter unavailable (${stepReporter.reason})`);
 
-  const result = await manager.start(request);
+  const result = await manager.start(request, {
+    reporterPath: stepReporter.path,
+    onStepEvent: (event) => {
+      applyEvent(ws.marks, event, request.id);
+      reporter.refreshInlayHints();
+    },
+  });
   reporter.log(`playwright: run ${request.id} command: ${result.command}\nplaywright: run ${request.id} cwd: ${config.configDir}\n${result.rawOutput.trimEnd()}`);
+  endRun(ws.marks, request.id);
+  reporter.refreshInlayHints();
+  if (ws.lastRun?.id === request.id) {
+    writeLog(ws, request, result, new Date().toISOString());
+    reporter.log(`playwright: run ${request.id} output written to ${ws.outputFile}`);
+    if (!clientShowsDocuments) reporter.log(`playwright: run ${request.id} output not offered (client has no showDocument support)`);
+  } else {
+    reporter.log(`playwright: run ${request.id} superseded, output not written`);
+  }
 
   switch (result.status) {
     case 'cancelled':
@@ -639,9 +716,8 @@ async function runFile(uri: string): Promise<void> {
   await startRun(ctx.ws, { kind: 'file', file: ctx.file, line: null }, ctx.config, 'file');
 }
 
-async function rerunLast(uri?: string): Promise<void> {
-  const gated = uri ? gatedWorkspace(uri) : null;
-  if (gated) return refuseNotEnabled(gated);
+/** The document's workspace when it has a run, else the workspace with the most recent run. */
+function workspaceWithLatestRun(uri?: string): Workspace | null {
   let ws: Workspace | null = null;
   const file = uri ? toPath(uri) : null;
   if (file) ws = workspaceForFile(file);
@@ -651,6 +727,24 @@ async function rerunLast(uri?: string): Promise<void> {
       if (candidate.lastRun && (!ws || candidate.lastRun.startedAt > (ws.lastRun as RunRequest).startedAt)) ws = candidate;
     }
   }
+  return ws;
+}
+
+/** Feature 006: opens the latest run's log through `window/showDocument`. */
+async function showLastRunOutput(uri?: string): Promise<void> {
+  const ws = workspaceWithLatestRun(uri);
+  if (!ws?.lastRun || !ws.outputFile) {
+    reporter.showInfo('Playwright: no run output yet');
+    return;
+  }
+  const opened = await reporter.showDocument(pathToFileURL(ws.outputFile).toString());
+  if (!opened) reporter.showWarning(`Playwright: could not open the run output; it is at ${ws.outputFile}`);
+}
+
+async function rerunLast(uri?: string): Promise<void> {
+  const gated = uri ? gatedWorkspace(uri) : null;
+  if (gated) return refuseNotEnabled(gated);
+  const ws = workspaceWithLatestRun(uri);
   if (!ws?.lastRun) {
     reporter.showInfo('Nothing to re-run yet');
     return;
@@ -714,6 +808,9 @@ connection.onExecuteCommand(async (params) => {
       case COMMAND_RERUN_LAST:
         await rerunLast(arg.uri);
         break;
+      case COMMAND_SHOW_LAST_RUN_OUTPUT:
+        await showLastRunOutput(arg.uri);
+        break;
       case COMMAND_TOGGLE_PROJECT:
         if (typeof arg.uri === 'string' && typeof arg.project === 'string') await toggleProjectCommand(arg.uri, arg.project);
         else reporter.showError('Playwright: toggle project needs a document and a project name');
@@ -747,6 +844,12 @@ connection.onRequest(STATUS_REQUEST, () =>
     discoverySource: ws.discoverySource,
     editorTrustGate,
     lastRun: ws.lastRun ? { id: ws.lastRun.id, location: ws.lastRun.location, trigger: ws.lastRun.trigger } : null,
+    outputFile: ws.outputFile,
+    marks: {
+      runId: ws.marks.runId,
+      active: Array.from(ws.marks.active, ([file, lines]) => Array.from(lines, ([line, count]) => ({ file, line, count }))).flat(),
+      finished: Array.from(ws.marks.finished, ([file, lines]) => Array.from(lines, ([line, mark]) => ({ file, line, ...mark }))).flat(),
+    },
     configs: ws.configs.map((c) => ({
       configPath: c.configPath,
       playwrightVersion: formatVersion(c.playwrightVersion),

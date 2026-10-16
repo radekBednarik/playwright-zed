@@ -106,6 +106,14 @@ code actions, lens filtering by selection, the `workspace/configuration` and
 `workspace/didChangeConfiguration` intake, new notifications and the extra `playwright/status`
 fields are specified in `specs/005-project-selection/contracts/project-selection.md`.
 
+## Feature 006 additions
+
+The `inlayHintProvider` capability, `textDocument/inlayHint` answers, `workspace/inlayHint/refresh`
+requests, the step reporter appended to the run command, the command
+`playwright.showLastRunOutput` with its code action, the `window/showDocument` request, the
+run log file and the extra `playwright/status` fields (`marks`, `outputFile`) are specified in
+`specs/006-single-click-run-parity/contracts/run-feedback.md`.
+
 ## Implementation notes
 
 - `window/showMessage` is sent explicitly as a notification. The `vscode-languageserver`

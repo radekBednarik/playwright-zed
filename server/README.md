@@ -32,8 +32,22 @@ support `workspace/configuration` may answer with `{ "projects": ["chromium", "f
 as a default for configurations without a stored choice; `workspace/didChangeConfiguration`
 with the same shape applies live.
 
+Step marks and run output (feature 006): the server declares `inlayHintProvider` and answers
+`textDocument/inlayHint` with one hint per marked line, `⌛ waiting…` while a step executes
+and `<n>ms` (or `<n>ms (ran <k>×)`) once it finished, refreshed through
+`workspace/inlayHint/refresh`. The data comes from a small Playwright reporter shipped in this
+package, `dist/step-reporter.js`, which the server appends to the run as
+`--reporter=list,json,<path>`; Playwright loads it inside the user's test run and it appends
+one JSON line per step event to the file named by `PLAYWRIGHT_ZED_STEP_FILE` (a temporary,
+owner-only file the server polls every 200 ms). The complete output of the latest run is
+written to `runs/<workspace key>.log` under the state directory (10 MB cap, one file per
+workspace) and the code action `Playwright: Show last run output` (command
+`playwright.showLastRunOutput`, `[{ uri }]`) opens it with `window/showDocument`. Clients
+without inlay hints or `showDocument` support get the same runs without these extras and one
+log line saying so.
+
 **Work in progress.** This is the first slice of the extension (detection, run at cursor,
-run file, re-run last, project selection). Expect breaking changes between minor versions; the extension pins the
+run file, re-run last, project selection, step marks and run output). Expect breaking changes between minor versions; the extension pins the
 exact server version it was built against.
 
 **Built with AI assistance.** The server, like the rest of the extension, is developed with
