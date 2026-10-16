@@ -50,7 +50,8 @@ selection change, in addition to after discovery.
 |--------------|------|---------|
 | `$/progress` (begin) | run start, config with two or more projects | message `Running <n> test(s) in <file> (<project>, <project>)` |
 | `window/showMessage` Info | reconcile dropped remembered names | `Playwright: project(s) <names> no longer exist in <config>; selection is now <names>` (once per distinct change) |
-| `window/showMessage` Warning | settings name unknown names | `Playwright: setting "projects" names <names>, which <config> does not define; available: <names>` (once per distinct change) |
+| `window/showMessage` Warning | settings name unknown names | `Playwright: setting "projects" names <names> which <config> does not define; available: <names>` (once per distinct change) |
+| `window/showMessage` Warning | settings value is not a list of non-empty strings | `Playwright: setting "projects" must be a list of project names` (once per invalid value; reset when a valid value arrives, the selection keeps its default) |
 | `window/showMessage` Warning | toggle refused | `Playwright: at least one project must stay selected` or `Playwright: <name> is not a project of <config>` |
 | `window/showMessage` Info | toggle or select all applied | `Playwright: projects for <config>: <names>` (Zed caches the code action menu per cursor position, so this is the immediate feedback) |
 | `textDocument/publishDiagnostics` | run failed, config with two or more projects | one Diagnostic per failing project entry of a spec, message `[<project>] <title>: <first error line>`; the Error notification's first failure carries the same prefix; single-project configs keep the unprefixed message |
