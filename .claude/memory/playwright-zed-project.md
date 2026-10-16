@@ -125,8 +125,15 @@ installed binary discovered the fixture and ran a test, record in
 `~/.bashrc:157` still exports `PLAYWRIGHT_ZED_SERVER_ENTRY` (the zshrc copy is commented out),
 and Zed re-reads the login shell, so an npm-path check from a bash-launched Zed needs
 `SHELL=/bin/sh` or that line commented out. The Linux Zed is now 1.24.2.
-Registry PR #7975
-stays at `v0.4.0` unless the owner decides to push the bump there. Note: the gitignored
+Registry PR #7975 bump to
+`v0.5.0` prepared 2026-10-16 (owner asked): fresh clone at `../zed-extensions` (remotes:
+`fork` = `git@github.com:radekBednarik/extensions.git` SSH, `origin` = upstream HTTPS; partial
+clone, only this submodule initialised), branch `playwright-runner-lsp`, commit `cbad511`
+on top of `0aef1c4` (submodule at `01c3173` = `v0.5.0`, `version = "0.5.0"`, sorted,
+`package-extensions` passed locally with the CLI at SHA `9ee3c503`, Rust 1.90). Not pushed:
+the owner pushes with `git -C ../zed-extensions push fork playwright-runner-lsp` and writes
+any PR comment personally. PR had no maintainer feedback as of 2026-10-16, only the CLA bot
+exchange (CLA signed 2026-10-13). Note: the gitignored
 `.specify/feature.json` pins the feature dir for speckit scripts; set
 `SPECIFY_FEATURE_DIRECTORY=specs/<nnn>-<name>` when it points at an older feature.
 
