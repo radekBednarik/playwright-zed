@@ -150,3 +150,29 @@ playwright.runAtCursor passing.spec.ts line 2:
 
 PASS. Tag `v0.5.0` follows this record. Not repeated here: the full quickstart in the Zed
 UI, which the owner ran on 2026-10-14 against the same server source.
+
+## Release 0.5.1: npm install path (2026-10-16)
+
+Lockstep release with no server code change; its purpose is the updated `extension.toml`
+description (project selection named) in a tagged commit for the registry. The owner
+published `playwright-zed-language-server@0.5.1`; release PR #6 (gate on the branch: 8 Rust
+tests, both wasm builds, lint, build, 154 vitest tests) merged as `eca794a`, tagged `v0.5.1`.
+
+Same check as for 0.5.0: `extension.wasm` rebuilt at `eca794a`, work directory removed, Zed
+1.24.2 started on the fixture with `SHELL=/bin/sh` and no override. `Zed.log` shows the server
+started from
+`~/.local/share/zed/extensions/work/playwright-runner-lsp/node_modules/playwright-zed-language-server/bin/playwright-zed-language-server.js`,
+whose `package.json` says `"version": "0.5.1"`. The installed binary driven over stdio as a
+Zed client on `fixtures/sample-project`:
+
+```text
+prompts: 0 (Zed trust gate, no consent question)
+discovered tests: 16 | projects: ["chromium","mobile"] | selected: ["chromium"] | source: default
+lenses in passing.spec.ts: 14 (2:▶ Run test, 7:▶ Run test, ...)
+code actions: Playwright: Run test at cursor | Playwright: Run file | Playwright: [x] chromium | Playwright: [ ] mobile | Playwright: Select all projects
+run log: playwright: run 1 (cursor, test) tests/passing.spec.ts:3 projects: chromium
+summary: Playwright: 1 passed, 0 failed, 0 skipped (0.6s)
+```
+
+PASS. Registry check in the fork clone at the `v0.5.1` submodule: `Packaging
+'playwright-runner-lsp'. Version: 0.5.1`, manifest description names project selection.
