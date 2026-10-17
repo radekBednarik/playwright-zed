@@ -169,10 +169,13 @@ verified all 10 quickstart scenarios in Zed 1.24.2 on 2026-10-16 (recorded in
 `verification.md`, T035 ticked, all 36 tasks done, not yet committed). Committed as `c2591f6`, pushed,
 **PR #8** (https://github.com/radekBednarik/playwright-zed/pull/8) opened 2026-10-16; parity row
 stays `full` (owner decision 2026-10-16). CI green on PR #8 (all six checks, 2026-10-16
-evening). **State at end of 2026-10-16: PR #8 open, awaiting the owner's merge.** Resume
-procedure for the next session: (1) owner merges with `! gh pr merge 8 --squash --admin
---delete-branch`, then `git checkout main && git pull && git branch -D 006-single-click-run-parity`
-locally; (2) lockstep release 0.6.0 (MINOR, a parity row moved to `full`): release branch, bump
+evening). **PR #8 merged** by the owner on 2026-10-17 06:24 UTC as merge commit `12556f9`
+(not squash); branch deleted locally and on origin; stale local branches
+`001-scaffold-run-at-cursor` and `remote` deleted (`004-zed-registry-submission` kept, not
+an ancestor of `main`). **Release 0.6.0 deferred** (owner decision 2026-10-17): one more
+feature (007) goes in first, then a single lockstep release carries 006 and 007 (MINOR;
+the version number is decided then). Release procedure when it comes:
+(2) lockstep release (MINOR, a parity row moved to `full`): release branch, bump
 `server/package.json` to 0.6.0, owner publishes the server from their own terminal
 (`npm publish --otp=<code>` in `server/`), then bump `PINNED_SERVER_VERSION` in `src/lib.rs`,
 `extension.toml` and `Cargo.toml` to 0.6.0, `cargo test`, wasm build, release PR, merge, tag
@@ -183,9 +186,8 @@ locally; (2) lockstep release 0.6.0 (MINOR, a parity row moved to `full`): relea
 (stage the submodule at `v0.6.0` first, `version = "0.6.0"` in `extensions.toml`,
 `corepack pnpm@11 sort-extensions`, local `package-extensions` with Rust 1.90), owner pushes
 to `fork`, which updates registry PR #7975 (still no maintainer feedback as of 2026-10-16).
-Also pending from earlier: the 0.5.1 registry bump commit `b3be8f7` in `../zed-extensions` was
-prepared but, as far as recorded, not yet pushed by the owner; check `git -C ../zed-extensions
-log fork/playwright-runner-lsp..playwright-runner-lsp` before preparing 0.6.0 on top.
+The 0.5.1 registry bump commit `b3be8f7` is pushed to `fork/playwright-runner-lsp`
+(verified 2026-10-17); the next registry bump goes on top of it.
 `.specify/feature.json` points at `specs/006-single-click-run-parity`; a new feature starts
 with `/speckit-specify` (the Spec Kit 1.1.2 script creates the directory, the branch is made by
 hand). The sparse Zed source clone used for research lived in the session scratchpad and is
