@@ -74,3 +74,35 @@ across two projects, run output via **Show last run output**, cancelled run, fai
 degradation without inlay hints, helper file, reopen, missing reporter). This satisfies
 FR-012 and SC-002 to SC-005 as far as a manual session can; the gap verdict table above
 carries the demonstrations.
+
+## Release 0.6.0: npm install path (2026-10-17)
+
+Lockstep release carrying feature 006 (step marks, durations, run output) and feature 007
+(already-open files served, Zed reinstall limitation documented). The owner published
+`playwright-zed-language-server@0.6.0` from the release branch (npm listed it as `latest`
+within minutes, 34 files, 188,959 bytes unpacked, tarball with `bin/`, `dist/server.js` and
+`dist/step-reporter.js`); release PR #12 (gate on the branch: 8 Rust tests, wasm32-wasip2
+build, lint, build, 211 vitest tests in 20 files) merged as `91aab9c`, tagged `v0.6.0`.
+
+Published package installed with `npm install --omit=dev playwright-zed-language-server@0.6.0`
+(the way Zed installs it; the bare tarball alone lacks `vscode-languageserver` and does not
+start) and driven over stdio as a Zed 1.24.2 client on `fixtures/sample-project`, opening
+`tests/passing.spec.ts` before discovery:
+
+```text
+lenses before discovery: 0 | after refresh: 14
+playwright: Zed trusts .../fixtures/sample-project; test discovery enabled without asking
+playwright: discovered 17 test(s) via .../fixtures/sample-project/playwright.config.ts
+playwright: 1 open file(s) served after discovery: tests/passing.spec.ts
+```
+
+Zed check by the owner (2026-10-17, Zed 1.24.2, terminal without
+`PLAYWRIGHT_ZED_SERVER_ENTRY`, `zed: install dev extension` rerun at `91aab9c`): the work
+directory's `package.json` names 0.6.0 and a lens run works. PASS.
+
+Registry: fork clone commit `40a4df3` (submodule at `v0.6.0`, `version = "0.6.0"`, sorted,
+local packaging check with the CLI at SHA `9ee3c503` and Rust 1.90: `Packaging
+'playwright-runner-lsp'. Version: 0.6.0`, manifest description names the step marks and run
+output), pushed by the owner to `fork/playwright-runner-lsp`; registry PR #7975 head is
+`40a4df3`, checks `package`, Danger and CLA green, still no maintainer review as of
+2026-10-17.
