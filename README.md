@@ -77,6 +77,16 @@ the submission process is described in
    If you installed a dev extension before 0.4.0, it is listed as "Playwright for Zed" with
    the id `playwright`; uninstall it in `zed: extensions` first, otherwise two Playwright
    language servers start on the same files.
+
+   Files that are already open when the extension is installed are picked up without
+   closing and reopening them (verified on Zed 1.24.2). One exception: after an **update, a
+   reinstall, or a rerun of `zed: install dev extension` in the same Zed session**, Zed keeps
+   the Playwright server stopped. It marks the server as manually stopped when the old
+   extension version unloads and never clears the mark, so no file is served, open before
+   or after. Run `editor: restart language server` from any TypeScript or JavaScript file of
+   the project, or restart Zed; closing and reopening files does not help. Tracked in Zed as
+   [zed-industries/zed#60405](https://github.com/zed-industries/zed/issues/60405) (the
+   remote variant of the same mechanism).
 4. Optional, to use the local server build instead of the published npm package, set
    `PLAYWRIGHT_ZED_SERVER_ENTRY=<repo>/server/bin/playwright-zed-language-server.js`. The
    extension reads it from the shell environment Zed loads for the project, so either export
@@ -310,7 +320,9 @@ from a WSL path).
    | No Playwright      | open a folder with a `.ts` file and no Playwright                                      | no question, no lenses, no actions, no warnings                                                   |
    | Old version        | copy the sample, set `@playwright/test` version to `1.37.1` in `node_modules`, open it | one warning naming 1.37.1 and 1.38, no actions                                                    |
 
-After a Rust change run `zed: install dev extension` again. After a server change run
+After a Rust change run `zed: install dev extension` again, then
+`editor: restart language server` (Zed keeps the server stopped after a reinstall, see
+Install). After a server change run
 `npm run build` and `editor: restart language server`. Problems with the extension itself
 appear in `zed: open log`; problems with runs appear in the Playwright server log.
 
