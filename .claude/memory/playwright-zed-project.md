@@ -198,8 +198,10 @@ written, checklist green, planned 2026-10-17: `plan.md`, `research.md`, `data-mo
 2026-10-17 on the branch, not committed: `server/test/integration/attach.test.ts` (3 tests),
 `servedOpenFiles` plus the log line in `server/src/server.ts` `discoverEnabled`, README
 Install caveat, parity rows, `verification.md`; owner ran quickstart scenarios 1 to 4 and 6 on Zed 1.24.2 on 2026-10-17,
-all PASS, recorded, all 10 tasks ticked; committed and PR opened the same day (see the
-PR note below); the 0.6.0 lockstep release carries 006 and 007 after the merge;
+all PASS, recorded, all 10 tasks ticked; committed as `80a5864`, **PR #10**
+(https://github.com/radekBednarik/playwright-zed/pull/10) opened 2026-10-17, awaiting CI and
+the owner's merge (`! gh pr merge 10 --squash --admin --delete-branch` or a merge commit,
+owner's choice); the 0.6.0 lockstep release carries 006 and 007 after the merge;
 `.specify/feature.json` points at it): owner report that spec files open in Zed before the
 extension is installed get no lenses until closed and reopened. Research verdicts (Zed
 1.24.2 source at `fb69067` plus a message-level reproduction with the Linux Zed and an LSP
