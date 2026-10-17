@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildRunArgs, countSelectedTests, resolveTestLocation } from '../../src/commands';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { buildRunArgs, countSelectedTests, resolveStepReporterPath, resolveTestLocation } from '../../src/commands';
 import type { DiscoveredTest, PlaywrightConfig } from '../../src/types';
 
 const FILE = '/w/tests/passing.spec.ts';
@@ -105,5 +108,47 @@ describe('countSelectedTests', () => {
     expect(countSelectedTests(mixed, { kind: 'test', file: FILE, line: 8 }, mobile)).toBe(0);
     expect(countSelectedTests(mixed, { kind: 'describe', file: FILE, line: 13 }, mobile)).toBe(1);
     expect(countSelectedTests(mixed, { kind: 'file', file: FILE, line: null }, { projects: [''], source: 'single', updatedAt: null })).toBe(3);
+  });
+});
+
+describe('buildRunArgs with a step reporter (feature 006)', () => {
+  const config = { configDir: '/w', configPath: '/w/playwright.config.ts', projects: ['chromium'] } as unknown as PlaywrightConfig;
+  it('appends the reporter path to the reporter list', () => {
+    expect(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, config, [], '/abs/step-reporter.js')).toEqual([
+      'test', 'tests/passing.spec.ts:3', '-c', '/w/playwright.config.ts', '--reporter=list,json,/abs/step-reporter.js',
+    ]);
+  });
+  it('keeps the 0.5.1 arguments when no reporter is given', () => {
+    expect(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, config, [], null)).toEqual([
+      'test', 'tests/passing.spec.ts:3', '-c', '/w/playwright.config.ts', '--reporter=list,json',
+    ]);
+  });
+  it('puts the reporter before the project arguments', () => {
+    const two = { ...config, projects: ['chromium', 'mobile'] } as unknown as PlaywrightConfig;
+    expect(buildRunArgs({ kind: 'file', file: FILE, line: null }, two, ['mobile'], '/abs/step-reporter.js')).toEqual([
+      'test', 'tests/passing.spec.ts', '-c', '/w/playwright.config.ts', '--reporter=list,json,/abs/step-reporter.js', '--project', 'mobile',
+    ]);
+  });
+});
+
+describe('resolveStepReporterPath', () => {
+  it('returns the path when step-reporter.js exists in the directory', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zed-dist-'));
+    fs.writeFileSync(path.join(dir, 'step-reporter.js'), '');
+    expect(resolveStepReporterPath(dir)).toEqual({ path: path.join(dir, 'step-reporter.js'), reason: null });
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+  it('reports a missing file', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zed-dist-'));
+    expect(resolveStepReporterPath(dir)).toEqual({ path: null, reason: 'file not found' });
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+  it('refuses a path with a comma', () => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zed-dist-'));
+    const dir = path.join(base, 'a,b');
+    fs.mkdirSync(dir);
+    fs.writeFileSync(path.join(dir, 'step-reporter.js'), '');
+    expect(resolveStepReporterPath(dir)).toEqual({ path: null, reason: 'path contains a comma' });
+    fs.rmSync(base, { recursive: true, force: true });
   });
 });

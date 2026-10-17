@@ -178,3 +178,30 @@ describe('RunManager', () => {
     expect(await p2).toMatchObject({ status: 'error', errorMessage: 'Error: No tests found' });
   });
 });
+
+describe('RunManager with a step reporter (feature 006)', () => {
+  it('passes the reporter and a step file next to the report when a path is given', async () => {
+    const spawn = controllableSpawn();
+    const manager = new RunManager(spawn.fn);
+    const onStepEvent = () => {};
+    const pending = manager.start(request('1'), { reporterPath: '/abs/step-reporter.js', onStepEvent });
+    const options = spawn.calls[0].options;
+    expect(options.args).toEqual(['test', 'tests/a.spec.ts:3', '-c', '/w/playwright.config.ts', '--reporter=list,json,/abs/step-reporter.js']);
+    expect(options.stepFile).toBe(path.join(path.dirname(options.reportFile), 'steps-1.jsonl'));
+    expect(options.onStepEvent).toBe(onStepEvent);
+    spawn.calls[0].resolve({ code: 0, report: load('run-report-pass.json') });
+    await pending;
+  });
+
+  it('passes neither when the reporter path is null', async () => {
+    const spawn = controllableSpawn();
+    const manager = new RunManager(spawn.fn);
+    const pending = manager.start(request('1'), { reporterPath: null, onStepEvent: () => {} });
+    const options = spawn.calls[0].options;
+    expect(options.args).toEqual(['test', 'tests/a.spec.ts:3', '-c', '/w/playwright.config.ts', '--reporter=list,json']);
+    expect(options.stepFile).toBeUndefined();
+    expect(options.onStepEvent).toBeUndefined();
+    spawn.calls[0].resolve({ code: 0, report: load('run-report-pass.json') });
+    await pending;
+  });
+});

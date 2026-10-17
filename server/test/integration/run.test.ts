@@ -52,6 +52,8 @@ describe('run at cursor (US2)', () => {
     const log = client.messages('window/logMessage').map((m) => m.params.message).join('\n');
     expect(log).toContain('tests/passing.spec.ts:3');
     expect(log).toContain('--reporter=list,json');
+    // Feature 006: the step reporter is the only addition to the 0.5.1 command line.
+    expect(log).toMatch(/--reporter=list,json,\S*step-reporter\.js(\s|$)/);
   });
 
   it('(b) reports a failing test with a diagnostic on the expect line', async () => {
@@ -177,7 +179,7 @@ describe('run at cursor (US2)', () => {
     expect(atDescribe[0].title).toBe('Playwright: Run describe at cursor');
     const atTop = await client.codeActions(PASSING, L.imports);
     // feature 005 appends the project picker entries after the run actions; they are tested in projects.test.ts
-    expect(atTop.map((a: any) => a.title).filter(notPicker)).toEqual(['Playwright: Run file', 'Playwright: Re-run last']);
+    expect(atTop.map((a: any) => a.title).filter(notPicker)).toEqual(['Playwright: Run file', 'Playwright: Re-run last', 'Playwright: Show last run output']);
     for (const a of [...atTest, ...atDescribe, ...atTop]) expect(a.kind).toBe('source.playwright');
   });
 
@@ -218,7 +220,7 @@ describe('re-run last (US4)', () => {
     await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
     client.clear();
     const actions = await client.codeActions(CONFIG, 0);
-    expect(actions.map((a: any) => a.title).filter(notPicker)).toEqual(['Playwright: Re-run last']);
+    expect(actions.map((a: any) => a.title).filter(notPicker)).toEqual(['Playwright: Re-run last', 'Playwright: Show last run output']);
     await client.execute(RERUN_LAST, [{ uri: uriOf(CONFIG) }]);
     const info = await client.waitFor('window/showMessage', (p) => p.type === MessageType.Info);
     expect(info.message).toMatch(summary(1, 0, 0));

@@ -1,6 +1,6 @@
 import * as path from 'node:path';
-import type { Failure, PlaywrightConfig, RunCounts, RunRequest, RunResult, RunStatus } from './types';
-import { reportFilePath, runPlaywright, type SpawnFn } from './spawn';
+import type { Failure, PlaywrightConfig, RunCounts, RunRequest, RunResult, RunStatus, StepEvent } from './types';
+import { reportFilePath, runPlaywright, stepFilePath, type SpawnFn } from './spawn';
 import { buildRunArgs } from './commands';
 
 const ANSI = /\u001b\[[0-9;]*[A-Za-z]/g;
@@ -107,6 +107,11 @@ interface Active {
   handle: ReturnType<SpawnFn>;
 }
 
+export interface StepOptions {
+  reporterPath: string | null;
+  onStepEvent?: (event: StepEvent) => void;
+}
+
 /** One running Playwright process per workspace; a new request cancels the running one. */
 export class RunManager {
   private active: Active | null = null;
@@ -130,15 +135,22 @@ export class RunManager {
     return request;
   }
 
-  async start(request: RunRequest): Promise<RunResult> {
+  /**
+   * Feature 006: with a step reporter path the run also carries the reporter and a step file
+   * next to the JSON report, and `onStepEvent` receives the events while the process runs.
+   */
+  async start(request: RunRequest, options: StepOptions = { reporterPath: null }): Promise<RunResult> {
     this.cancelActive();
     const config: PlaywrightConfig = request.config;
+    const reportFile = reportFilePath('run', request.id);
+    const withSteps = options.reporterPath !== null;
     const handle = this.spawnFn({
       cli: config.playwrightCli,
-      args: buildRunArgs(request.location, config, request.projects),
+      args: buildRunArgs(request.location, config, request.projects, options.reporterPath),
       cwd: config.configDir,
       env: { FORCE_COLOR: '0' },
-      reportFile: reportFilePath('run', request.id),
+      reportFile,
+      ...(withSteps ? { stepFile: stepFilePath(reportFile, request.id), onStepEvent: options.onStepEvent } : {}),
     });
     const entry: Active = { request, handle };
     this.active = entry;

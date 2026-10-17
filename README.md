@@ -47,6 +47,12 @@ AI-assisted project.
 - Runs happen through the Playwright installed in your workspace, headless. Results arrive
   as a progress indicator, a pass/fail notification, an error marker on each failing line,
   and the full output in Zed's language server log (`dev: open language server logs`).
+- While a test runs, the step that is executing right now carries a `⌛ waiting…` label at
+  the end of its line; afterwards every step line shows how long it took (`2003ms`, or
+  `2003ms (ran 2×)` when the line ran in two projects). The labels are inlay hints, see
+  "Settings" below.
+- **Show last run output** opens the complete output of the latest run (the command line,
+  Playwright's own report, everything the test printed) in an editor tab.
 
 ## Requirements
 
@@ -93,6 +99,20 @@ settings:
 
 Use `"menu"` instead to list lenses inside the code action menu.
 
+Inlay hints are off by default in Zed as well. The executing-step label and the per-step
+durations are inlay hints, so they appear only with:
+
+```json
+{
+  "inlay_hints": {
+    "enabled": true
+  }
+}
+```
+
+Both settings can live under `"languages": { "TypeScript": { ... } }` if you prefer them per
+language. Without them the extension runs tests exactly the same; only the labels are absent.
+
 ## Usage
 
 ### Before the first run: test discovery
@@ -136,6 +156,7 @@ workspace folder.
 | Enable discovery after "Not now" | `ctrl-.` in any file of that folder, **Playwright: Enable test discovery**         |
 | Choose the projects (browsers)   | `ctrl-.` in any file of the config, toggle **Playwright: [ ] <project>**            |
 | Run in every project             | `ctrl-.`, **Playwright: Select all projects**                                      |
+| Read the full output of a run    | `ctrl-.` after a run, **Playwright: Show last run output**                         |
 
 Notes:
 
@@ -152,6 +173,23 @@ Notes:
   message starts with the project in brackets, for example `[mobile] adds numbers: ...`.
 - With several configuration files, the one nearest to the test file is used.
 - Playwright below v1.38 produces a single warning and disables running.
+- Step labels follow the file: an edit removes the durations of that file (their lines may
+  have moved), the next run removes all of them, and closing and reopening an unedited file
+  brings them back. Steps inside helper files and page objects are labelled there.
+- The run output is written to a `runs/` folder under the state directory listed in
+  "Projects" below, one file per workspace, latest run only, and opened as a normal buffer.
+  Zed keeps the tab in sync with the file, so the next run updates it in place. Put the
+  cursor on a `tests/foo.spec.ts:12:7` reference and use `editor: open selected filename`
+  to jump there.
+
+### Differences from the VS Code extension
+
+- The executing step is marked with a trailing label, not a highlighted line: Zed has no
+  decoration API for extensions, inlay hints are the closest native surface.
+- The run output opens as an editor tab, not in a Test Results panel, because Zed has no
+  panel an extension could fill. The tasks recipe under "Terminal output" is the way to a
+  real terminal.
+- Both surfaces are opt-in through Zed settings (`code_lens`, `inlay_hints`).
 
 ### Projects
 
@@ -206,8 +244,9 @@ refreshes the menu.
 
 ## Terminal output (optional)
 
-Extensions cannot write to Zed's terminal panel. If you want the familiar terminal output,
-add this task to `~/.config/zed/tasks.json`. Zed already recognises `test(` and
+Extensions cannot write to Zed's terminal panel. **Playwright: Show last run output** gives
+you the same text in an editor tab; if you want a real terminal, add this task to
+`~/.config/zed/tasks.json`. Zed already recognises `test(` and
 `test.describe(` calls in TypeScript and JavaScript files, so the gutter run button and the
 `task: spawn` picker will offer it:
 

@@ -82,6 +82,43 @@ export interface RunRequest {
 
 export type RunStatus = 'queued' | 'running' | 'passed' | 'failed' | 'cancelled' | 'error';
 
+// ---------------------------------------------------------------------------
+// Feature 006: step events from the run and the marks derived from them
+// ---------------------------------------------------------------------------
+
+export type StepEventType = 'testBegin' | 'stepBegin' | 'stepEnd' | 'testEnd';
+
+/**
+ * One line of the step reporter's output. `step` is absent for test events; only steps with
+ * a location are emitted; `duration` is set on `stepEnd` only; `status` on `testEnd` only.
+ */
+export interface StepEvent {
+  type: StepEventType;
+  test: { file: string; line: number; column: number; title: string; project: string };
+  step?: { id: number; title: string; category: string; file: string; line: number; column: number };
+  duration?: number;
+  status?: string;
+  /** Milliseconds since the epoch, for ordering and the log. */
+  at: number;
+}
+
+export interface FinishedMark {
+  durationMs: number;
+  count: number;
+}
+
+/** Executing and finished step lines per file (data-model.md "StepMarks"). */
+export interface StepMarks {
+  /** Run that produced the marks; events from any other run are ignored. */
+  runId: string | null;
+  /** file -> line (1-based) -> number of steps executing on that line. */
+  active: Map<string, Map<number, number>>;
+  /** file -> line (1-based) -> latest duration and how many times the line finished. */
+  finished: Map<string, Map<number, FinishedMark>>;
+  /** step id -> owner, so `testEnd` can clear the test's remaining active lines. */
+  activeSteps: Map<number, { test: string; file: string; line: number }>;
+}
+
 export interface RunCounts {
   expected: number;
   unexpected: number;
@@ -141,4 +178,8 @@ export interface Workspace {
    * `false` for the `rootUri` fallback.
    */
   fromWorkspaceFolders: boolean;
+  /** Feature 006: step marks of the latest run. */
+  marks: StepMarks;
+  /** Feature 006: path of the last written run log, null before the first run. */
+  outputFile: string | null;
 }

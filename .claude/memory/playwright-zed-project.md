@@ -144,6 +144,56 @@ owner's admin rights; docs changes go through PRs from now on. Note: the gitigno
 `.specify/feature.json` pins the feature dir for speckit scripts; set
 `SPECIFY_FEATURE_DIRECTORY=specs/<nnn>-<name>` when it points at an older feature.
 
+**Feature 006, single-click run parity gaps** (`specs/006-single-click-run-parity/`, branch
+`006-single-click-run-parity` created from `main` at `0a0c400` on 2026-10-16, spec written,
+checklist green, not planned yet): investigates whether the three gaps of the "Run tests with
+a single click" parity row (executing-line highlight, per-step durations, in-editor run
+output) can be closed with surfaces Zed renders for language servers, and delivers every gap
+with a "deliverable" verdict; a "blocked" verdict with evidence is a complete outcome. Upstream
+facts verified 2026-10-16: active step line highlighted with a trailing "waiting…" note,
+finished steps show "<n>ms" (with "ran N×"), cleared on edit or next run; test stdout goes to
+VS Code's Test Results panel, never a terminal, so "terminal output" is read as "full output
+readable inside the editor". Planned 2026-10-16 (`plan.md`, `research.md`, `data-model.md`, `contracts/run-feedback.md`, `quickstart.md`): all three gaps are deliverable on Zed 1.24.2 (`fb69067`): executing mark and durations as LSP inlay hints (`inlay_hints.enabled` is off by default in Zed; refresh via `workspace/inlayHint/refresh`, per-server invalidation verified in `crates/editor/src/inlays/inlay_hints.rs`), fed by a step reporter shipped in `server/dist` and passed as `--reporter=list,json,<abs path>` (Playwright resolves absolute reporter paths; events as JSON lines in a temp file polled every 200 ms); run output written to `<stateDir>/runs/<key>.log` and opened through `window/showDocument` (Zed handles it in `crates/editor/src/items.rs` `handle_lsp_show_document`, any absolute path) from the code action "Playwright: Show last run output". Semantic tokens (supported but off by default), code lens blocks and Hint diagnostics were rejected. Server-only change, no Rust. Implemented 2026-10-16 on the
+branch (tasks T001 to T034 and T036 ticked; T035, the Zed scenarios, is the owner's): new
+server modules `step-reporter.ts` (CommonJS `export =`, loaded by Playwright), `marks.ts`,
+`output.ts`; `spawn.ts` polls the step file; `server.ts` declares `inlayHintProvider`, answers
+`textDocument/inlayHint`, offers "Playwright: Show last run output" (`playwright.showLastRunOutput`)
+and writes `<stateDir>/runs/<sha1 prefix>.log`; current run id guard everywhere. Fixture gained
+`tests/slow.spec.ts` and `tests/helpers/steps.ts` (17 discovered tests now). Gate green: 8 Rust,
+208 vitest in 19 files (after `/speckit-converge` appended and `/speckit-implement` closed T037, T038: per-run
+reporter log line, contract additions; all 38 tasks ticked). Gotcha found: WSL2 steps its wall clock (a -2480 ms step measured),
+Playwright's `step.duration` then goes negative; the server clamps to 0 and the integration
+test checks the longest step only. Parity row moved to `full` in `docs/parity.md` (owner may
+still prefer `partial` because the executing mark is a label, not a line background). Owner
+verified all 10 quickstart scenarios in Zed 1.24.2 on 2026-10-16 (recorded in
+`verification.md`, T035 ticked, all 36 tasks done, not yet committed). Committed as `c2591f6`, pushed,
+**PR #8** (https://github.com/radekBednarik/playwright-zed/pull/8) opened 2026-10-16; parity row
+stays `full` (owner decision 2026-10-16). CI green on PR #8 (all six checks, 2026-10-16
+evening). **State at end of 2026-10-16: PR #8 open, awaiting the owner's merge.** Resume
+procedure for the next session: (1) owner merges with `! gh pr merge 8 --squash --admin
+--delete-branch`, then `git checkout main && git pull && git branch -D 006-single-click-run-parity`
+locally; (2) lockstep release 0.6.0 (MINOR, a parity row moved to `full`): release branch, bump
+`server/package.json` to 0.6.0, owner publishes the server from their own terminal
+(`npm publish --otp=<code>` in `server/`), then bump `PINNED_SERVER_VERSION` in `src/lib.rs`,
+`extension.toml` and `Cargo.toml` to 0.6.0, `cargo test`, wasm build, release PR, merge, tag
+`v0.6.0` on the merge commit; (3) npm install path check in Zed (fresh terminal without
+`PLAYWRIGHT_ZED_SERVER_ENTRY`, `zed: install dev extension` rerun, look for 0.6.0 in
+`~/.local/share/zed/extensions/work/playwright-runner-lsp/package.json`), record in
+`specs/006-single-click-run-parity/verification.md`; (4) registry bump in `../zed-extensions`
+(stage the submodule at `v0.6.0` first, `version = "0.6.0"` in `extensions.toml`,
+`corepack pnpm@11 sort-extensions`, local `package-extensions` with Rust 1.90), owner pushes
+to `fork`, which updates registry PR #7975 (still no maintainer feedback as of 2026-10-16).
+Also pending from earlier: the 0.5.1 registry bump commit `b3be8f7` in `../zed-extensions` was
+prepared but, as far as recorded, not yet pushed by the owner; check `git -C ../zed-extensions
+log fork/playwright-runner-lsp..playwright-runner-lsp` before preparing 0.6.0 on top.
+`.specify/feature.json` points at `specs/006-single-click-run-parity`; a new feature starts
+with `/speckit-specify` (the Spec Kit 1.1.2 script creates the directory, the branch is made by
+hand). The sparse Zed source clone used for research lived in the session scratchpad and is
+gone; re-clone with `git clone --branch v1.24.2 --depth 1 --filter=blob:none --sparse` if
+Zed source evidence is needed again.
+Note: `create-new-feature.sh` in Spec Kit 1.1.2 no longer creates the git branch; it was
+created by hand.
+
 **Why:** the next session on another machine must not re-derive the state, re-ask about
 publishing, or prepare the registry PR unasked.
 

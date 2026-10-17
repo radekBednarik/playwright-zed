@@ -3,7 +3,9 @@ import {
   CodeLensRefreshRequest,
   Diagnostic,
   DiagnosticSeverity,
+  InlayHintRefreshRequest,
   MessageType,
+  ShowDocumentRequest,
   ShowMessageNotification,
   WorkDoneProgress,
   WorkDoneProgressCreateRequest,
@@ -12,6 +14,7 @@ import { pathToFileURL } from 'node:url';
 import type { Failure } from './types';
 
 export const DIAGNOSTIC_SOURCE = 'playwright';
+export const INLAY_HINT_REFRESH_MS = 100;
 
 /** `[project] title` when the failure belongs to one of several projects, else the title. */
 export function failureLabel(failure: Pick<Failure, 'title' | 'project'>): string {
@@ -23,6 +26,8 @@ export type DiscoveryAnswer = typeof DISCOVERY_RUN | typeof DISCOVERY_NOT_NOW;
 
 /** Thin wrappers over the LSP channels Zed renders (progress, messages, diagnostics, log). */
 export class Reporter {
+  private inlayHintTimer: NodeJS.Timeout | null = null;
+
   constructor(private readonly connection: Connection) {}
 
   /**
@@ -120,6 +125,31 @@ export class Reporter {
 
   info(line: string): void {
     this.connection.console.info(line);
+  }
+
+  /**
+   * Feature 006: asks the client to refetch inlay hints, at most once per 100 ms however many
+   * step events arrive in between. Clients without support are ignored.
+   */
+  refreshInlayHints(): void {
+    if (this.inlayHintTimer) return;
+    this.inlayHintTimer = setTimeout(() => {
+      this.inlayHintTimer = null;
+      this.connection.sendRequest(InlayHintRefreshRequest.type).then(
+        () => undefined,
+        () => undefined,
+      );
+    }, INLAY_HINT_REFRESH_MS);
+  }
+
+  /** Feature 006: `window/showDocument` with focus; false when the client refuses or cannot. */
+  async showDocument(uri: string): Promise<boolean> {
+    try {
+      const result = await this.connection.sendRequest(ShowDocumentRequest.type, { uri, takeFocus: true });
+      return result.success === true;
+    } catch {
+      return false;
+    }
   }
 
   async refreshCodeLenses(): Promise<void> {

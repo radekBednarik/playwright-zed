@@ -10,6 +10,8 @@ export const FIXTURE = path.join(REPO_ROOT, 'fixtures/sample-project');
 export const PASSING = path.join(FIXTURE, 'tests/passing.spec.ts');
 export const FAILING = path.join(FIXTURE, 'tests/failing.spec.ts');
 export const CONFIG = path.join(FIXTURE, 'playwright.config.ts');
+export const SLOW = path.join(FIXTURE, 'tests/slow.spec.ts');
+export const HELPER = path.join(FIXTURE, 'tests/helpers/steps.ts');
 const BIN = path.join(REPO_ROOT, 'server/bin/playwright-zed-language-server.js');
 
 export interface Message {
@@ -38,6 +40,12 @@ export interface StartOptions {
   settings?: unknown;
   /** Do not advertise `workspace.configuration` (feature 005: client without settings). */
   noConfiguration?: boolean;
+  /** Do not advertise `window.showDocument` (feature 006: client without an output surface). */
+  noShowDocument?: boolean;
+  /** Do not advertise `textDocument.inlayHint` (feature 006: client without step marks). */
+  noInlayHints?: boolean;
+  /** Server entry script to spawn instead of `server/bin` (feature 006: a dist copy without the step reporter). */
+  serverEntry?: string;
 }
 
 export class TestClient {
@@ -60,7 +68,7 @@ export class TestClient {
     }
     const ownsStateDir = options.stateDir === undefined;
     const stateDir = options.stateDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zed-state-'));
-    const child = spawn(process.execPath, [BIN, '--stdio'], {
+    const child = spawn(process.execPath, [options.serverEntry ?? BIN, '--stdio'], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, PLAYWRIGHT_ZED_STATE_DIR: stateDir },
     });
@@ -80,6 +88,8 @@ export class TestClient {
         const items = ((params as { items?: unknown[] }).items ?? []);
         return items.map(() => client.settings);
       }
+      if (method === 'workspace/inlayHint/refresh') return null;
+      if (method === 'window/showDocument') return { success: true };
       if (method === 'window/workDoneProgress/create') {
         // vscode-jsonrpc routes `$/progress` to per-token handlers, not to the star handler.
         const token = (params as { token: string | number }).token;
@@ -96,13 +106,14 @@ export class TestClient {
       ...(options.rootUriOnly ? {} : { workspaceFolders: folders.map((f) => ({ uri: uriOf(f), name: path.basename(f) })) }),
       ...(options.clientInfo ? { clientInfo: options.clientInfo } : {}),
       capabilities: {
-        window: { workDoneProgress: true },
+        window: { workDoneProgress: true, ...(options.noShowDocument ? {} : { showDocument: { support: true } }) },
         workspace: {
           workspaceFolders: true,
           codeLens: { refreshSupport: true },
+          ...(options.noInlayHints ? {} : { inlayHint: { refreshSupport: true } }),
           ...(options.noConfiguration ? {} : { configuration: true, didChangeConfiguration: { dynamicRegistration: false } }),
         },
-        textDocument: { codeAction: {}, codeLens: {}, publishDiagnostics: {} },
+        textDocument: { codeAction: {}, codeLens: {}, publishDiagnostics: {}, ...(options.noInlayHints ? {} : { inlayHint: {} }) },
       },
     });
     await conn.sendNotification('initialized', {});
@@ -186,6 +197,14 @@ export class TestClient {
 
   codeLenses(file: string) {
     return this.request<any[]>('textDocument/codeLens', { textDocument: { uri: uriOf(file) } });
+  }
+
+  /** Inlay hints for the whole document (feature 006). */
+  inlayHints(file: string) {
+    return this.request<any[]>('textDocument/inlayHint', {
+      textDocument: { uri: uriOf(file) },
+      range: { start: { line: 0, character: 0 }, end: { line: 100000, character: 0 } },
+    });
   }
 
   status() {
