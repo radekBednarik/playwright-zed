@@ -17,9 +17,11 @@ Released: npm `playwright-zed-language-server` 0.1.0, 0.2.0, 0.3.0 and 0.4.0 (0.
 published 2026-10-13 16:20 UTC by the owner; 0.3.0 published 2026-10-13 07:06 UTC; a public
 `0.0.0-stage` placeholder from npm staged publishing also exists, harmless, removable with
 `npm unpublish playwright-zed-language-server@0.0.0-stage --otp=<code>` within 72 h of
-2026-10-12 16:07 UTC). Rust shell pins 0.4.0; `extension.toml` and `Cargo.toml` are 0.4.0;
-tags `v0.1.0`, `v0.2.0`, `v0.3.0`, `v0.4.0`. Zed installing 0.2.0 and 0.3.0 from npm on its own is
-verified; 0.4.0 npm install path verified on 2026-10-13 at `b4c1116`. Through 0.3.0 the display name ended
+2026-10-12 16:07 UTC). Later releases: 0.5.0 and 0.5.1 (2026-10-16), **0.6.0 (2026-10-17,
+current `latest`; shell pin, `extension.toml` and `Cargo.toml` are 0.6.0, tag `v0.6.0` =
+`91aab9c`)**; tags `v0.1.0` through `v0.6.0`. Zed installing 0.2.0 and 0.3.0 from npm on its own is
+verified; 0.4.0 npm install path verified on 2026-10-13 at `b4c1116`, 0.5.0, 0.5.1 and
+0.6.0 likewise (records in the feature 005 and 006 verification files). Through 0.3.0 the display name ended
 with " Zed" and the id was `playwright`; feature 004 renames them to "Playwright Runner" and
 `playwright-runner-lsp`. The description starts with "Work in progress." and
 carries a non-affiliation notice (Playwright is a Microsoft trademark); READMEs disclose
@@ -172,22 +174,37 @@ stays `full` (owner decision 2026-10-16). CI green on PR #8 (all six checks, 202
 evening). **PR #8 merged** by the owner on 2026-10-17 06:24 UTC as merge commit `12556f9`
 (not squash); branch deleted locally and on origin; stale local branches
 `001-scaffold-run-at-cursor` and `remote` deleted (`004-zed-registry-submission` kept, not
-an ancestor of `main`). **Release 0.6.0 deferred** (owner decision 2026-10-17): one more
-feature (007) goes in first, then a single lockstep release carries 006 and 007 (MINOR;
-the version number is decided then). Release procedure when it comes:
-(2) lockstep release (MINOR, a parity row moved to `full`): release branch, bump
-`server/package.json` to 0.6.0, owner publishes the server from their own terminal
-(`npm publish --otp=<code>` in `server/`), then bump `PINNED_SERVER_VERSION` in `src/lib.rs`,
-`extension.toml` and `Cargo.toml` to 0.6.0, `cargo test`, wasm build, release PR, merge, tag
-`v0.6.0` on the merge commit; (3) npm install path check in Zed (fresh terminal without
-`PLAYWRIGHT_ZED_SERVER_ENTRY`, `zed: install dev extension` rerun, look for 0.6.0 in
-`~/.local/share/zed/extensions/work/playwright-runner-lsp/package.json`), record in
-`specs/006-single-click-run-parity/verification.md`; (4) registry bump in `../zed-extensions`
-(stage the submodule at `v0.6.0` first, `version = "0.6.0"` in `extensions.toml`,
-`corepack pnpm@11 sort-extensions`, local `package-extensions` with Rust 1.90), owner pushes
-to `fork`, which updates registry PR #7975 (still no maintainer feedback as of 2026-10-16).
-The 0.5.1 registry bump commit `b3be8f7` is pushed to `fork/playwright-runner-lsp`
-(verified 2026-10-17); the next registry bump goes on top of it.
+an ancestor of `main`). **Released 0.6.0** (2026-10-17, lockstep, carries 006 and 007):
+release branch `release-0.6.0`, server 0.6.0 published by the owner from the branch (npm
+`latest` within minutes), pin, `extension.toml`, `Cargo.toml` and the README manual-testing
+line bumped, description names the step marks and run output, release PR #12 merged by the
+owner as squash `91aab9c`, tag `v0.6.0` on it; published package driven over stdio and the
+owner's Zed npm install path check both PASS (record: "Release 0.6.0" section in
+`specs/006-single-click-run-parity/verification.md`). Registry bump `40a4df3` in
+`../zed-extensions` (submodule at `v0.6.0`, packaging check with the CLI at SHA `9ee3c503`,
+Rust 1.90, binary linked at the clone root from session scratch, gitignored) pushed by the
+owner to `fork/playwright-runner-lsp`; registry PR #7975 head is `40a4df3`, `package`,
+Danger and CLA checks green, no maintainer review as of 2026-10-17 (queue: 388 open PRs,
+maintainers merge selectively, recent language-server submissions took 1 to 7 days).
+Release procedure that worked for 0.5.1 and 0.6.0 (reuse for the next one):
+(1) release branch from `main`, `cd server && npm version <x.y.z> --no-git-tag-version`,
+same version in `Cargo.toml`, `extension.toml`, `PINNED_SERVER_VERSION` in `src/lib.rs`,
+README "must list Playwright Runner <x.y.z>" line, description if features were added,
+`cargo test` (refreshes `Cargo.lock`), wasm build, server lint, build, test, `npm pack
+--dry-run` in `server/`, commit, push, release PR; (2) owner publishes from the branch
+(`npm publish --otp=<code>` in `server/`), poll `npm view playwright-zed-language-server@<x.y.z>
+version` (a few minutes); (3) owner merges the PR, agent tags `v<x.y.z>` on the merge commit
+and pushes the tag; (4) agent checks the published package: `npm install --omit=dev` into a
+scratch dir (the bare tarball lacks `vscode-languageserver`) and drive it over stdio; owner
+does the Zed npm install path check (terminal without `PLAYWRIGHT_ZED_SERVER_ENTRY`,
+`zed: install dev extension` rerun, version in the work directory's `package.json`);
+(5) registry bump in `../zed-extensions`: fetch tags in the submodule, check out the tag
+commit, `git add` it first, `version` in `extensions.toml`, `corepack pnpm@11
+sort-extensions`, download the CLI at the `ZED_EXTENSION_CLI_SHA` of the registry's
+`.github/workflows/ci.yml` to scratch, symlink as `./zed-extension` in the clone root,
+`RUSTUP_TOOLCHAIN=1.90 corepack pnpm@11 package-extensions`, check `output/manifest.json`,
+commit "Update playwright-runner-lsp to v<x.y.z>", owner pushes to `fork`; (6) record in the
+feature's verification file and here through a docs PR.
 A new feature starts with `/speckit-specify` (the Spec Kit 1.1.2 script creates the
 directory, the branch is made by hand).
 
@@ -201,8 +218,7 @@ Install caveat, parity rows, `verification.md`; owner ran quickstart scenarios 1
 all PASS, recorded, all 10 tasks ticked; **PR #10**
 (https://github.com/radekBednarik/playwright-zed/pull/10) merged by the owner on 2026-10-17
 as squash commit `d937c90` with all eight CI checks green, branch deleted locally and on
-origin; `main` now carries 006 and 007 unreleased, the 0.6.0 lockstep release is the next
-step when the owner asks (procedure in the feature 006 paragraph);
+origin; released in 0.6.0 the same day (see "Released 0.6.0" above);
 `.specify/feature.json` points at it): owner report that spec files open in Zed before the
 extension is installed get no lenses until closed and reopened. Research verdicts (Zed
 1.24.2 source at `fb69067` plus a message-level reproduction with the Linux Zed and an LSP
