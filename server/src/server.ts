@@ -213,6 +213,27 @@ async function discoverEnabled(ws: Workspace): Promise<void> {
     if (config.supported) await discoverConfig(config);
   }
   await reporter.refreshCodeLenses();
+  // Feature 007: files the editor opened before discovery finished are served from now on
+  // (the editor refetches their lenses after the refresh); name them so a user can check
+  // the install path without a protocol trace (contracts/attach.md section 2).
+  const served = servedOpenFiles(ws);
+  if (served.length > 0) reporter.log(`playwright: ${served.length} open file(s) served after discovery: ${served.join(', ')}`);
+}
+
+/**
+ * Feature 007: open documents of this workspace that lie under a discovered config's test
+ * directories, relative to the workspace root, sorted. Derived from `documents` on demand.
+ */
+function servedOpenFiles(ws: Workspace): string[] {
+  const served: string[] = [];
+  for (const doc of documents.all()) {
+    const file = toPath(doc.uri);
+    if (!file || workspaceForFile(file) !== ws) continue;
+    const config = configForFile(ws, file);
+    if (!config || !config.supported || !isUnderTestDirs(config, file)) continue;
+    served.push(path.relative(ws.rootPath, file).split(path.sep).join('/'));
+  }
+  return served.sort();
 }
 
 /** Idempotent: marks the workspace enabled and runs discovery once. */

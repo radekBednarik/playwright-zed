@@ -188,9 +188,43 @@ the version number is decided then). Release procedure when it comes:
 to `fork`, which updates registry PR #7975 (still no maintainer feedback as of 2026-10-16).
 The 0.5.1 registry bump commit `b3be8f7` is pushed to `fork/playwright-runner-lsp`
 (verified 2026-10-17); the next registry bump goes on top of it.
-`.specify/feature.json` points at `specs/006-single-click-run-parity`; a new feature starts
-with `/speckit-specify` (the Spec Kit 1.1.2 script creates the directory, the branch is made by
-hand). The sparse Zed source clone used for research lived in the session scratchpad and is
+A new feature starts with `/speckit-specify` (the Spec Kit 1.1.2 script creates the
+directory, the branch is made by hand).
+
+**Feature 007, attach to already-open spec files** (`specs/007-attach-open-spec-files/`,
+branch `007-attach-open-spec-files` created from `main` at `3d8e362` on 2026-10-17, spec
+written, checklist green, planned 2026-10-17: `plan.md`, `research.md`, `data-model.md`,
+`contracts/attach.md`, `quickstart.md`, `tools/lsp-tap.js`; tasks T001 to T009 implemented
+2026-10-17 on the branch, not committed: `server/test/integration/attach.test.ts` (3 tests),
+`servedOpenFiles` plus the log line in `server/src/server.ts` `discoverEnabled`, README
+Install caveat, parity rows, `verification.md`; owner ran quickstart scenarios 1 to 4 and 6 on Zed 1.24.2 on 2026-10-17,
+all PASS, recorded, all 10 tasks ticked; committed and PR opened the same day (see the
+PR note below); the 0.6.0 lockstep release carries 006 and 007 after the merge;
+`.specify/feature.json` points at it): owner report that spec files open in Zed before the
+extension is installed get no lenses until closed and reopened. Research verdicts (Zed
+1.24.2 source at `fb69067` plus a message-level reproduction with the Linux Zed and an LSP
+tap, timelines in `research.md` R5): first install in a fresh session, `editor: restart
+language server` and an editor restart with restored tabs already work (Zed sends `didOpen`
+for every open buffer when a server starts, `lsp_store.rs:13575`, and the server's
+`codeLens/refresh` after discovery makes Zed refetch); update, reinstall and every rerun of
+`zed: install dev extension` in the same session are **blocked by Zed**: the extension
+unload path calls `stop_language_servers_for_buffers`, which adds "playwright" to
+`stopped_language_servers` (`lsp_store.rs:13151`), `register_buffer_with_language_servers`
+then skips the server for every file, old or new (`:3218`), and only `editor: restart
+language server` (`clear_stopped = true`, `:13081`) or a new Zed process clears it; closing
+and reopening a file does not help. Zed issue #60405 (open) is the remote variant. **Dev
+loop gotcha**: after each `zed: install dev extension` rerun, run `editor: restart language
+server` from a spec file, otherwise the Playwright server stays down. Deliverables: server
+integration test `attach.test.ts` (open before discovery, empty lenses, refresh, lenses),
+a log line `playwright: <n> open file(s) served after discovery: ...`, README install caveat
+with the restart command, parity notes with the link, verification record; no Rust change.
+The owner writes any Zed issue comment (AI policy); R3 holds the facts. The remote
+topology (Windows Zed + WSL remote server) never loaded this extension
+(`~/.local/share/zed/remote_extensions/` has only `html`) and is out of scope. Reproduction
+method that needs no GUI: create or remove the symlink
+`~/.local/share/zed/extensions/installed/playwright-runner-lsp` while Zed runs (Zed watches
+the directory); the server entry override must sit in `~/.bashrc` because Zed reads the
+project environment from the login shell. The sparse Zed source clone used for research lived in the session scratchpad and is
 gone; re-clone with `git clone --branch v1.24.2 --depth 1 --filter=blob:none --sparse` if
 Zed source evidence is needed again.
 Note: `create-new-feature.sh` in Spec Kit 1.1.2 no longer creates the git branch; it was
