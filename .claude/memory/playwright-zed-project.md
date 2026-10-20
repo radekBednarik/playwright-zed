@@ -246,6 +246,37 @@ the directory); the server entry override must sit in `~/.bashrc` because Zed re
 project environment from the login shell. The sparse Zed source clone used for research lived in the session scratchpad and is
 gone; re-clone with `git clone --branch v1.24.2 --depth 1 --filter=blob:none --sparse` if
 Zed source evidence is needed again.
+**Feature 008, show trace viewer** (`specs/008-show-trace-viewer/`, spec, plan, research,
+data model, contract, quickstart, tasks and verification written 2026-10-20; implemented the
+same day; **PR #14** (https://github.com/radekBednarik/playwright-zed/pull/14) merged by the
+owner on 2026-10-20 as squash `a89d103`, branch deleted; `.specify/feature.json` points at
+it; **not released yet**: the 0.7.0 lockstep release (MINOR, new upstream capability) is
+the next step on the owner's OK, following the recorded procedure, then the registry bump).
+Delivered, server only, no Rust change: code action `Playwright: [x]/[ ] Show trace viewer`
+(`playwright.toggleTraceViewer`, remembered per user in `trace-viewer.json` next to
+`project-selection.json`, Zed settings default `lsp.playwright.settings.showTrace`, a
+remembered choice wins, every toggle confirmed by an Info notification); `--trace on` on
+every run while on; one `playwright show-trace --stdin` process per config
+(`server/src/trace.ts` `ViewerSessions`, cwd = workspace root, started on the first trace,
+reused, closed on toggle off, workspace removal, shutdown and exit); a single-test run is
+followed live (step reporter emits `traceLive` on `testBegin`, the predicted
+`<outputDir>/.playwright-artifacts-<worker>/traces/<test.id>.json`, and `trace` on
+`testEnd`); `Playwright: Show trace` (`playwright.showTrace`, `[{ uri, line }]`) shows the
+latest trace of the test at the cursor from the last run's JSON report attachments; Warning
+`Playwright: no trace recorded for <target> in this run` for a followed run without a
+trace. Parity row `full` (`lsp, playwright-ui`), "Show browser" row carries a deferred note
+(upstream disables tracing while the browser is shown). Playwright gotchas (research R2):
+the viewer dies on a path that does not exist (so `.zip` paths are stat-checked) and reads
+each stdin chunk as one path with its reader attached only after loading, so two paths
+written close together crash it; writes are spaced (first at once, later ones 3 s after
+start and 250 ms apart, a newer path replaces a waiting one), which is why a fast test shows
+its final trace up to 3 s late. CI: the server test step runs `xvfb-run -a npm test`
+(installs `xvfb` if missing) because one integration test starts the real viewer window;
+the test skips itself without `DISPLAY` or `WAYLAND_DISPLAY`. Test-writing gotcha:
+`workspace/executeCommand` for a run answers only when the run ends, so a mid-run action in
+a test must not await the run. Gate after merge: 8 Rust, 248 vitest tests in 22 files.
+Owner verified quickstart scenarios 1 to 11 in Zed on 2026-10-20.
+
 Note: `create-new-feature.sh` in Spec Kit 1.1.2 no longer creates the git branch; it was
 created by hand.
 
