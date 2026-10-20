@@ -207,7 +207,7 @@ export class TestClient {
     });
   }
 
-    status() {
+  status() {
     return this.request<any[]>('playwright/status', {});
   }
 

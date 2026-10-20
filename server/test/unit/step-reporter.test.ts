@@ -104,7 +104,7 @@ describe('StepReporter', () => {
     expect(ids).toEqual([['stepBegin', 1], ['stepBegin', 2], ['stepEnd', 2], ['stepEnd', 1]]);
   });
 
-    it('emits the predicted live trace path on testBegin and the trace attachment on testEnd (feature 008)', () => {
+  it('emits the predicted live trace path on testBegin and the trace attachment on testEnd (feature 008)', () => {
     const reporter = new StepReporter();
     const test = { ...fakeTest(), id: 'abc-123', parent: { project: () => ({ name: 'chromium', outputDir: '/w/test-results' }) } };
     const begun = { status: 'passed', workerIndex: 2 };

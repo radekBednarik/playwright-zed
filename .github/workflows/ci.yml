@@ -61,7 +61,7 @@ jobs:
       - name: Build
         working-directory: server
         run: npm run build
-            - name: Test
+      - name: Test
         working-directory: server
         # Feature 008: one integration test starts Playwright's trace viewer window, which needs a display.
         run: |

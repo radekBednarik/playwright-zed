@@ -21,7 +21,7 @@ import {
   COMMAND_RUN_AT_CURSOR,
   COMMAND_RUN_FILE,
   COMMAND_SELECT_ALL_PROJECTS,
-    COMMAND_SHOW_LAST_RUN_OUTPUT,
+  COMMAND_SHOW_LAST_RUN_OUTPUT,
   COMMAND_SHOW_TRACE,
   COMMAND_TOGGLE_PROJECT,
   COMMAND_TOGGLE_TRACE_VIEWER,
@@ -320,7 +320,7 @@ async function addWorkspace(folder: WorkspaceFolder, fromWorkspaceFolders: boole
     rootPath,
     configs: [],
     lastRun: null,
-        marks: createMarks(),
+    marks: createMarks(),
     outputFile: null,
     traces: null,
     versionWarningShown: false,
@@ -346,7 +346,7 @@ async function addWorkspace(folder: WorkspaceFolder, fromWorkspaceFolders: boole
 function removeWorkspace(folder: WorkspaceFolder): void {
   const rootPath = toPath(folder.uri);
   if (!rootPath) return;
-    runManagers.get(rootPath)?.cancelActive();
+  runManagers.get(rootPath)?.cancelActive();
   viewers.closeFor(rootPath);
   workspaces.delete(rootPath);
   runManagers.delete(rootPath);
@@ -379,7 +379,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 connection.onInitialized(() => {
   if (stepReporter.path === null) reporter.log(`playwright: step reporter unavailable (${stepReporter.reason}); step marks and durations are disabled`);
   if (!clientRequestsInlayHints) reporter.log('playwright: client does not request inlay hints; step marks will not be shown');
-    loadTracePreference();
+  loadTracePreference();
   void (async () => {
     await loadSettings();
     for (const { folder, fromWorkspaceFolders } of pendingFolders.splice(0)) await addWorkspace(folder, fromWorkspaceFolders);

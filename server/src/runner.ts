@@ -84,7 +84,7 @@ export function parseRunReport(json: unknown): ParsedRun {
     for (const child of suite.suites ?? []) walk(child);
   };
   for (const suite of report.suites ?? []) walk(suite);
-    const durationMs = typeof report.stats?.duration === 'number' ? report.stats.duration : null;
+  const durationMs = typeof report.stats?.duration === 'number' ? report.stats.duration : null;
   return { counts, failures, durationMs, traces: extractTraces(json) };
 }
 
@@ -149,7 +149,7 @@ export class RunManager {
     const withSteps = options.reporterPath !== null;
     const handle = this.spawnFn({
       cli: config.playwrightCli,
-            args: buildRunArgs(request.location, config, request.projects, options.reporterPath, request.trace),
+      args: buildRunArgs(request.location, config, request.projects, options.reporterPath, request.trace),
       cwd: config.configDir,
       env: { FORCE_COLOR: '0' },
       reportFile,
@@ -161,7 +161,7 @@ export class RunManager {
     if (this.active === entry) this.active = null;
 
     const rawOutput = `${outcome.stdout}${outcome.stderr ? `\n${outcome.stderr}` : ''}`;
-        const base = { request, rawOutput, command: outcome.command, failures: [] as Failure[], counts: emptyCounts(), durationMs: null as number | null, traces: [] as TraceRecord[] };
+    const base = { request, rawOutput, command: outcome.command, failures: [] as Failure[], counts: emptyCounts(), durationMs: null as number | null, traces: [] as TraceRecord[] };
 
     if (outcome.cancelled) return { ...base, status: 'cancelled' };
     if (outcome.spawnError) return { ...base, status: 'error', errorMessage: outcome.spawnError };
@@ -172,6 +172,6 @@ export class RunManager {
       return { ...base, status, errorMessage: stripAnsi(detail) };
     }
     const parsed = parseRunReport(outcome.report);
-        return { ...base, status, counts: parsed.counts, failures: parsed.failures, durationMs: parsed.durationMs, traces: parsed.traces };
+    return { ...base, status, counts: parsed.counts, failures: parsed.failures, durationMs: parsed.durationMs, traces: parsed.traces };
   }
 }

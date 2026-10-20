@@ -72,7 +72,7 @@ describe('parseRunReport', () => {
     expect(f).toMatchObject({ file: '/tmp/sample/tests/passing.spec.ts', line: 3, column: 5 });
   });
 
-    it('tolerates empty input', () => {
+  it('tolerates empty input', () => {
     expect(parseRunReport(null)).toEqual({ counts: { expected: 0, unexpected: 0, skipped: 0, flaky: 0 }, failures: [], durationMs: null, traces: [] });
   });
 

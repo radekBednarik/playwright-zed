@@ -76,7 +76,7 @@ export interface RunRequest {
   trigger: RunTrigger;
   startedAt: string;
   dirty: boolean;
-    /** Copy of `config.selection.projects` at start (feature 005). */
+  /** Copy of `config.selection.projects` at start (feature 005). */
   projects: string[];
   /** Feature 008: copy of the trace preference at start; `--trace on` is appended when true. */
   trace: boolean;
@@ -128,7 +128,7 @@ export interface StepEvent {
   type: StepEventType;
   test: { file: string; line: number; column: number; title: string; project: string };
   step?: { id: number; title: string; category: string; file: string; line: number; column: number };
-    duration?: number;
+  duration?: number;
   status?: string;
   /** Feature 008: predicted live trace path on `testBegin`, when the reporter could build it. */
   traceLive?: string;
@@ -182,7 +182,7 @@ export interface RunResult {
   failures: Failure[];
   rawOutput: string;
   command: string;
-    /** Wall-clock duration reported by Playwright, when a report exists. */
+  /** Wall-clock duration reported by Playwright, when a report exists. */
   durationMs: number | null;
   /** Feature 008: one record per result with a `trace` attachment; empty without a report. */
   traces: TraceRecord[];
@@ -218,7 +218,7 @@ export interface Workspace {
   fromWorkspaceFolders: boolean;
   /** Feature 006: step marks of the latest run. */
   marks: StepMarks;
-    /** Feature 006: path of the last written run log, null before the first run. */
+  /** Feature 006: path of the last written run log, null before the first run. */
   outputFile: string | null;
   /** Feature 008: trace records of the latest finished run, null before the first run ends. */
   traces: { runId: string; records: TraceRecord[] } | null;

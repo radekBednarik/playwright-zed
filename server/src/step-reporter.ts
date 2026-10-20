@@ -37,7 +37,7 @@ interface StepEventLine {
   type: 'testBegin' | 'stepBegin' | 'stepEnd' | 'testEnd';
   test: { file: string; line: number; column: number; title: string; project: string };
   step?: { id: number; title: string; category: string; file: string; line: number; column: number };
-    duration?: number;
+  duration?: number;
   status?: string;
   /** Feature 008: predicted live trace path (`testBegin`) and final trace attachment (`testEnd`). */
   traceLive?: string;
@@ -60,7 +60,7 @@ class StepReporter {
     return false;
   }
 
-    onTestBegin(test: TestCaseLike, result?: TestResultLike): void {
+  onTestBegin(test: TestCaseLike, result?: TestResultLike): void {
     const traceLive = liveTracePath(test, result);
     this.write({ type: 'testBegin', test: testInfo(test), ...(traceLive ? { traceLive } : {}), at: Date.now() });
   }
@@ -78,7 +78,7 @@ class StepReporter {
     this.write({ type: 'stepEnd', test: testInfo(test), step: stepInfo(step, id, step.location), duration: step.duration, at: Date.now() });
   }
 
-    onTestEnd(test: TestCaseLike, result: TestResultLike): void {
+  onTestEnd(test: TestCaseLike, result: TestResultLike): void {
     const trace = finalTracePath(result);
     this.write({ type: 'testEnd', test: testInfo(test), status: result?.status ?? 'unknown', ...(trace ? { trace } : {}), at: Date.now() });
   }
