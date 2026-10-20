@@ -10,7 +10,7 @@ import {
   ViewerSessions,
   extractTraces,
   latestTraceFor,
-    parseShowTraceSetting,
+  parseShowTraceSetting,
   resolveTracePreference,
   showOutcomeWarning,
   type ViewerChild,

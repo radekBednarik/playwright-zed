@@ -82,7 +82,7 @@ let invalidShowTraceWarned = false;
 /** Feature 008: one trace viewer process per configuration, started on the first trace to show. */
 const viewers = new ViewerSessions({
   onStarted: (name, pid, command) => reporter.log(`playwright: trace viewer ${name} started (pid ${pid}): ${command}`),
-    onShowing: (name, tracePath) => reporter.log(`playwright: trace viewer ${name} showing ${tracePath}`),
+  onShowing: (name, tracePath) => reporter.log(`playwright: trace viewer ${name} showing ${tracePath}`),
   onDropped: (name, tracePath) => reporter.log(`playwright: trace viewer ${name} trace file disappeared before it could be shown: ${tracePath}`),
   onOutput: (name, line) => reporter.log(`playwright: trace viewer ${name}: ${line}`),
   onExit: (name, code) => reporter.log(`playwright: trace viewer ${name} exited (code ${code})`),
@@ -613,7 +613,7 @@ connection.onCodeAction((params) => {
   if (ws?.lastRun) actions.push(action('Playwright: Re-run last', COMMAND_RERUN_LAST, [{ uri }]));
   // Feature 006: the run log, opened through window/showDocument.
   if (ws?.lastRun && ws.outputFile && clientShowsDocuments) actions.push(action('Playwright: Show last run output', COMMAND_SHOW_LAST_RUN_OUTPUT, [{ uri }]));
-    const owner = configForDocument(uri);
+  const owner = configForDocument(uri);
   // Feature 008: the trace viewer toggle from any served file of the config, and the trace of the test at the cursor.
   if (owner) actions.push(action(`Playwright: [${tracePreference.enabled ? 'x' : ' '}] Show trace viewer`, COMMAND_TOGGLE_TRACE_VIEWER, [{ uri }]));
   if (tracePreference.enabled && ctx && ctx.ws.traces) {
@@ -705,7 +705,7 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
   const manager = managerFor(ws);
   const uri = pathToFileURL(location.file).toString();
   const dirty = dirtyUris.has(uri);
-    const request: RunRequest = {
+  const request: RunRequest = {
     id: manager.nextId(),
     location,
     config,
@@ -732,20 +732,20 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
   reporter.log(`playwright: run ${request.id} (${trigger}, ${location.kind}) ${target} projects: ${request.projects.join(', ')}`);
   if (stepReporter.path === null) reporter.log(`playwright: run ${request.id} step reporter unavailable (${stepReporter.reason})`);
 
-    // Feature 008: a single-test run with the trace viewer on follows the test in the viewer
+  // Feature 008: a single-test run with the trace viewer on follows the test in the viewer
   // (live path on testBegin, final trace on testEnd, research R2); other runs only record traces.
   const followTrace = request.trace && location.kind === 'test';
   const configName = path.basename(config.configPath);
   let outsideWarned = false;
   let finalShown = false;
-    const showTrace = (tracePath: string) => {
+  const showTrace = (tracePath: string) => {
     // Turned off while the run was in progress: the run keeps its trace, the viewer stays closed (FR-007).
     if (ws.lastRun?.id !== request.id || !tracePreference.enabled) return;
     if (!isWithin(ws.rootPath, tracePath) && !outsideWarned) {
       outsideWarned = true;
       reporter.showWarning(`Playwright: the trace ${tracePath} is outside ${ws.rootPath}; the viewer cannot read it (set outputDir inside the workspace)`);
     }
-        const warning = showOutcomeWarning(viewers.show(config, ws.rootPath, tracePath), tracePath);
+    const warning = showOutcomeWarning(viewers.show(config, ws.rootPath, tracePath), tracePath);
     if (warning) {
       reporter.log(`playwright: trace viewer ${configName} trace file not found: ${tracePath}`);
       reporter.showWarning(warning);
@@ -767,14 +767,14 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
   reporter.log(`playwright: run ${request.id} command: ${result.command}\nplaywright: run ${request.id} cwd: ${config.configDir}\n${result.rawOutput.trimEnd()}`);
   endRun(ws.marks, request.id);
   reporter.refreshInlayHints();
-    if (ws.lastRun?.id === request.id) {
+  if (ws.lastRun?.id === request.id) {
     writeLog(ws, request, result, new Date().toISOString());
     reporter.log(`playwright: run ${request.id} output written to ${ws.outputFile}`);
     if (!clientShowsDocuments) reporter.log(`playwright: run ${request.id} output not offered (client has no showDocument support)`);
     // Feature 008: the run's traces, for "Show trace" at the cursor; a followed run that
     // produced none says so, and one without a step reporter shows its final trace here.
     ws.traces = { runId: request.id, records: result.traces };
-        if (followTrace && tracePreference.enabled && result.status !== 'error') {
+    if (followTrace && tracePreference.enabled && result.status !== 'error') {
       if (result.traces.length === 0) {
         reporter.showWarning(`Playwright: no trace recorded for ${target} in this run`);
       } else if (!finalShown) {
@@ -918,7 +918,7 @@ async function showTraceCommand(uri: string, line0: number): Promise<void> {
     reporter.showWarning(`Playwright: no trace for ${titles.join(', ') || `${path.basename(ctx.file)}:${line}`} in the last run`);
     return;
   }
-    const warning = showOutcomeWarning(viewers.show(ctx.config, ctx.ws.rootPath, record.path), record.path);
+  const warning = showOutcomeWarning(viewers.show(ctx.config, ctx.ws.rootPath, record.path), record.path);
   if (warning) reporter.showWarning(warning);
 }
 
@@ -989,7 +989,7 @@ connection.onExecuteCommand(async (params) => {
       case COMMAND_RERUN_LAST:
         await rerunLast(arg.uri);
         break;
-            case COMMAND_SHOW_LAST_RUN_OUTPUT:
+      case COMMAND_SHOW_LAST_RUN_OUTPUT:
         await showLastRunOutput(arg.uri);
         break;
       case COMMAND_TOGGLE_TRACE_VIEWER:
@@ -1033,7 +1033,7 @@ connection.onRequest(STATUS_REQUEST, () =>
     discoverySource: ws.discoverySource,
     editorTrustGate,
     lastRun: ws.lastRun ? { id: ws.lastRun.id, location: ws.lastRun.location, trigger: ws.lastRun.trigger } : null,
-        outputFile: ws.outputFile,
+    outputFile: ws.outputFile,
     traceViewer: { enabled: tracePreference.enabled, source: tracePreference.source },
     traces: ws.traces
       ? { runId: ws.traces.runId, records: ws.traces.records.map(({ file, line, title, project, path: tracePath }) => ({ file, line, title, project, path: tracePath })) }

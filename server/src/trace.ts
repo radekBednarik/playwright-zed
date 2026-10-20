@@ -300,7 +300,7 @@ export class ViewerSessions {
     child.on('exit', (code: number | null) => {
       this.forget(session);
       if (code !== 0 && code !== null && !session.closing) {
-                const detail = session.stderrHead.find((line) => /^\s*[A-Za-z]*Error\b/.test(line)) ?? session.stderrHead[0] ?? `exit code ${code}`;
+        const detail = session.stderrHead.find((line) => /^\s*[A-Za-z]*Error\b/.test(line)) ?? session.stderrHead[0] ?? `exit code ${code}`;
         this.hooks.onFailure(configName, command, detail);
       } else {
         this.hooks.onExit(configName, code);

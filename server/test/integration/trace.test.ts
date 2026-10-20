@@ -22,7 +22,7 @@ const titles = (actions: any[]) => actions.map((a) => a.title as string);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function runCommandLine(client: TestClient): string {
-    const line = client.messages('window/logMessage').map((m) => m.params.message as string).find((m) => /^playwright: run \d+ command: /.test(m));
+  const line = client.messages('window/logMessage').map((m) => m.params.message as string).find((m) => /^playwright: run \d+ command: /.test(m));
   if (!line) throw new Error('no run command line logged');
   // the message carries the cwd and the output on further lines
   return line.split('\n')[0].replace(/^playwright: run \d+ command: /, '');
@@ -321,7 +321,7 @@ describe('toggles during a run (US3)', () => {
   });
   beforeEach(() => client.clear());
 
-    it('(p) turning off mid-run keeps that run tracing but leaves no viewer behind', async () => {
+  it('(p) turning off mid-run keeps that run tracing but leaves no viewer behind', async () => {
     await toggle(client);
     client.clear();
     // executeCommand answers only when the run ends, so the run is not awaited here
@@ -335,14 +335,14 @@ describe('toggles during a run (US3)', () => {
     expect(runCommandLine(client)).toContain('--trace on');
     const status = await client.status();
     expect(status[0].traceViewer.enabled).toBe(false);
-        expect((status[0].traces as TracesStatus).records).toHaveLength(1);
+    expect((status[0].traces as TracesStatus).records).toHaveLength(1);
     // the viewer that followed the test was closed by the toggle; its exit may land a moment later
     await client.waitForStatus((s) => ((s[0].traceViewers as unknown[]).length === 0 ? true : null), 10_000);
     expect(client.showMessages(MessageType.Warning).filter((m) => /no trace recorded/.test(m))).toEqual([]);
     expect(client.messages('window/logMessage').map((m) => m.params.message)).not.toContain(expect.stringMatching(/showing .*slow-slow-steps.*trace\.zip$/));
   });
 
-    it('(q) turning on mid-run leaves that run alone and applies to the next one', async () => {
+  it('(q) turning on mid-run leaves that run alone and applies to the next one', async () => {
     const run = client.execute(RUN_AT_CURSOR, [{ uri: uriOf(SLOW), line: L.slow }]);
     await client.waitFor('$/progress', (p) => p.value?.kind === 'begin');
     await toggle(client);

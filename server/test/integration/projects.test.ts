@@ -14,7 +14,7 @@ const L = { adds: 2 };
 const SUMMARY = /(\d+) passed, (\d+) failed, (\d+) skipped/;
 
 function projectTitles(actions: any[]): string[] {
-    return actions.map((a) => a.title as string).filter((t) => (t.startsWith('Playwright: [') && !t.includes('Show trace viewer')) || t === SELECT_ALL_TITLE);
+  return actions.map((a) => a.title as string).filter((t) => (t.startsWith('Playwright: [') && !t.includes('Show trace viewer')) || t === SELECT_ALL_TITLE);
 }
 
 function runCommandLine(client: TestClient): string {
