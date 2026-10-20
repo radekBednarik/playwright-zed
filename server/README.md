@@ -46,8 +46,22 @@ workspace) and the code action `Playwright: Show last run output` (command
 without inlay hints or `showDocument` support get the same runs without these extras and one
 log line saying so.
 
+Trace viewer (feature 008): the code action `Playwright: [x] Show trace viewer` /
+`Playwright: [ ] Show trace viewer` (command `playwright.toggleTraceViewer`, `[{ uri }]`)
+flips a per-user preference stored in `trace-viewer.json` under the state directory; a client
+may also answer `workspace/configuration` with `{ "showTrace": true }` as a default. While it
+is on, runs carry `--trace on`, the step reporter adds the predicted live trace path to
+`testBegin` and the `trace` attachment path to `testEnd`, and a single-test run feeds both to
+one `playwright show-trace --stdin` process per configuration (started in the workspace
+root on the first trace, kept across runs, closed when the option is turned off or the server
+exits). `Playwright: Show trace` (`playwright.showTrace`, `[{ uri, line }]`) shows the trace
+of the test at the cursor from the last run, taken from the JSON report's attachments. Paths
+are written one per line, spaced so the viewer never reads two in one chunk. The full
+automated suite starts that window once, so it needs a display (`xvfb-run -a npm test` on a
+headless machine; the test skips itself without one).
+
 **Work in progress.** This is the first slice of the extension (detection, run at cursor,
-run file, re-run last, project selection, step marks and run output). Expect breaking changes between minor versions; the extension pins the
+run file, re-run last, project selection, step marks, run output and the trace viewer). Expect breaking changes between minor versions; the extension pins the
 exact server version it was built against.
 
 **Built with AI assistance.** The server, like the rest of the extension, is developed with

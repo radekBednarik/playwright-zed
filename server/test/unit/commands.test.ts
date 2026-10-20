@@ -131,6 +131,18 @@ describe('buildRunArgs with a step reporter (feature 006)', () => {
   });
 });
 
+describe('buildRunArgs with the trace viewer on (feature 008)', () => {
+  const config = { configDir: '/w', configPath: '/w/playwright.config.ts', projects: ['chromium', 'mobile'] } as unknown as PlaywrightConfig;
+  it('appends --trace on after the project arguments only when asked', () => {
+    expect(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, config, ['mobile'], '/abs/step-reporter.js', true)).toEqual([
+      'test', 'tests/passing.spec.ts:3', '-c', '/w/playwright.config.ts', '--reporter=list,json,/abs/step-reporter.js', '--project', 'mobile', '--trace', 'on',
+    ]);
+    const off = buildRunArgs({ kind: 'test', file: FILE, line: 3 }, config, ['mobile'], '/abs/step-reporter.js', false);
+    expect(off).toEqual(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, config, ['mobile'], '/abs/step-reporter.js'));
+    expect(off).not.toContain('--trace');
+  });
+});
+
 describe('resolveStepReporterPath', () => {
   it('returns the path when step-reporter.js exists in the directory', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zed-dist-'));

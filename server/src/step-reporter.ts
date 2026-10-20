@@ -5,6 +5,7 @@
  * dependency on the rest of the server and never throws into Playwright.
  */
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 const STEP_FILE_VAR = 'PLAYWRIGHT_ZED_STEP_FILE';
 
@@ -15,12 +16,15 @@ interface Location {
   column: number;
 }
 interface TestCaseLike {
+  id?: string;
   title: string;
   location: Location;
-  parent?: { project?: () => { name?: string } | undefined };
+  parent?: { project?: () => { name?: string; outputDir?: string } | undefined };
 }
 interface TestResultLike {
   status?: string;
+  workerIndex?: number;
+  attachments?: { name?: string; path?: string }[];
 }
 interface TestStepLike {
   title: string;
@@ -35,6 +39,9 @@ interface StepEventLine {
   step?: { id: number; title: string; category: string; file: string; line: number; column: number };
   duration?: number;
   status?: string;
+  /** Feature 008: predicted live trace path (`testBegin`) and final trace attachment (`testEnd`). */
+  traceLive?: string;
+  trace?: string;
   at: number;
 }
 
@@ -53,8 +60,9 @@ class StepReporter {
     return false;
   }
 
-  onTestBegin(test: TestCaseLike): void {
-    this.write({ type: 'testBegin', test: testInfo(test), at: Date.now() });
+  onTestBegin(test: TestCaseLike, result?: TestResultLike): void {
+    const traceLive = liveTracePath(test, result);
+    this.write({ type: 'testBegin', test: testInfo(test), ...(traceLive ? { traceLive } : {}), at: Date.now() });
   }
 
   onStepBegin(test: TestCaseLike, _result: TestResultLike, step: TestStepLike): void {
@@ -71,7 +79,8 @@ class StepReporter {
   }
 
   onTestEnd(test: TestCaseLike, result: TestResultLike): void {
-    this.write({ type: 'testEnd', test: testInfo(test), status: result?.status ?? 'unknown', at: Date.now() });
+    const trace = finalTracePath(result);
+    this.write({ type: 'testEnd', test: testInfo(test), status: result?.status ?? 'unknown', ...(trace ? { trace } : {}), at: Date.now() });
   }
 
   private write(event: StepEventLine): void {
@@ -93,6 +102,28 @@ function testInfo(test: TestCaseLike): StepEventLine['test'] {
   }
   const loc = test.location ?? { file: '', line: 0, column: 0 };
   return { file: loc.file, line: loc.line, column: loc.column, title: test.title, project };
+}
+
+/**
+ * Feature 008 (research R2): where Playwright writes the live trace of a running test, as
+ * upstream predicts it: `<outputDir>/.playwright-artifacts-<workerIndex>/traces/<test.id>.json`.
+ * Undefined when any part is unavailable; nothing on the file system is checked.
+ */
+function liveTracePath(test: TestCaseLike, result: TestResultLike | undefined): string | undefined {
+  try {
+    const outputDir = test.parent?.project?.()?.outputDir;
+    const workerIndex = result?.workerIndex;
+    if (typeof outputDir !== 'string' || !outputDir || typeof workerIndex !== 'number' || workerIndex < 0 || typeof test.id !== 'string' || !test.id) return undefined;
+    return path.join(outputDir, `.playwright-artifacts-${workerIndex}`, 'traces', `${test.id}.json`);
+  } catch {
+    return undefined;
+  }
+}
+
+/** Feature 008: the path of the result attachment named `trace`, when there is one. */
+function finalTracePath(result: TestResultLike | undefined): string | undefined {
+  const attachment = result?.attachments?.find((a) => a?.name === 'trace' && typeof a.path === 'string' && a.path !== '');
+  return attachment?.path;
 }
 
 function stepInfo(step: TestStepLike, id: number, loc: Location): NonNullable<StepEventLine['step']> {

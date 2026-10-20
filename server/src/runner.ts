@@ -1,7 +1,8 @@
 import * as path from 'node:path';
-import type { Failure, PlaywrightConfig, RunCounts, RunRequest, RunResult, RunStatus, StepEvent } from './types';
+import type { Failure, PlaywrightConfig, RunCounts, RunRequest, RunResult, RunStatus, StepEvent, TraceRecord } from './types';
 import { reportFilePath, runPlaywright, stepFilePath, type SpawnFn } from './spawn';
 import { buildRunArgs } from './commands';
+import { extractTraces } from './trace';
 
 const ANSI = /\u001b\[[0-9;]*[A-Za-z]/g;
 
@@ -35,6 +36,8 @@ export interface ParsedRun {
   counts: RunCounts;
   failures: Failure[];
   durationMs: number | null;
+  /** Feature 008: one record per result with a `trace` attachment. */
+  traces: TraceRecord[];
 }
 
 /**
@@ -82,7 +85,7 @@ export function parseRunReport(json: unknown): ParsedRun {
   };
   for (const suite of report.suites ?? []) walk(suite);
   const durationMs = typeof report.stats?.duration === 'number' ? report.stats.duration : null;
-  return { counts, failures, durationMs };
+  return { counts, failures, durationMs, traces: extractTraces(json) };
 }
 
 /** 0 passed, 1 with a report failed, anything else is a run error. */
@@ -146,7 +149,7 @@ export class RunManager {
     const withSteps = options.reporterPath !== null;
     const handle = this.spawnFn({
       cli: config.playwrightCli,
-      args: buildRunArgs(request.location, config, request.projects, options.reporterPath),
+      args: buildRunArgs(request.location, config, request.projects, options.reporterPath, request.trace),
       cwd: config.configDir,
       env: { FORCE_COLOR: '0' },
       reportFile,
@@ -158,7 +161,7 @@ export class RunManager {
     if (this.active === entry) this.active = null;
 
     const rawOutput = `${outcome.stdout}${outcome.stderr ? `\n${outcome.stderr}` : ''}`;
-    const base = { request, rawOutput, command: outcome.command, failures: [] as Failure[], counts: emptyCounts(), durationMs: null as number | null };
+    const base = { request, rawOutput, command: outcome.command, failures: [] as Failure[], counts: emptyCounts(), durationMs: null as number | null, traces: [] as TraceRecord[] };
 
     if (outcome.cancelled) return { ...base, status: 'cancelled' };
     if (outcome.spawnError) return { ...base, status: 'error', errorMessage: outcome.spawnError };
@@ -169,6 +172,6 @@ export class RunManager {
       return { ...base, status, errorMessage: stripAnsi(detail) };
     }
     const parsed = parseRunReport(outcome.report);
-    return { ...base, status, counts: parsed.counts, failures: parsed.failures, durationMs: parsed.durationMs };
+    return { ...base, status, counts: parsed.counts, failures: parsed.failures, durationMs: parsed.durationMs, traces: parsed.traces };
   }
 }

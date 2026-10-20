@@ -104,6 +104,32 @@ describe('StepReporter', () => {
     expect(ids).toEqual([['stepBegin', 1], ['stepBegin', 2], ['stepEnd', 2], ['stepEnd', 1]]);
   });
 
+  it('emits the predicted live trace path on testBegin and the trace attachment on testEnd (feature 008)', () => {
+    const reporter = new StepReporter();
+    const test = { ...fakeTest(), id: 'abc-123', parent: { project: () => ({ name: 'chromium', outputDir: '/w/test-results' }) } };
+    const begun = { status: 'passed', workerIndex: 2 };
+    const ended = { status: 'passed', workerIndex: 2, attachments: [{ name: 'screenshot', path: '/w/s.png' }, { name: 'trace', contentType: 'application/zip', path: '/w/test-results/slow-chromium/trace.zip' }] };
+    reporter.onTestBegin(test as never, begun as never);
+    reporter.onTestEnd(test as never, ended as never);
+    const [begin, end] = lines();
+    expect(begin.traceLive).toBe(path.join('/w/test-results', '.playwright-artifacts-2', 'traces', 'abc-123.json'));
+    expect(begin.trace).toBeUndefined();
+    expect(end.trace).toBe('/w/test-results/slow-chromium/trace.zip');
+    expect(end.traceLive).toBeUndefined();
+  });
+
+  it('omits the trace fields when the reporter cannot build them', () => {
+    const reporter = new StepReporter();
+    reporter.onTestBegin(fakeTest() as never); // no id, no result
+    reporter.onTestBegin({ ...fakeTest(), id: 'x' } as never, { workerIndex: -1 } as never); // skipped before a worker ran it
+    reporter.onTestEnd(fakeTest() as never, { status: 'skipped', attachments: [] } as never);
+    reporter.onTestEnd(fakeTest() as never, { status: 'passed' } as never);
+    for (const e of lines()) {
+      expect(e.traceLive).toBeUndefined();
+      expect(e.trace).toBeUndefined();
+    }
+  });
+
   it('reports an empty project name when the suite has none', () => {
     const reporter = new StepReporter();
     const test = { ...fakeTest(), parent: {} };
