@@ -51,3 +51,31 @@ on the owner's machine (Linux Zed, 1.24.2 at the last recorded check).
 `showOutcomeWarning` helper in `server/src/trace.ts` (unit tests added). After the change:
 `npm run lint` and `npm run build` clean, unit suite 13 files / 150 tests, integration
 `trace.test.ts` 15 tests, all green (WSLg display present).
+
+## Release 0.7.0
+
+2026-10-20, lockstep with server 0.7.0 (MINOR, new upstream capability):
+
+- Release branch `release-0.7.0`: server `npm version 0.7.0`, `Cargo.toml`, `extension.toml`,
+  `PINNED_SERVER_VERSION`, README manual-testing line, description naming the trace viewer;
+  gate on the branch: `cargo test` 8 passed, `wasm32-wasip2` build, server lint and build
+  clean, 248 vitest tests in 22 files, `npm pack --dry-run` 36 files / 53.5 kB with
+  `dist/trace.js` and `dist/step-reporter.js`. Release PR #16, CI green (all eight checks).
+- Server 0.7.0 published by the owner from the branch; `npm view` listed it about one
+  minute later, `dist-tags.latest = 0.7.0`.
+- Published package driven over stdio: `npm install --omit=dev playwright-zed-language-server@0.7.0`
+  into a scratch directory, `TestClient` started `bin/playwright-zed-language-server.js`
+  against `fixtures/sample-project`: 17 tests discovered, `Playwright: [ ] Show trace viewer`
+  offered, toggle confirmed, `playwright.runFile` command line ended with `--trace on`,
+  11 trace records with existing files, `Playwright: Show trace` offered on a test line. PASS.
+- PR #16 merged by the owner as squash `01cae88`; tag `v0.7.0` = `01cae88`, pushed.
+- Registry bump in `../zed-extensions`, branch `playwright-runner-lsp` reset to the fork's
+  `40a4df3`, new commit "Update playwright-runner-lsp to v0.7.0" (submodule at `01cae88` =
+  `v0.7.0`, `version = "0.7.0"`, `sort-extensions` clean, `package-extensions` with the CLI
+  at SHA `9ee3c503` and Rust 1.90: manifest name "Playwright Runner", version 0.7.0,
+  `wasm_api_version` 0.7.0, provides `language-servers`, archive 125 kB). Pushed by the
+  owner to `fork/playwright-runner-lsp` (`40a4df31..bb79322c`) on 2026-10-20; registry PR
+  #7975 head is `bb79322c`, still open with no maintainer review.
+- Zed npm install path check (owner, 2026-10-20): PASS. Zed started from a terminal without
+  `PLAYWRIGHT_ZED_SERVER_ENTRY` after a `zed: install dev extension` rerun installed server
+  0.7.0 from npm; the work directory's `package.json` names 0.7.0.
