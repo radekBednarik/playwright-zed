@@ -76,4 +76,6 @@ on the owner's machine (Linux Zed, 1.24.2 at the last recorded check).
   `wasm_api_version` 0.7.0, provides `language-servers`, archive 125 kB). Pushed by the
   owner to `fork/playwright-runner-lsp` (`40a4df31..bb79322c`) on 2026-10-20; registry PR
   #7975 head is `bb79322c`, still open with no maintainer review.
-- Zed npm install path check (owner): pending.
+- Zed npm install path check (owner, 2026-10-20): PASS. Zed started from a terminal without
+  `PLAYWRIGHT_ZED_SERVER_ENTRY` after a `zed: install dev extension` rerun installed server
+  0.7.0 from npm; the work directory's `package.json` names 0.7.0.
