@@ -246,6 +246,7 @@ the directory); the server entry override must sit in `~/.bashrc` because Zed re
 project environment from the login shell. The sparse Zed source clone used for research lived in the session scratchpad and is
 gone; re-clone with `git clone --branch v1.24.2 --depth 1 --filter=blob:none --sparse` if
 Zed source evidence is needed again.
+
 **Feature 008, show trace viewer** (`specs/008-show-trace-viewer/`, spec, plan, research,
 data model, contract, quickstart, tasks and verification written 2026-10-20; implemented the
 same day; **PR #14** (https://github.com/radekBednarik/playwright-zed/pull/14) merged by the
