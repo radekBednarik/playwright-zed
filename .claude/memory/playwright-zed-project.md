@@ -18,8 +18,8 @@ published 2026-10-13 16:20 UTC by the owner; 0.3.0 published 2026-10-13 07:06 UT
 `0.0.0-stage` placeholder from npm staged publishing also exists, harmless, removable with
 `npm unpublish playwright-zed-language-server@0.0.0-stage --otp=<code>` within 72 h of
 2026-10-12 16:07 UTC). Later releases: 0.5.0 and 0.5.1 (2026-10-16), **0.6.0 (2026-10-17,
-current `latest`; shell pin, `extension.toml` and `Cargo.toml` are 0.6.0, tag `v0.6.0` =
-`91aab9c`)**; tags `v0.1.0` through `v0.6.0`. Zed installing 0.2.0 and 0.3.0 from npm on its own is
+`latest` until 0.7.0; shell pin, `extension.toml` and `Cargo.toml` were 0.6.0, tag `v0.6.0` =
+`91aab9c`)**, then **0.7.0 (2026-10-20, current, see feature 008 below)**; tags `v0.1.0` through `v0.7.0`. Zed installing 0.2.0 and 0.3.0 from npm on its own is
 verified; 0.4.0 npm install path verified on 2026-10-13 at `b4c1116`, 0.5.0, 0.5.1 and
 0.6.0 likewise (records in the feature 005 and 006 verification files). Through 0.3.0 the display name ended
 with " Zed" and the id was `playwright`; feature 004 renames them to "Playwright Runner" and
@@ -251,8 +251,18 @@ Zed source evidence is needed again.
 data model, contract, quickstart, tasks and verification written 2026-10-20; implemented the
 same day; **PR #14** (https://github.com/radekBednarik/playwright-zed/pull/14) merged by the
 owner on 2026-10-20 as squash `a89d103`, branch deleted; `.specify/feature.json` points at
-it; **not released yet**: the 0.7.0 lockstep release (MINOR, new upstream capability) is
-the next step on the owner's OK, following the recorded procedure, then the registry bump).
+it). **Released 0.7.0** (2026-10-20, lockstep, MINOR): release PR #16 merged by the owner
+as squash `01cae88`, tag `v0.7.0` = `01cae88`, server 0.7.0 published by the owner (npm
+`latest`), published package driven over stdio PASS (record in the feature's
+`verification.md`, "Release 0.7.0"); **the shell pin, `extension.toml` and `Cargo.toml`
+are 0.7.0 and `v0.7.0` is the current tag**. Registry bump committed in `../zed-extensions`
+on `playwright-runner-lsp` (local branch reset to the fork's `40a4df3`; this machine's
+clone had been stale at `0aef1c4`): "Update playwright-runner-lsp to v0.7.0", submodule
+at `01cae88`, `package-extensions` passed with the CLI at SHA `9ee3c503` (re-downloaded
+to session scratch, symlinked as `./zed-extension`, gitignored) and Rust 1.90; the owner
+pushes it to `fork` (`git -C ../zed-extensions push fork playwright-runner-lsp`), which
+updates registry PR #7975. The owner's Zed npm install path check for 0.7.0 was pending
+when this was written.
 Delivered, server only, no Rust change: code action `Playwright: [x]/[ ] Show trace viewer`
 (`playwright.toggleTraceViewer`, remembered per user in `trace-viewer.json` next to
 `project-selection.json`, Zed settings default `lsp.playwright.settings.showTrace`, a
