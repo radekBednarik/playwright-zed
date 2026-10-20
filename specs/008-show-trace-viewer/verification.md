@@ -73,6 +73,7 @@ on the owner's machine (Linux Zed, 1.24.2 at the last recorded check).
   `40a4df3`, new commit "Update playwright-runner-lsp to v0.7.0" (submodule at `01cae88` =
   `v0.7.0`, `version = "0.7.0"`, `sort-extensions` clean, `package-extensions` with the CLI
   at SHA `9ee3c503` and Rust 1.90: manifest name "Playwright Runner", version 0.7.0,
-  `wasm_api_version` 0.7.0, provides `language-servers`, archive 125 kB). Not pushed; the
-  owner pushes with `git -C ../zed-extensions push fork playwright-runner-lsp`.
+  `wasm_api_version` 0.7.0, provides `language-servers`, archive 125 kB). Pushed by the
+  owner to `fork/playwright-runner-lsp` (`40a4df31..bb79322c`) on 2026-10-20; registry PR
+  #7975 head is `bb79322c`, still open with no maintainer review.
 - Zed npm install path check (owner): pending.

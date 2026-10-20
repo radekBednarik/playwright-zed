@@ -259,9 +259,9 @@ are 0.7.0 and `v0.7.0` is the current tag**. Registry bump committed in `../zed-
 on `playwright-runner-lsp` (local branch reset to the fork's `40a4df3`; this machine's
 clone had been stale at `0aef1c4`): "Update playwright-runner-lsp to v0.7.0", submodule
 at `01cae88`, `package-extensions` passed with the CLI at SHA `9ee3c503` (re-downloaded
-to session scratch, symlinked as `./zed-extension`, gitignored) and Rust 1.90; the owner
-pushes it to `fork` (`git -C ../zed-extensions push fork playwright-runner-lsp`), which
-updates registry PR #7975. The owner's Zed npm install path check for 0.7.0 was pending
+to session scratch, symlinked as `./zed-extension`, gitignored) and Rust 1.90; pushed by
+the owner to `fork/playwright-runner-lsp` on 2026-10-20, so registry PR #7975's head is
+`bb79322c` (still open, no maintainer review as of that day). The owner's Zed npm install path check for 0.7.0 was pending
 when this was written.
 Delivered, server only, no Rust change: code action `Playwright: [x]/[ ] Show trace viewer`
 (`playwright.toggleTraceViewer`, remembered per user in `trace-viewer.json` next to
