@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { STATE_SUBDIR, STORE_FILE, readSelections, stateDir, writeSelection } from '../../src/store';
+import { STATE_SUBDIR, STORE_FILE, TRACE_STORE_FILE, readSelections, readTracePreference, stateDir, writeSelection, writeTracePreference } from '../../src/store';
 
 const temps: string[] = [];
 function tempDir(): string {
@@ -79,5 +79,41 @@ describe('writeSelection', () => {
     writeSelection(dir, CONFIG_A, ['chromium']);
     writeSelection(dir, CONFIG_A, ['mobile']);
     expect(readSelections(dir)).toMatchObject({ [CONFIG_A]: { projects: ['mobile'] } });
+  });
+});
+
+describe('trace preference store (feature 008)', () => {
+  it('reads nothing for a missing, malformed, wrong-version, wrong-type or symlinked file', () => {
+    const dir = tempDir();
+    const file = path.join(dir, TRACE_STORE_FILE);
+    expect(readTracePreference(dir)).toBeNull();
+    fs.writeFileSync(file, '{not json');
+    expect(readTracePreference(dir)).toBeNull();
+    fs.writeFileSync(file, JSON.stringify({ version: 2, showTrace: true, updatedAt: 't' }));
+    expect(readTracePreference(dir)).toBeNull();
+    fs.writeFileSync(file, JSON.stringify({ version: 1, showTrace: 'yes', updatedAt: 't' }));
+    expect(readTracePreference(dir)).toBeNull();
+    fs.writeFileSync(file, JSON.stringify({ version: 1, showTrace: true }));
+    expect(readTracePreference(dir)).toBeNull();
+    fs.unlinkSync(file);
+    const real = path.join(dir, 'elsewhere.json');
+    fs.writeFileSync(real, JSON.stringify({ version: 1, showTrace: true, updatedAt: 't' }));
+    fs.symlinkSync(real, file);
+    expect(readTracePreference(dir)).toBeNull();
+  });
+  it('round-trips the choice with owner-only modes next to the selection store', () => {
+    const dir = path.join(tempDir(), STATE_SUBDIR);
+    const written = writeTracePreference(dir, true, new Date('2026-10-20T10:00:00.000Z'));
+    expect(written).toEqual({ showTrace: true, updatedAt: '2026-10-20T10:00:00.000Z' });
+    expect(readTracePreference(dir)).toEqual(written);
+    writeSelection(dir, CONFIG_A, ['chromium']);
+    expect(fs.readdirSync(dir).sort()).toEqual([STORE_FILE, TRACE_STORE_FILE].sort());
+    if (process.platform !== 'win32') {
+      expect(fs.statSync(dir).mode & 0o777).toBe(0o700);
+      expect(fs.statSync(path.join(dir, TRACE_STORE_FILE)).mode & 0o777).toBe(0o600);
+    }
+    writeTracePreference(dir, false);
+    expect(readTracePreference(dir)?.showTrace).toBe(false);
+    expect(JSON.parse(fs.readFileSync(path.join(dir, TRACE_STORE_FILE), 'utf8')).version).toBe(1);
   });
 });

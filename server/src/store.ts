@@ -8,6 +8,8 @@ export const STATE_SUBDIR = 'playwright-zed-language-server';
 export const STORE_FILE = 'project-selection.json';
 /** Environment override for the state directory (tests, power users). */
 export const STATE_DIR_VAR = 'PLAYWRIGHT_ZED_STATE_DIR';
+/** Per-user "Show trace viewer" choice (feature 008, research R4). */
+export const TRACE_STORE_FILE = 'trace-viewer.json';
 
 export interface StoredSelection {
   projects: string[];
@@ -85,4 +87,59 @@ export function writeSelection(dir: string, configPath: string, projects: string
     throw error;
   }
   return entry;
+}
+
+// ---------------------------------------------------------------------------
+// Feature 008: the "Show trace viewer" preference
+// ---------------------------------------------------------------------------
+
+export interface StoredTracePreference {
+  showTrace: boolean;
+  updatedAt: string;
+}
+
+interface TraceStoreFile {
+  version: 1;
+  showTrace: boolean;
+  updatedAt: string;
+}
+
+/**
+ * Reads the remembered choice. A missing, unreadable, malformed or symlinked file, a wrong
+ * version, a non-boolean `showTrace` or a non-string `updatedAt` all read as "no choice".
+ */
+export function readTracePreference(dir: string): StoredTracePreference | null {
+  const file = path.join(dir, TRACE_STORE_FILE);
+  let raw: string;
+  try {
+    if (!fs.lstatSync(file).isFile()) return null;
+    raw = fs.readFileSync(file, 'utf8');
+  } catch {
+    return null;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const store = parsed as Partial<TraceStoreFile> | null;
+  if (!store || store.version !== 1 || typeof store.showTrace !== 'boolean' || typeof store.updatedAt !== 'string') return null;
+  return { showTrace: store.showTrace, updatedAt: store.updatedAt };
+}
+
+/** Writes the choice through a temp file and a rename. Directory `0700`, file `0600`. Throws on failure. */
+export function writeTracePreference(dir: string, showTrace: boolean, now: Date = new Date()): StoredTracePreference {
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  const store: TraceStoreFile = { version: 1, showTrace, updatedAt: now.toISOString() };
+  const file = path.join(dir, TRACE_STORE_FILE);
+  const temp = path.join(dir, `${TRACE_STORE_FILE}.${process.pid}.${Math.random().toString(36).slice(2)}.tmp`);
+  try {
+    fs.writeFileSync(temp, `${JSON.stringify(store, null, 2)}\n`, { mode: 0o600 });
+    fs.renameSync(temp, file);
+  } catch (error) {
+    fs.rmSync(temp, { force: true });
+    throw error;
+  }
+  return { showTrace, updatedAt: store.updatedAt };
 }

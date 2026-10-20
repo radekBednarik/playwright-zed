@@ -76,11 +76,43 @@ export interface RunRequest {
   trigger: RunTrigger;
   startedAt: string;
   dirty: boolean;
-  /** Copy of `config.selection.projects` at start (feature 005). */
+    /** Copy of `config.selection.projects` at start (feature 005). */
   projects: string[];
+  /** Feature 008: copy of the trace preference at start; `--trace on` is appended when true. */
+  trace: boolean;
 }
 
 export type RunStatus = 'queued' | 'running' | 'passed' | 'failed' | 'cancelled' | 'error';
+
+// ---------------------------------------------------------------------------
+// Feature 008: the "Show trace viewer" preference and the traces of the last run
+// ---------------------------------------------------------------------------
+
+/** Where the on/off state came from: the per-user store, the editor settings, or the built-in default (off). */
+export type TracePreferenceSource = 'remembered' | 'settings' | 'default';
+
+export interface TracePreference {
+  enabled: boolean;
+  source: TracePreferenceSource;
+  /** Set for `remembered` (copied from the store), else null. */
+  updatedAt: string | null;
+}
+
+/** One trace attachment of one test result, from the run's JSON report (data-model.md "TraceRecord"). */
+export interface TraceRecord {
+  /** Absolute test file. */
+  file: string;
+  /** 1-based spec line, as discovery reports it. */
+  line: number;
+  column: number;
+  title: string;
+  /** Project of the result; null when the config has fewer than two projects. */
+  project: string | null;
+  /** The `trace` attachment path (`.zip`). */
+  path: string;
+  /** `startTime + duration` of the result in epoch milliseconds; the ordering key for "latest". */
+  finishedAt: number;
+}
 
 // ---------------------------------------------------------------------------
 // Feature 006: step events from the run and the marks derived from them
@@ -96,8 +128,12 @@ export interface StepEvent {
   type: StepEventType;
   test: { file: string; line: number; column: number; title: string; project: string };
   step?: { id: number; title: string; category: string; file: string; line: number; column: number };
-  duration?: number;
+    duration?: number;
   status?: string;
+  /** Feature 008: predicted live trace path on `testBegin`, when the reporter could build it. */
+  traceLive?: string;
+  /** Feature 008: path of the result attachment named `trace` on `testEnd`, when there is one. */
+  trace?: string;
   /** Milliseconds since the epoch, for ordering and the log. */
   at: number;
 }
@@ -146,8 +182,10 @@ export interface RunResult {
   failures: Failure[];
   rawOutput: string;
   command: string;
-  /** Wall-clock duration reported by Playwright, when a report exists. */
+    /** Wall-clock duration reported by Playwright, when a report exists. */
   durationMs: number | null;
+  /** Feature 008: one record per result with a `trace` attachment; empty without a report. */
+  traces: TraceRecord[];
   /** Set when status is `error`. */
   errorMessage?: string;
 }
@@ -180,6 +218,8 @@ export interface Workspace {
   fromWorkspaceFolders: boolean;
   /** Feature 006: step marks of the latest run. */
   marks: StepMarks;
-  /** Feature 006: path of the last written run log, null before the first run. */
+    /** Feature 006: path of the last written run log, null before the first run. */
   outputFile: string | null;
+  /** Feature 008: trace records of the latest finished run, null before the first run ends. */
+  traces: { runId: string; records: TraceRecord[] } | null;
 }

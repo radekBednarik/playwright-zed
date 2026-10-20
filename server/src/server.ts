@@ -21,21 +21,24 @@ import {
   COMMAND_RUN_AT_CURSOR,
   COMMAND_RUN_FILE,
   COMMAND_SELECT_ALL_PROJECTS,
-  COMMAND_SHOW_LAST_RUN_OUTPUT,
+    COMMAND_SHOW_LAST_RUN_OUTPUT,
+  COMMAND_SHOW_TRACE,
   COMMAND_TOGGLE_PROJECT,
+  COMMAND_TOGGLE_TRACE_VIEWER,
   countSelectedTests,
   resolveStepReporterPath,
   resolveTestLocation,
 } from './commands';
 import { runList } from './discovery';
 import { allSelected, isTestSelected, parseProjectsSetting, resolveSelection, selectAll, toggleProject } from './selection';
-import { readSelections, stateDir, writeSelection } from './store';
+import { readSelections, readTracePreference, stateDir, writeSelection, writeTracePreference } from './store';
+import { ViewerSessions, latestTraceFor, parseShowTraceSetting, resolveTracePreference, showOutcomeWarning } from './trace';
 import { DISCOVERY_NOT_NOW, DISCOVERY_RUN, Reporter, failureLabel } from './reporting';
 import { RunManager, summarize } from './runner';
 import { applyEvent, clearFile, createMarks, endRun, hintsFor, startRun as beginMarks } from './marks';
 import { formatRunLog, runLogFor, writeRunLog } from './output';
 import { editorHasTrustGate } from './trust';
-import type { DiscoveredTest, PlaywrightConfig, ProjectSelection, RunRequest, RunResult, RunTrigger, TestLocation, Workspace } from './types';
+import type { DiscoveredTest, PlaywrightConfig, ProjectSelection, RunRequest, RunResult, RunTrigger, TestLocation, TracePreference, Workspace } from './types';
 import { formatVersion } from './version';
 import { buildConfig, configForFile, findConfigs, isConfigFile, isUnderTestDirs } from './workspace';
 
@@ -71,6 +74,24 @@ let clientShowsDocuments = false;
 let clientRequestsInlayHints = false;
 /** Feature 006: the step reporter next to the built server files, or why it is unavailable. */
 const stepReporter = resolveStepReporterPath();
+/** Feature 008: the "Show trace viewer" preference (data-model "TraceViewerPreference"). */
+let tracePreference: TracePreference = { enabled: false, source: 'default', updatedAt: null };
+/** Feature 008: the `showTrace` value from the editor settings, null when absent or invalid. */
+let traceSettingValue: boolean | null = null;
+let invalidShowTraceWarned = false;
+/** Feature 008: one trace viewer process per configuration, started on the first trace to show. */
+const viewers = new ViewerSessions({
+  onStarted: (name, pid, command) => reporter.log(`playwright: trace viewer ${name} started (pid ${pid}): ${command}`),
+    onShowing: (name, tracePath) => reporter.log(`playwright: trace viewer ${name} showing ${tracePath}`),
+  onDropped: (name, tracePath) => reporter.log(`playwright: trace viewer ${name} trace file disappeared before it could be shown: ${tracePath}`),
+  onOutput: (name, line) => reporter.log(`playwright: trace viewer ${name}: ${line}`),
+  onExit: (name, code) => reporter.log(`playwright: trace viewer ${name} exited (code ${code})`),
+  onClosed: (name) => reporter.log(`playwright: trace viewer ${name} closed`),
+  onFailure: (name, command, detail) => {
+    reporter.log(`playwright: trace viewer ${name} failed: ${detail}`);
+    reporter.showError(`Playwright could not start the trace viewer.\nCommand: ${command}\n${detail}`);
+  },
+});
 
 function toPath(uri: string): string | null {
   try {
@@ -299,8 +320,9 @@ async function addWorkspace(folder: WorkspaceFolder, fromWorkspaceFolders: boole
     rootPath,
     configs: [],
     lastRun: null,
-    marks: createMarks(),
+        marks: createMarks(),
     outputFile: null,
+    traces: null,
     versionWarningShown: false,
     discovery: 'pending',
     discoveryAsked: false,
@@ -324,7 +346,8 @@ async function addWorkspace(folder: WorkspaceFolder, fromWorkspaceFolders: boole
 function removeWorkspace(folder: WorkspaceFolder): void {
   const rootPath = toPath(folder.uri);
   if (!rootPath) return;
-  runManagers.get(rootPath)?.cancelActive();
+    runManagers.get(rootPath)?.cancelActive();
+  viewers.closeFor(rootPath);
   workspaces.delete(rootPath);
   runManagers.delete(rootPath);
   publishedFiles.delete(rootPath);
@@ -356,6 +379,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 connection.onInitialized(() => {
   if (stepReporter.path === null) reporter.log(`playwright: step reporter unavailable (${stepReporter.reason}); step marks and durations are disabled`);
   if (!clientRequestsInlayHints) reporter.log('playwright: client does not request inlay hints; step marks will not be shown');
+    loadTracePreference();
   void (async () => {
     await loadSettings();
     for (const { folder, fromWorkspaceFolders } of pendingFolders.splice(0)) await addWorkspace(folder, fromWorkspaceFolders);
@@ -396,6 +420,7 @@ async function loadSettings(): Promise<void> {
  * and chosen selections keep.
  */
 async function applySettings(value: unknown): Promise<void> {
+  applyShowTraceSetting(value);
   const raw = value && typeof value === 'object' ? (value as { projects?: unknown }).projects : undefined;
   const parsed = parseProjectsSetting(raw);
   if (parsed.invalid) {
@@ -420,6 +445,45 @@ async function applySettings(value: unknown): Promise<void> {
     }
   }
   if (changed) await reporter.refreshCodeLenses();
+}
+
+// ---------------------------------------------------------------------------
+// Feature 008: the "Show trace viewer" preference
+// ---------------------------------------------------------------------------
+
+/** Reads the remembered choice once at start-up; the settings may still apply when there is none. */
+function loadTracePreference(): void {
+  tracePreference = resolveTracePreference(readTracePreference(stateDir()), traceSettingValue);
+  logTracePreference();
+}
+
+function logTracePreference(): void {
+  reporter.info(`playwright: show trace viewer: ${tracePreference.enabled ? 'on' : 'off'} (${tracePreference.source})`);
+}
+
+/**
+ * Applies `{ showTrace: true|false }` from the editor settings (data-model "Resolution"): a
+ * remembered choice always wins; otherwise the setting decides and a default that turns the
+ * option on is announced once, because nothing else tells the developer why traces appear.
+ */
+function applyShowTraceSetting(value: unknown): void {
+  const raw = value && typeof value === 'object' ? (value as { showTrace?: unknown }).showTrace : undefined;
+  const parsed = parseShowTraceSetting(raw);
+  if (parsed.invalid) {
+    if (!invalidShowTraceWarned) reporter.showWarning('Playwright: setting "showTrace" must be true or false');
+    invalidShowTraceWarned = true;
+  } else {
+    invalidShowTraceWarned = false;
+  }
+  if (parsed.value === traceSettingValue) return;
+  traceSettingValue = parsed.value;
+  if (tracePreference.source === 'remembered') return;
+  const before = tracePreference;
+  tracePreference = resolveTracePreference(null, traceSettingValue);
+  if (before.enabled === tracePreference.enabled && before.source === tracePreference.source) return;
+  logTracePreference();
+  if (tracePreference.enabled && tracePreference.source === 'settings') reporter.showInfo('Playwright: show trace viewer is on (from settings)');
+  if (!tracePreference.enabled) viewers.closeAll();
 }
 
 // ---------------------------------------------------------------------------
@@ -549,8 +613,15 @@ connection.onCodeAction((params) => {
   if (ws?.lastRun) actions.push(action('Playwright: Re-run last', COMMAND_RERUN_LAST, [{ uri }]));
   // Feature 006: the run log, opened through window/showDocument.
   if (ws?.lastRun && ws.outputFile && clientShowsDocuments) actions.push(action('Playwright: Show last run output', COMMAND_SHOW_LAST_RUN_OUTPUT, [{ uri }]));
+    const owner = configForDocument(uri);
+  // Feature 008: the trace viewer toggle from any served file of the config, and the trace of the test at the cursor.
+  if (owner) actions.push(action(`Playwright: [${tracePreference.enabled ? 'x' : ' '}] Show trace viewer`, COMMAND_TOGGLE_TRACE_VIEWER, [{ uri }]));
+  if (tracePreference.enabled && ctx && ctx.ws.traces) {
+    const cursorLine0 = params.range.start.line;
+    const at = resolveTestLocation(ctx.config.tests.filter((t) => t.file === ctx.file), ctx.file, cursorLine0 + 1);
+    if (at.kind === 'test') actions.push(action('Playwright: Show trace', COMMAND_SHOW_TRACE, [{ uri, line: cursorLine0 }]));
+  }
   // Feature 005: the project picker, one entry per project, from any served file of the config.
-  const owner = configForDocument(uri);
   if (owner && owner.config.projects.length >= 2) {
     for (const name of owner.config.projects) {
       const on = owner.config.selection.projects.includes(name);
@@ -634,7 +705,16 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
   const manager = managerFor(ws);
   const uri = pathToFileURL(location.file).toString();
   const dirty = dirtyUris.has(uri);
-  const request: RunRequest = { id: manager.nextId(), location, config, trigger, startedAt: new Date().toISOString(), dirty, projects: [...config.selection.projects] };
+    const request: RunRequest = {
+    id: manager.nextId(),
+    location,
+    config,
+    trigger,
+    startedAt: new Date().toISOString(),
+    dirty,
+    projects: [...config.selection.projects],
+    trace: tracePreference.enabled,
+  };
   ws.lastRun = request;
   // Feature 006: marks and the run log belong to the newest run only (current run id guard).
   beginMarks(ws.marks, request.id);
@@ -652,20 +732,55 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
   reporter.log(`playwright: run ${request.id} (${trigger}, ${location.kind}) ${target} projects: ${request.projects.join(', ')}`);
   if (stepReporter.path === null) reporter.log(`playwright: run ${request.id} step reporter unavailable (${stepReporter.reason})`);
 
+    // Feature 008: a single-test run with the trace viewer on follows the test in the viewer
+  // (live path on testBegin, final trace on testEnd, research R2); other runs only record traces.
+  const followTrace = request.trace && location.kind === 'test';
+  const configName = path.basename(config.configPath);
+  let outsideWarned = false;
+  let finalShown = false;
+    const showTrace = (tracePath: string) => {
+    // Turned off while the run was in progress: the run keeps its trace, the viewer stays closed (FR-007).
+    if (ws.lastRun?.id !== request.id || !tracePreference.enabled) return;
+    if (!isWithin(ws.rootPath, tracePath) && !outsideWarned) {
+      outsideWarned = true;
+      reporter.showWarning(`Playwright: the trace ${tracePath} is outside ${ws.rootPath}; the viewer cannot read it (set outputDir inside the workspace)`);
+    }
+        const warning = showOutcomeWarning(viewers.show(config, ws.rootPath, tracePath), tracePath);
+    if (warning) {
+      reporter.log(`playwright: trace viewer ${configName} trace file not found: ${tracePath}`);
+      reporter.showWarning(warning);
+    }
+  };
   const result = await manager.start(request, {
     reporterPath: stepReporter.path,
     onStepEvent: (event) => {
       applyEvent(ws.marks, event, request.id);
       reporter.refreshInlayHints();
+      if (!followTrace) return;
+      if (event.type === 'testBegin' && event.traceLive) showTrace(event.traceLive);
+      if (event.type === 'testEnd' && event.trace) {
+        finalShown = true;
+        showTrace(event.trace);
+      }
     },
   });
   reporter.log(`playwright: run ${request.id} command: ${result.command}\nplaywright: run ${request.id} cwd: ${config.configDir}\n${result.rawOutput.trimEnd()}`);
   endRun(ws.marks, request.id);
   reporter.refreshInlayHints();
-  if (ws.lastRun?.id === request.id) {
+    if (ws.lastRun?.id === request.id) {
     writeLog(ws, request, result, new Date().toISOString());
     reporter.log(`playwright: run ${request.id} output written to ${ws.outputFile}`);
     if (!clientShowsDocuments) reporter.log(`playwright: run ${request.id} output not offered (client has no showDocument support)`);
+    // Feature 008: the run's traces, for "Show trace" at the cursor; a followed run that
+    // produced none says so, and one without a step reporter shows its final trace here.
+    ws.traces = { runId: request.id, records: result.traces };
+        if (followTrace && tracePreference.enabled && result.status !== 'error') {
+      if (result.traces.length === 0) {
+        reporter.showWarning(`Playwright: no trace recorded for ${target} in this run`);
+      } else if (!finalShown) {
+        showTrace(result.traces.reduce((best, record) => (record.finishedAt >= best.finishedAt ? record : best)).path);
+      }
+    }
   } else {
     reporter.log(`playwright: run ${request.id} superseded, output not written`);
   }
@@ -762,6 +877,51 @@ async function showLastRunOutput(uri?: string): Promise<void> {
   if (!opened) reporter.showWarning(`Playwright: could not open the run output; it is at ${ws.outputFile}`);
 }
 
+/** Feature 008: flips "Show trace viewer", remembers it, confirms it (Zed caches the menu) and closes the viewers when off. */
+async function toggleTraceViewerCommand(uri: string): Promise<void> {
+  const gated = gatedWorkspace(uri);
+  if (gated) return refuseNotEnabled(gated);
+  if (!configForDocument(uri)) return notPlaywright(uri);
+  const enabled = !tracePreference.enabled;
+  const now = new Date();
+  tracePreference = { enabled, source: 'remembered', updatedAt: now.toISOString() };
+  try {
+    writeTracePreference(stateDir(), enabled, now);
+  } catch (error) {
+    reporter.log(`playwright: could not remember the trace viewer choice in ${stateDir()}: ${(error as Error).message}`);
+  }
+  logTracePreference();
+  reporter.showInfo(`Playwright: show trace viewer is ${enabled ? 'on' : 'off'}`);
+  if (!enabled) viewers.closeAll();
+}
+
+/** Feature 008: shows the latest trace of the test at the cursor from the last run (contract section 2). */
+async function showTraceCommand(uri: string, line0: number): Promise<void> {
+  if (!tracePreference.enabled) {
+    reporter.showWarning('Playwright: turn on "Show trace viewer" first; the last run recorded no traces');
+    return;
+  }
+  const gated = gatedWorkspace(uri);
+  if (gated) return refuseNotEnabled(gated);
+  const { ctx } = testFileContext(uri);
+  if (!ctx) return notPlaywright(uri);
+  const inFile = ctx.config.tests.filter((t) => t.file === ctx.file);
+  const location = resolveTestLocation(inFile, ctx.file, line0 + 1);
+  if (location.kind !== 'test' || location.line === null) {
+    reporter.showWarning('Playwright: put the cursor inside a test to show its trace');
+    return;
+  }
+  const line = location.line;
+  const record = latestTraceFor(ctx.ws.traces?.records ?? [], ctx.file, line);
+  if (!record) {
+    const titles = inFile.filter((t) => t.line === line).map((t) => t.title);
+    reporter.showWarning(`Playwright: no trace for ${titles.join(', ') || `${path.basename(ctx.file)}:${line}`} in the last run`);
+    return;
+  }
+    const warning = showOutcomeWarning(viewers.show(ctx.config, ctx.ws.rootPath, record.path), record.path);
+  if (warning) reporter.showWarning(warning);
+}
+
 async function rerunLast(uri?: string): Promise<void> {
   const gated = uri ? gatedWorkspace(uri) : null;
   if (gated) return refuseNotEnabled(gated);
@@ -829,8 +989,16 @@ connection.onExecuteCommand(async (params) => {
       case COMMAND_RERUN_LAST:
         await rerunLast(arg.uri);
         break;
-      case COMMAND_SHOW_LAST_RUN_OUTPUT:
+            case COMMAND_SHOW_LAST_RUN_OUTPUT:
         await showLastRunOutput(arg.uri);
+        break;
+      case COMMAND_TOGGLE_TRACE_VIEWER:
+        if (typeof arg.uri === 'string') await toggleTraceViewerCommand(arg.uri);
+        else reporter.showError('Playwright: toggle trace viewer needs a document');
+        break;
+      case COMMAND_SHOW_TRACE:
+        if (typeof arg.uri === 'string' && typeof arg.line === 'number') await showTraceCommand(arg.uri, arg.line);
+        else reporter.showError('Playwright: show trace needs a document and a line');
         break;
       case COMMAND_TOGGLE_PROJECT:
         if (typeof arg.uri === 'string' && typeof arg.project === 'string') await toggleProjectCommand(arg.uri, arg.project);
@@ -865,7 +1033,12 @@ connection.onRequest(STATUS_REQUEST, () =>
     discoverySource: ws.discoverySource,
     editorTrustGate,
     lastRun: ws.lastRun ? { id: ws.lastRun.id, location: ws.lastRun.location, trigger: ws.lastRun.trigger } : null,
-    outputFile: ws.outputFile,
+        outputFile: ws.outputFile,
+    traceViewer: { enabled: tracePreference.enabled, source: tracePreference.source },
+    traces: ws.traces
+      ? { runId: ws.traces.runId, records: ws.traces.records.map(({ file, line, title, project, path: tracePath }) => ({ file, line, title, project, path: tracePath })) }
+      : null,
+    traceViewers: viewers.list(ws.rootPath).map(({ configPath, pid, currentPath, startedAt }) => ({ configPath, pid, currentPath, startedAt })),
     marks: {
       runId: ws.marks.runId,
       active: Array.from(ws.marks.active, ([file, lines]) => Array.from(lines, ([line, count]) => ({ file, line, count }))).flat(),
@@ -885,6 +1058,11 @@ connection.onRequest(STATUS_REQUEST, () =>
     })),
   })),
 );
+
+// Feature 008: no viewer outlives the server (research R7).
+connection.onShutdown(() => viewers.closeAll());
+connection.onExit(() => viewers.closeAll(true));
+process.on('exit', () => viewers.closeAll(true));
 
 documents.listen(connection);
 connection.listen();

@@ -207,8 +207,19 @@ export class TestClient {
     });
   }
 
-  status() {
+    status() {
     return this.request<any[]>('playwright/status', {});
+  }
+
+  /** Feature 008: polls `playwright/status` until the predicate accepts it. */
+  async waitForStatus<T>(probe: (status: any[]) => T | null, timeoutMs = 60_000): Promise<T> {
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+      const value = probe(await this.status());
+      if (value !== null) return value;
+      if (Date.now() > deadline) throw new Error(`timed out waiting for a status condition; last status: ${JSON.stringify(await this.status()).slice(0, 400)}`);
+      await new Promise((r) => setTimeout(r, 250));
+    }
   }
 
   /** Replaces the settings object and sends `workspace/didChangeConfiguration` (feature 005). */
@@ -231,6 +242,34 @@ export class TestClient {
 }
 
 export const MessageType = { Error: 1, Warning: 2, Info: 3, Log: 4 } as const;
+
+// Feature 008: the shape of the trace viewer fields in `playwright/status` (contract section 9).
+export interface TraceViewerStatus {
+  enabled: boolean;
+  source: 'remembered' | 'settings' | 'default';
+}
+export interface TraceRecordStatus {
+  file: string;
+  line: number;
+  title: string;
+  project: string | null;
+  path: string;
+}
+export interface TracesStatus {
+  runId: string;
+  records: TraceRecordStatus[];
+}
+export interface ViewerSessionStatus {
+  configPath: string;
+  pid: number;
+  currentPath: string | null;
+  startedAt: string;
+}
+
+/** Feature 008: the real trace viewer opens a Chromium window; tests that start it skip without a display. */
+export function hasDisplay(): boolean {
+  return Boolean(process.env.DISPLAY?.trim() || process.env.WAYLAND_DISPLAY?.trim());
+}
 
 export const SPEC_SOURCE = `import { test, expect } from '@playwright/test';
 

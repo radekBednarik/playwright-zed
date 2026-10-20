@@ -72,8 +72,30 @@ describe('parseRunReport', () => {
     expect(f).toMatchObject({ file: '/tmp/sample/tests/passing.spec.ts', line: 3, column: 5 });
   });
 
-  it('tolerates empty input', () => {
-    expect(parseRunReport(null)).toEqual({ counts: { expected: 0, unexpected: 0, skipped: 0, flaky: 0 }, failures: [], durationMs: null });
+    it('tolerates empty input', () => {
+    expect(parseRunReport(null)).toEqual({ counts: { expected: 0, unexpected: 0, skipped: 0, flaky: 0 }, failures: [], durationMs: null, traces: [] });
+  });
+
+  it('extracts trace records from the attachments, one per result (feature 008)', () => {
+    const attachment = (p: string) => ({ name: 'trace', contentType: 'application/zip', path: p });
+    const report = {
+      config: { rootDir: '/r/tests', projects: [{ name: 'chromium' }, { name: 'mobile' }] },
+      stats: { expected: 2, unexpected: 0, skipped: 1, flaky: 0, duration: 10 },
+      suites: [{ specs: [
+        { title: 'adds', file: 'a.spec.ts', line: 3, column: 5, ok: true, tests: [
+          { projectName: 'chromium', status: 'expected', results: [{ status: 'passed', startTime: '2026-10-20T10:00:00.000Z', duration: 100, attachments: [attachment('/r/test-results/a-chromium/trace.zip')] }] },
+          { projectName: 'mobile', status: 'expected', results: [{ status: 'passed', startTime: '2026-10-20T10:00:00.500Z', duration: 100, attachments: [attachment('/r/test-results/a-mobile/trace.zip')] }] },
+        ] },
+        { title: 'skipped', file: 'a.spec.ts', line: 9, column: 5, ok: true, tests: [{ projectName: 'chromium', status: 'skipped', results: [{ status: 'skipped', attachments: [] }] }] },
+      ] }],
+    };
+    const parsed = parseRunReport(report);
+    expect(parsed.traces.map((t) => [t.title, t.project, t.path])).toEqual([
+      ['adds', 'chromium', '/r/test-results/a-chromium/trace.zip'],
+      ['adds', 'mobile', '/r/test-results/a-mobile/trace.zip'],
+    ]);
+    expect(parsed.traces[1].finishedAt).toBeGreaterThan(parsed.traces[0].finishedAt);
+    expect(parseRunReport(load('run-report-pass.json')).traces).toEqual([]);
   });
 });
 

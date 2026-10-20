@@ -167,6 +167,8 @@ workspace folder.
 | Choose the projects (browsers)   | `ctrl-.` in any file of the config, toggle **Playwright: [ ] <project>**            |
 | Run in every project             | `ctrl-.`, **Playwright: Select all projects**                                      |
 | Read the full output of a run    | `ctrl-.` after a run, **Playwright: Show last run output**                         |
+| Record and show traces           | `ctrl-.` in any file of the config, **Playwright: [ ] Show trace viewer**          |
+| Open the trace of one test       | cursor in the test after a run, `ctrl-.`, **Playwright: Show trace**               |
 
 Notes:
 
@@ -200,6 +202,10 @@ Notes:
   panel an extension could fill. The tasks recipe under "Terminal output" is the way to a
   real terminal.
 - Both surfaces are opt-in through Zed settings (`code_lens`, `inlay_hints`).
+- "Show trace viewer" is an entry in the `ctrl-.` menu rather than a checkbox in a settings
+  view, and the trace of a particular test is chosen with the cursor rather than in a Test
+  Explorer tree, because Zed has neither. The viewer window starts with the first trace to
+  show instead of before the run.
 
 ### Projects
 
@@ -251,6 +257,46 @@ the code action menu per cursor position and refetches it only when the cursor m
 file changes, so reopening the menu at the very same spot right after a toggle still shows
 the old check marks; the notification shows the real state, and the next cursor move
 refreshes the menu.
+
+### Trace viewer
+
+Like the VS Code extension's **Show trace viewer** checkbox, **Playwright: [ ] Show trace
+viewer** (in the `ctrl-.` menu of any file that belongs to a Playwright configuration) makes
+every run record a full [trace](https://playwright.dev/docs/trace-viewer) and opens
+Playwright's own trace viewer window for it:
+
+- Run a single test (**▶ Run test** or **Run test at cursor**) and the viewer opens with that
+  test, following it while it runs and showing the final trace when it ends. Later single-test
+  runs reuse the same window. If you close the window, the next trace opens a new one.
+- After **Run file**, **Run describe** or **Re-run last**, put the cursor inside a test and
+  choose **Playwright: Show trace** to see that test's trace from the last run. A test that
+  recorded none (skipped, or not part of the run) gets a message instead.
+- Choose **Playwright: [x] Show trace viewer** again to turn it off: the window closes and
+  runs go back to your configuration's own `trace` setting. Every toggle is confirmed by a
+  notification, for the same menu-caching reason as the project picker.
+
+While it is on, runs pass `--trace on` to Playwright, so they take a little longer and
+`test-results/` holds a `trace.zip` per test; Playwright manages those files, the extension
+never deletes them. The viewer is started from your project's own Playwright
+(`playwright show-trace`), so it needs the Chromium that `npx playwright install` provides;
+if it cannot start, you get one error notification with the command, and the run itself is
+unaffected.
+
+The choice is remembered per user in `trace-viewer.json` next to `project-selection.json`
+(locations in "Projects" above). A folder or team default lives in the same settings block as
+the projects default and applies until you toggle the option yourself:
+
+```json
+{
+  "lsp": {
+    "playwright": {
+      "settings": {
+        "showTrace": true
+      }
+    }
+  }
+}
+```
 
 ## Terminal output (optional)
 
