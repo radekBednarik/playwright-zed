@@ -49,3 +49,33 @@ server from `server/dist`) on 2026-10-29: all PASS. The first pass surfaced the
 one-directional coupling (see the change note above); after the symmetric rule was built,
 scenario 10 was re-run and passed. The owner reported the result in the session; no
 scenario was skipped.
+
+## Release 0.8.0
+
+2026-10-29, lockstep, MINOR (two upstream capabilities). Release branch `release-0.8.0`:
+`server/package.json`, `Cargo.toml`, `extension.toml`, `PINNED_SERVER_VERSION` and the README
+manual-testing line bumped to 0.8.0, description names the shown browser; gate on the
+branch: `cargo test` 8 passed, wasm32-wasip2 release build finished, server lint, build and
+`npm test` 24 files / 284 tests green, `npm pack --dry-run` lists `dist/browser.js`. Server
+0.8.0 published by the owner from the branch at about 14:08 UTC; `npm view` listed it after
+about three minutes with dist-tag `latest`. Release PR #19 merged by the owner as squash
+`72fbf34` with all eight CI checks green; tag `v0.8.0` on `72fbf34`, pushed.
+
+Published package check (14:25 UTC): `npm install --omit=dev playwright-zed-language-server@0.8.0`
+into a scratch directory, the server started with `--stdio` and `PW_DEBUG_CONTROLLER_HEADLESS=1`,
+driven through `vscode-jsonrpc`: `initialize` advertised `playwright.toggleShowBrowser` and
+`playwright.closeAllBrowsers`, discovery found 17 tests, the toggle confirmed, a run at the
+cursor passed with a command ending in `--headed --workers 1 --trace off` and
+`playwright/status` listed one ready browser server, toggle off stopped it within 1.5 s,
+`shutdown` and `exit` returned exit code 0, no leftover `run-server`. PASS.
+
+Registry bump: `../zed-extensions` branch `playwright-runner-lsp` reset to the fork's
+`bb79322` (the local clone was stale at `40a4df3`), submodule moved to `v0.8.0` (`72fbf34`),
+`version = "0.8.0"`, `sort-extensions`, `RUSTUP_TOOLCHAIN=1.90 corepack pnpm@11
+package-extensions` passed with the CLI at SHA `9ee3c503` (manifest: name "Playwright
+Runner", version 0.8.0, provides language-servers), committed as `c48f6b2`; the owner
+pushes to `fork`.
+
+Owner's Zed npm install path check for 0.8.0 (2026-10-29): PASS. Zed installed server
+0.8.0 from npm into the extension's work directory and the fixture tests ran and passed
+through it (reported by the owner in the session).

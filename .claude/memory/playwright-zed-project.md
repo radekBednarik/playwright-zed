@@ -19,7 +19,7 @@ published 2026-10-13 16:20 UTC by the owner; 0.3.0 published 2026-10-13 07:06 UT
 `npm unpublish playwright-zed-language-server@0.0.0-stage --otp=<code>` within 72 h of
 2026-10-12 16:07 UTC). Later releases: 0.5.0 and 0.5.1 (2026-10-16), **0.6.0 (2026-10-17,
 `latest` until 0.7.0; shell pin, `extension.toml` and `Cargo.toml` were 0.6.0, tag `v0.6.0` =
-`91aab9c`)**, then **0.7.0 (2026-10-20, current, see feature 008 below)**; tags `v0.1.0` through `v0.7.0`. Zed installing 0.2.0 and 0.3.0 from npm on its own is
+`91aab9c`)**, then 0.7.0 (2026-10-20), then **0.8.0 (2026-10-29, current, see feature 009 below)**; tags `v0.1.0` through `v0.8.0`. Zed installing 0.2.0 and 0.3.0 from npm on its own is
 verified; 0.4.0 npm install path verified on 2026-10-13 at `b4c1116`, 0.5.0, 0.5.1 and
 0.6.0 likewise (records in the feature 005 and 006 verification files). Through 0.3.0 the display name ended
 with " Zed" and the id was `playwright`; feature 004 renames them to "Playwright Runner" and
@@ -254,8 +254,8 @@ owner on 2026-10-20 as squash `a89d103`, branch deleted; `.specify/feature.json`
 it). **Released 0.7.0** (2026-10-20, lockstep, MINOR): release PR #16 merged by the owner
 as squash `01cae88`, tag `v0.7.0` = `01cae88`, server 0.7.0 published by the owner (npm
 `latest`), published package driven over stdio PASS (record in the feature's
-`verification.md`, "Release 0.7.0"); **the shell pin, `extension.toml` and `Cargo.toml`
-are 0.7.0 and `v0.7.0` is the current tag**. Registry bump committed in `../zed-extensions`
+`verification.md`, "Release 0.7.0"); the shell pin, `extension.toml` and `Cargo.toml`
+were 0.7.0 until 0.8.0 (feature 009). Registry bump committed in `../zed-extensions`
 on `playwright-runner-lsp` (local branch reset to the fork's `40a4df3`; this machine's
 clone had been stale at `0aef1c4`): "Update playwright-runner-lsp to v0.7.0", submodule
 at `01cae88`, `package-extensions` passed with the CLI at SHA `9ee3c503` (re-downloaded
@@ -287,6 +287,63 @@ the test skips itself without `DISPLAY` or `WAYLAND_DISPLAY`. Test-writing gotch
 `workspace/executeCommand` for a run answers only when the run ends, so a mid-run action in
 a test must not await the run. Gate after merge: 8 Rust, 248 vitest tests in 22 files.
 Owner verified quickstart scenarios 1 to 11 in Zed on 2026-10-20.
+
+**Feature 009, show browser and close all browsers** (`specs/009-show-browser/`, spec,
+plan, research, data model, contract, quickstart, tasks and verification written
+2026-10-29; implemented the same day; `/speckit-analyze` findings remediated (FR-005
+amended: video cannot be forced off from the CLI); `/speckit-converge` clean; **PR #17**
+(https://github.com/radekBednarik/playwright-zed/pull/17) merged by the owner on 2026-10-29
+as squash `fe8f09b`, branch deleted; `.specify/feature.json` points at it). **Released
+0.8.0** (2026-10-29, lockstep, MINOR, two upstream capabilities): release PR #19 merged by
+the owner as squash `72fbf34`, tag `v0.8.0` = `72fbf34`, server 0.8.0 published by the owner
+from the release branch (npm `latest` after about three minutes), published package driven
+over stdio PASS (install into scratch, both new commands advertised, discovery, a headless
+shown run through a kept server, toggle off stopped it, clean exit); **the shell pin,
+`extension.toml` and `Cargo.toml` are 0.8.0 and `v0.8.0` is the current tag**. Registry
+bump committed in `../zed-extensions` on `playwright-runner-lsp` as `c48f6b2` on top of the
+fork's `bb79322` (local branch was stale at `40a4df3` and was reset to
+`fork/playwright-runner-lsp` first; submodule at `72fbf34`, `version = "0.8.0"`,
+`sort-extensions`, `package-extensions` passed with the CLI at SHA `9ee3c503` re-downloaded
+to session scratch and symlinked as `./zed-extension`, Rust 1.90, manifest version 0.8.0);
+pushed by the owner to `fork/playwright-runner-lsp` on 2026-10-29, so registry PR #7975's
+head is `c48f6b2`. The owner's Zed npm install path check for 0.8.0 PASSED on 2026-10-29
+(server 0.8.0 installed from npm, fixture tests passed). Delivered, server
+only, no Rust change: code action
+`Playwright: [x]/[ ] Show browser` (`playwright.toggleShowBrowser`, remembered per user in
+`show-browser.json` next to `trace-viewer.json`, Zed settings default
+`lsp.playwright.settings.reuseBrowser` under upstream's setting name, a remembered choice
+wins, every toggle confirmed by an Info notification) and `Playwright: Close all browsers`
+(`playwright.closeAllBrowsers`, offered while the option is on or a server runs, refused
+with a Warning during a run, `no browsers to close` when idle). Mechanism (research R1 to
+R4, verified by probes on Playwright 1.64.0): one `playwright run-server --path=/<32 hex>
+--host 127.0.0.1` process per configuration with `PW_EXTENSION_MODE=1`
+(`server/src/browser.ts` `BrowserServers`, cwd = config dir, started by the first run that
+needs it, endpoint parsed from the `Listening on ws://...` line, 15 s readiness timeout,
+shared promise while starting); shown runs carry `--headed --workers 1 --trace off` plus
+`PW_TEST_CONNECT_WS_ENDPOINT` and `PW_TEST_REUSE_CONTEXT=1`, so the browser window stays
+open between runs with the last page and the next run continues in it; a browser closed by
+hand is relaunched by the server at the next run. Stop is `SIGINT` then `SIGKILL` after 5 s
+(stdin end does nothing, the server never reads stdin; `SIGTERM` closes the browser but
+leaves the Node process alive; `SIGHUP` likewise); stopped on toggle off (idle workspaces
+at once, a workspace with a run in progress at that run's end), close action, settings
+default turning off, workspace removal, shutdown and exit; an unexpected exit logs and
+shows one Warning, the next run starts a new server. **Owner decision 2026-10-29, beyond
+upstream**: "Show browser" and "Show trace viewer" exclude each other both ways (upstream
+only turns the trace viewer off when the browser is shown); turning either on turns the
+other off as a remembered choice and closes its window or browsers; both on is reachable
+only through a settings default and then runs record no trace with a one-time Warning per
+combination. Video cannot be forced off from the CLI (no `playwright test` option); a
+project with `video: on` keeps recording and Playwright then skips context reuse on its own
+(recorded in the parity note). "Show trace" at the cursor is now offered only when the last
+run recorded a trace. Tests: the integration suite keeps the kept browser headless through
+Playwright's own `PW_DEBUG_CONTROLLER_HEADLESS=1` (passed via a new `env` option of
+`TestClient.start`), so no display and no CI change; `childPids` and `processAlive`
+helpers; test suites that own a state directory across restarts create it themselves
+because `TestClient.stop()` removes a directory it created. Gate after merge: 8 Rust, 284
+vitest tests in 24 files. `projects.test.ts` filters the picker entries by the
+`Playwright: [` prefix and excludes both the trace and the browser toggles. Owner verified
+quickstart scenarios 1 to 12 in Zed on 2026-10-29. Parity rows "Show browser" (`full`,
+`lsp, playwright-ui`) and "Close all browsers" (`full`, `lsp`).
 
 Note: `create-new-feature.sh` in Spec Kit 1.1.2 no longer creates the git branch; it was
 created by hand.
