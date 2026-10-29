@@ -122,6 +122,46 @@ Same PR rules and the same AI policy. In the extensions fork:
 the submodule), bump `version` in `extensions.toml` to match the new `extension.toml`, sort,
 validate locally, open the PR. The version must never decrease.
 
+## 5. Documentation site
+
+The site at https://radekbednarik.github.io/playwright-zed/ is built from `site/` (Astro
+with Starlight, TypeScript) and published by `.github/workflows/docs-site.yml`:
+
+- Pull requests that touch `site/**`, `docs/parity.md` or the workflow run the `build`
+  job (`npm ci`, `npm run check`, `npm run build`); a type error, a missing screenshot or
+  an invalid internal link fails the check.
+- Pushes to `main` that touch the same paths run `build` and then `deploy`
+  (`actions/deploy-pages`, environment `github-pages`). Pages is configured with the
+  "GitHub Actions" source (enabled by the owner on 2026-10-29); no branch holds the built
+  site.
+- `workflow_dispatch` republishes without a change.
+
+The parity page is generated from `docs/parity.md` at every build (`site/scripts/sync-parity.ts`);
+do not edit `site/src/content/docs/reference/parity.md`, it is gitignored.
+
+Screenshots live in `site/src/assets/screenshots/` with a typed manifest in
+`site/src/data/screenshots.ts`. `npm run check` fails when a manifest entry's
+`extensionVersion` differs from `version` in `extension.toml`, so a release that changes
+what a capability looks like is followed by retaking the pictures:
+
+1. `site/scripts/zed-screenshot-profile.sh` starts Zed on `fixtures/sample-project` with a
+   dedicated profile (stock theme, lenses and inlay hints on, the released extension
+   installed from npm). First launch: `zed: install dev extension` on the repository root,
+   then `editor: restart language server`.
+2. Stage a scene from the table in `specs/010-user-docs-site/quickstart.md`, maximise the
+   window, run `python3 site/scripts/capture-screenshot.py <scene-id> --force` (add
+   `--full` for a scene whose second window reaches outside the Zed window). The portal
+   captures the whole screen; the helper crops the GNOME top bar and the Ubuntu dock.
+   Staging can be scripted with `site/scripts/zed-input.py` (keystrokes and clicks through
+   the RemoteDesktop portal, one-time approval, keep hands off the keyboard while it
+   runs); `zed <file>:<line>:<col>` with the profile's `XDG_*` variables places the cursor,
+   `ctrl-.` plus arrow keys drives the menu, and the run log under the profile's state
+   directory tells when a run has ended.
+3. Update the manifest entry (`extensionVersion`, `zedVersion`, `capturedOn`, alt text if
+   the picture changed), run `npm run check`, and review the picture for private data.
+
+A release that changes no capability only needs the manifest's `extensionVersion` bumped.
+
 ## Identity
 
 The prerequisites ask extensions that provide only a language server to carry a

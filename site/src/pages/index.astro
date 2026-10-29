@@ -1,0 +1,106 @@
+---
+// Landing page (feature 010, design A "Terminal"). A plain Astro page inside Starlight's
+// frame: the editor frame, the terminal-styled install panel and the labelled notices are
+// beyond what Starlight's hero block expresses (design-decision.md).
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import Shot from '../components/Shot.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const repository = 'https://github.com/radekBednarik/playwright-zed';
+const features = [
+  { href: 'features/run-tests', title: 'Run tests', text: 'Run the test, describe block or file under the cursor, re-run the last run.' },
+  { href: 'features/projects', title: 'Projects', text: 'Pick the Playwright projects (browsers) a run uses, remembered per config.' },
+  { href: 'features/step-labels-and-output', title: 'Step labels and run output', text: 'See the executing step and per-step durations inline, open the full output in a tab.' },
+  { href: 'features/trace-viewer', title: 'Trace viewer', text: "Record a trace for every run and open it in Playwright's trace viewer." },
+  { href: 'features/show-browser', title: 'Show browser', text: 'Watch tests in a visible browser that stays open between runs.' },
+  { href: 'features/discovery-consent', title: 'Discovery consent', text: 'Nothing runs in a folder until you trust it.' },
+];
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Playwright Runner',
+    description: 'Run and manage Playwright end-to-end tests from the Zed editor.',
+    template: 'splash',
+    tableOfContents: false,
+  }}
+>
+  <div class="pr-landing">
+    <p class="pr-kicker">zed: extensions · community extension for Zed</p>
+    <p class="pr-lede">Run and manage Playwright end-to-end tests from the Zed editor.</p>
+    <p class="pr-sub">
+      A community Zed extension that mirrors the Playwright VS Code extension through the
+      surfaces Zed gives extensions. Work in progress.
+    </p>
+    <div class="pr-actions">
+      <a class="primary" href={`${base}/getting-started/install/`}>Install</a>
+      <a href={`${base}/getting-started/requirements/`}>Read the docs</a>
+      <a href={repository}>GitHub</a>
+    </div>
+
+    <div class="pr-frame">
+      <div class="pr-bar"><i></i><i></i><i></i><span>sample-project / tests / passing.spec.ts</span></div>
+      <Shot id="landing-hero" />
+    </div>
+
+    <div class="pr-two">
+      <section>
+        <h2>Install</h2>
+        <div class="pr-terminal">
+          <div class="pr-bar"><i></i><i></i><i></i><span>playwright-runner : install</span></div>
+          <ol>
+            <li data-step="01">In Zed, open <code>zed: extensions</code> and search for <strong>Playwright Runner</strong>.</li>
+            <li data-step="02">Turn on code lenses in your Zed settings: <code>"code_lens": "on"</code>.</li>
+            <li data-step="03">Open a project with <code>@playwright/test</code> 1.38 or newer, trust the folder, and click <strong>▶ Run test</strong> above any test.</li>
+          </ol>
+        </div>
+        <p class="pr-fine">
+          The registry listing is under review; until then{' '}
+          <a href={`${base}/getting-started/install/`}>install from source</a>.
+        </p>
+      </section>
+      <section>
+        <h2>Requirements</h2>
+        <p>Zed 1.23 or newer, Node.js 22 or newer, <code>@playwright/test</code> 1.38 or newer with browsers installed.</p>
+        <p class="pr-fine">
+          Screenshots on this site show Zed 1.26.2 on Linux with Playwright Runner 0.8.0; the
+          window chrome differs per platform.
+        </p>
+      </section>
+    </div>
+
+    <h2>Capabilities</h2>
+    <div class="pr-grid">
+      {features.map((feature, index) => (
+        <a href={`${base}/${feature.href}/`}>
+          <span class="pr-n">{String(index + 1).padStart(2, '0')}</span>
+          <strong>{feature.title}</strong>
+          <p>{feature.text}</p>
+        </a>
+      ))}
+    </div>
+
+    <div class="pr-notices">
+      <div class="pr-notice">
+        <span class="pr-label">status</span>
+        Work in progress. Expect rough edges and gaps compared to the VS Code extension; bug
+        reports and feedback are welcome in the <a href={`${repository}/issues`}>issue tracker</a>.
+      </div>
+      <div class="pr-notice">
+        <span class="pr-label">affiliation</span>
+        Independent community extension. Not affiliated with, endorsed by, or maintained by
+        Microsoft or the Playwright team. "Playwright" is a trademark of Microsoft Corporation;
+        the name is used only to describe what this extension works with.
+      </div>
+    </div>
+
+    <div class="pr-links">
+      <a href={`${base}/getting-started/requirements/`}>Documentation</a>
+      <a href={repository}>GitHub</a>
+      <a href={`${repository}/issues`}>Issues</a>
+      <a href={`${base}/reference/parity/`}>Parity with the VS Code extension</a>
+      <a href="https://zed.dev">Zed</a>
+      <a href="https://playwright.dev">Playwright</a>
+    </div>
+  </div>
+</StarlightPage>

@@ -32,8 +32,8 @@ owner's own terminal; the Claude Code `!` shell cannot answer the two-factor pro
 registry may take a few minutes to list a new version (HTTP 202 on PUT). Publishing steps
 and the registry PR procedure are in `docs/publishing.md`.
 
-**Why:** the owner switches machines (WSL2 today); the gitignored pieces (`node_modules`,
+**Why:** the owner switches machines (native Ubuntu since 2026-10-29, WSL2 before); the gitignored pieces (`node_modules`,
 Chromium, `extension.wasm`, `server/dist`) must be rebuilt per machine.
 
 **How to apply:** run the block above first; then see [[playwright-zed-project]] for state
-and [[dev-environment-wsl-zed]] for the WSL-specific notes if on WSL again.
+and [[dev-environment-linux-zed]] for the current machine and the earlier WSL notes.

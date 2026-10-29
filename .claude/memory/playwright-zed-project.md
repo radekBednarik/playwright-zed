@@ -352,5 +352,5 @@ created by hand.
 publishing, or prepare the registry PR unasked.
 
 **How to apply:** continue on `main` or a new `/speckit-specify` feature; ask before any
-`npm publish`, registry action or merge; see [[dev-environment-wsl-zed]] for the environment and
+`npm publish`, registry action or merge; see [[dev-environment-linux-zed]] for the environment and
 [[new-machine-setup]] for bootstrapping a fresh clone.

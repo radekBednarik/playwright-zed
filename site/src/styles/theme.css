@@ -1,0 +1,408 @@
+/* Playwright Runner docs: design A "Terminal" (specs/010-user-docs-site/design-decision.md)
+   applied to Starlight through its custom properties. Dark is the default scheme. */
+
+:root {
+  --sl-font: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --sl-font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sl-content-width: 50rem;
+  --pr-accent-hex: #4ade80;
+
+  /* dark (default) */
+  --sl-color-accent-low: #0f2a1a;
+  --sl-color-accent: #4ade80;
+  --sl-color-accent-high: #b7f3cc;
+  --sl-color-white: #d9e0e8;
+  --sl-color-gray-1: #c9d1da;
+  --sl-color-gray-2: #95a1b1;
+  --sl-color-gray-3: #7b8796;
+  --sl-color-gray-4: #4a5461;
+  --sl-color-gray-5: #2a323c;
+  --sl-color-gray-6: #1f2630;
+  --sl-color-gray-7: #11151c;
+  --sl-color-black: #0b0e13;
+  --sl-color-text-accent: #4ade80;
+  --sl-color-bg: #0b0e13;
+  --sl-color-bg-nav: #0b0e13;
+  --sl-color-bg-sidebar: #0b0e13;
+  --sl-color-bg-inline-code: #11151c;
+  --sl-color-hairline: #1f2630;
+  --sl-color-hairline-light: #2a323c;
+}
+
+:root[data-theme='light'] {
+  --pr-accent-hex: #0f7a3c;
+  --sl-color-accent-low: #dcf3e4;
+  --sl-color-accent: #0f7a3c;
+  --sl-color-accent-high: #0a4f27;
+  --sl-color-white: #1b222c;
+  --sl-color-gray-1: #2b3441;
+  --sl-color-gray-2: #54626e;
+  --sl-color-gray-3: #6b7885;
+  --sl-color-gray-4: #a9b3bd;
+  --sl-color-gray-5: #d6dbe0;
+  --sl-color-gray-6: #e6e9ec;
+  --sl-color-gray-7: #f0f1ef;
+  --sl-color-black: #f6f7f5;
+  --sl-color-text-accent: #0f7a3c;
+  --sl-color-bg: #f6f7f5;
+  --sl-color-bg-nav: #f6f7f5;
+  --sl-color-bg-sidebar: #f6f7f5;
+  --sl-color-bg-inline-code: #e6e9ec;
+  --sl-color-hairline: #d6dbe0;
+  --sl-color-hairline-light: #e6e9ec;
+}
+
+/* Monospace display type for everything that is not body text. */
+.site-title,
+.sl-markdown-content h1,
+.sl-markdown-content h2,
+.sl-markdown-content h3,
+.sl-markdown-content h4,
+.sl-markdown-content th,
+.sidebar-content,
+.right-sidebar,
+.pagination-links,
+.content-panel h1,
+starlight-toc,
+.sl-markdown-content a.sl-anchor-link {
+  font-family: var(--sl-font-mono);
+}
+
+.site-title {
+  font-weight: 700;
+}
+.site-title::before {
+  content: '~/';
+  color: var(--sl-color-accent);
+}
+
+/* Heading prefixes in the accent colour, like Markdown source. */
+.content-panel h1::before {
+  content: '# ';
+  color: var(--sl-color-accent);
+}
+.sl-markdown-content h2::before {
+  content: '## ';
+  color: var(--sl-color-accent);
+}
+.sl-markdown-content h3::before {
+  content: '### ';
+  color: var(--sl-color-accent);
+}
+.sl-markdown-content h2 {
+  border-top: 1px solid var(--sl-color-hairline);
+  padding-top: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+/* Sidebar: group labels as "## GROUP", current entry with a marker. */
+.sidebar-content .large {
+  font-size: var(--sl-text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sl-color-gray-2);
+}
+.sidebar-content .large::before {
+  content: '## ';
+  color: var(--sl-color-accent);
+}
+.sidebar-content a {
+  font-size: var(--sl-text-sm);
+}
+.sidebar-content a[aria-current='page'] {
+  background: var(--sl-color-gray-7);
+  color: var(--sl-color-accent);
+  border-left: 2px solid var(--sl-color-accent);
+}
+.sidebar-content a[aria-current='page']::before {
+  content: '▶ ';
+  font-size: 0.75em;
+}
+
+/* Right column ("On this page") in the same label style. */
+starlight-toc h2,
+.right-sidebar-panel h2 {
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sl-color-gray-2);
+}
+starlight-toc h2::before,
+.right-sidebar-panel h2::before {
+  content: '## ';
+  color: var(--sl-color-accent);
+}
+
+/* Tables and code blocks as panels. */
+.sl-markdown-content table {
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 0.5rem;
+}
+.sl-markdown-content th {
+  font-size: var(--sl-text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sl-color-gray-2);
+}
+.sl-markdown-content :not(pre) > code {
+  font-size: 0.9em;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 0.3rem;
+}
+
+/* Landing page pieces (src/pages/index.astro). */
+.pr-landing {
+  font-family: var(--sl-font);
+}
+.pr-landing .pr-kicker {
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-xs);
+  color: var(--sl-color-gray-2);
+}
+.pr-landing .pr-kicker::before {
+  content: '$ ';
+  color: var(--sl-color-accent);
+}
+.pr-landing h1 {
+  font-family: var(--sl-font-mono);
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  line-height: 1.1;
+  margin: 0.5rem 0 1rem;
+  color: var(--sl-color-white);
+}
+.pr-landing h1::after {
+  content: '_';
+  color: var(--sl-color-accent);
+}
+.pr-landing .pr-lede {
+  font-size: var(--sl-text-xl);
+  font-weight: 500;
+  max-width: 34rem;
+  color: var(--sl-color-white);
+}
+.pr-landing .pr-sub {
+  color: var(--sl-color-gray-2);
+  max-width: 34rem;
+}
+.pr-landing h2 {
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sl-color-gray-2);
+  margin: 2.5rem 0 1rem;
+}
+.pr-landing h2::before {
+  content: '## ';
+  color: var(--sl-color-accent);
+}
+.pr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.5rem 0 2rem;
+}
+.pr-actions a {
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-sm);
+  text-decoration: none;
+  padding: 0.6rem 1rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--sl-color-hairline-light);
+  color: var(--sl-color-white);
+  background: var(--sl-color-gray-7);
+}
+.pr-actions a.primary {
+  background: var(--sl-color-accent);
+  border-color: var(--sl-color-accent);
+  color: #0b0e13;
+  font-weight: 600;
+}
+.pr-frame {
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.6rem;
+  background: var(--sl-color-gray-7);
+  overflow: hidden;
+}
+.pr-frame .pr-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-bottom: 1px solid var(--sl-color-hairline);
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-xs);
+  color: var(--sl-color-gray-2);
+}
+.pr-frame .pr-bar i {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--sl-color-gray-4);
+}
+.pr-frame .pr-bar i:first-child {
+  background: var(--sl-color-accent);
+}
+.pr-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.pr-frame .shot {
+  margin: 0;
+}
+.pr-frame .shot img {
+  border: 0;
+  border-radius: 0;
+}
+.pr-frame .shot figcaption {
+  padding: 0.5rem 0.9rem 0.75rem;
+}
+.pr-terminal {
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-sm);
+  background: #0b0e13;
+  color: #d9e0e8;
+  border: 1px solid #1f2630;
+  border-radius: 0.6rem;
+  overflow: hidden;
+}
+.pr-terminal .pr-bar {
+  background: #11151c;
+  border-bottom: 1px solid #1f2630;
+  color: #95a1b1;
+}
+.pr-terminal ol {
+  list-style: none;
+  margin: 0;
+  padding: 1rem 1.1rem;
+}
+.pr-terminal li {
+  position: relative;
+  padding-left: 4.6em;
+  margin: 0.4rem 0;
+  line-height: 1.6;
+}
+.pr-terminal li::before {
+  content: attr(data-step) ' ❯';
+  position: absolute;
+  left: 0;
+  color: #4ade80;
+}
+.pr-terminal code {
+  background: #1a2029;
+  border: 1px solid #2a323c;
+  border-radius: 0.3rem;
+  padding: 0 0.3em;
+  color: #d9e0e8;
+}
+.pr-two {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+.pr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 0.6rem;
+  overflow: hidden;
+}
+.pr-grid a {
+  display: block;
+  padding: 1rem 1.1rem;
+  border-right: 1px solid var(--sl-color-hairline);
+  border-bottom: 1px solid var(--sl-color-hairline);
+  text-decoration: none;
+  color: inherit;
+}
+.pr-grid a:nth-child(3n) {
+  border-right: 0;
+}
+.pr-grid a:nth-last-child(-n + 3) {
+  border-bottom: 0;
+}
+.pr-grid a:hover {
+  background: var(--sl-color-gray-7);
+}
+.pr-grid .pr-n {
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-xs);
+  color: var(--sl-color-accent);
+}
+.pr-grid strong {
+  display: block;
+  font-family: var(--sl-font-mono);
+  margin: 0.25rem 0 0.35rem;
+  color: var(--sl-color-white);
+}
+.pr-grid p {
+  margin: 0;
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-gray-2);
+}
+.pr-notices {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 2.5rem 0;
+}
+.pr-notice {
+  border-left: 2px solid var(--sl-color-accent);
+  background: var(--sl-color-gray-7);
+  padding: 0.9rem 1.1rem;
+  font-size: var(--sl-text-sm);
+}
+.pr-notice .pr-label {
+  display: block;
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-xs);
+  color: var(--sl-color-accent);
+  margin-bottom: 0.3rem;
+}
+.pr-notice .pr-label::before {
+  content: '// ';
+}
+.pr-links {
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--sl-color-hairline);
+}
+.pr-fine {
+  font-size: var(--sl-text-xs);
+  color: var(--sl-color-gray-3);
+}
+@media (max-width: 50rem) {
+  .pr-two,
+  .pr-notices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pr-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pr-grid a:nth-child(3n) {
+    border-right: 1px solid var(--sl-color-hairline);
+  }
+  .pr-grid a:nth-child(2n) {
+    border-right: 0;
+  }
+  .pr-grid a:nth-last-child(-n + 3) {
+    border-bottom: 1px solid var(--sl-color-hairline);
+  }
+  .pr-grid a:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+}
+@media (max-width: 30rem) {
+  .pr-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pr-grid a {
+    border-right: 0 !important;
+  }
+}
