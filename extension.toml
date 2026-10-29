@@ -1,9 +1,9 @@
 id = "playwright-runner-lsp"
 name = "Playwright Runner"
-version = "0.7.0"
+version = "0.8.0"
 schema_version = 1
 authors = ["Radek Bednarik <radek.bednarik@tesena.com>"]
-description = "Work in progress. Run Playwright end-to-end tests from Zed: run at cursor, run file, re-run last, pick the projects (browsers) to run in, see the executing step and step durations inline, open the run output, record traces and open them in Playwright's trace viewer, with results in the editor. Community extension, not affiliated with or endorsed by Microsoft."
+description = "Work in progress. Run Playwright end-to-end tests from Zed: run at cursor, run file, re-run last, pick the projects (browsers) to run in, see the executing step and step durations inline, open the run output, record traces and open them in Playwright's trace viewer, show the browser and keep it open between runs, with results in the editor. Community extension, not affiliated with or endorsed by Microsoft."
 repository = "https://github.com/radekBednarik/playwright-zed"
 
 capabilities = [
