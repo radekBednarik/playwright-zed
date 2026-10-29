@@ -288,6 +288,50 @@ the test skips itself without `DISPLAY` or `WAYLAND_DISPLAY`. Test-writing gotch
 a test must not await the run. Gate after merge: 8 Rust, 248 vitest tests in 22 files.
 Owner verified quickstart scenarios 1 to 11 in Zed on 2026-10-20.
 
+**Feature 009, show browser and close all browsers** (`specs/009-show-browser/`, spec,
+plan, research, data model, contract, quickstart, tasks and verification written
+2026-10-29; implemented the same day; `/speckit-analyze` findings remediated (FR-005
+amended: video cannot be forced off from the CLI); `/speckit-converge` clean; **PR #17**
+(https://github.com/radekBednarik/playwright-zed/pull/17) merged by the owner on 2026-10-29
+as squash `fe8f09b`, branch deleted; `.specify/feature.json` points at it; **release 0.8.0
+pending** (lockstep, MINOR, two upstream capabilities; the shell pin, `extension.toml` and
+`Cargo.toml` are still 0.7.0)). Delivered, server only, no Rust change: code action
+`Playwright: [x]/[ ] Show browser` (`playwright.toggleShowBrowser`, remembered per user in
+`show-browser.json` next to `trace-viewer.json`, Zed settings default
+`lsp.playwright.settings.reuseBrowser` under upstream's setting name, a remembered choice
+wins, every toggle confirmed by an Info notification) and `Playwright: Close all browsers`
+(`playwright.closeAllBrowsers`, offered while the option is on or a server runs, refused
+with a Warning during a run, `no browsers to close` when idle). Mechanism (research R1 to
+R4, verified by probes on Playwright 1.64.0): one `playwright run-server --path=/<32 hex>
+--host 127.0.0.1` process per configuration with `PW_EXTENSION_MODE=1`
+(`server/src/browser.ts` `BrowserServers`, cwd = config dir, started by the first run that
+needs it, endpoint parsed from the `Listening on ws://...` line, 15 s readiness timeout,
+shared promise while starting); shown runs carry `--headed --workers 1 --trace off` plus
+`PW_TEST_CONNECT_WS_ENDPOINT` and `PW_TEST_REUSE_CONTEXT=1`, so the browser window stays
+open between runs with the last page and the next run continues in it; a browser closed by
+hand is relaunched by the server at the next run. Stop is `SIGINT` then `SIGKILL` after 5 s
+(stdin end does nothing, the server never reads stdin; `SIGTERM` closes the browser but
+leaves the Node process alive; `SIGHUP` likewise); stopped on toggle off (idle workspaces
+at once, a workspace with a run in progress at that run's end), close action, settings
+default turning off, workspace removal, shutdown and exit; an unexpected exit logs and
+shows one Warning, the next run starts a new server. **Owner decision 2026-10-29, beyond
+upstream**: "Show browser" and "Show trace viewer" exclude each other both ways (upstream
+only turns the trace viewer off when the browser is shown); turning either on turns the
+other off as a remembered choice and closes its window or browsers; both on is reachable
+only through a settings default and then runs record no trace with a one-time Warning per
+combination. Video cannot be forced off from the CLI (no `playwright test` option); a
+project with `video: on` keeps recording and Playwright then skips context reuse on its own
+(recorded in the parity note). "Show trace" at the cursor is now offered only when the last
+run recorded a trace. Tests: the integration suite keeps the kept browser headless through
+Playwright's own `PW_DEBUG_CONTROLLER_HEADLESS=1` (passed via a new `env` option of
+`TestClient.start`), so no display and no CI change; `childPids` and `processAlive`
+helpers; test suites that own a state directory across restarts create it themselves
+because `TestClient.stop()` removes a directory it created. Gate after merge: 8 Rust, 284
+vitest tests in 24 files. `projects.test.ts` filters the picker entries by the
+`Playwright: [` prefix and excludes both the trace and the browser toggles. Owner verified
+quickstart scenarios 1 to 12 in Zed on 2026-10-29. Parity rows "Show browser" (`full`,
+`lsp, playwright-ui`) and "Close all browsers" (`full`, `lsp`).
+
 Note: `create-new-feature.sh` in Spec Kit 1.1.2 no longer creates the git branch; it was
 created by hand.
 
