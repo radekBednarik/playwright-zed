@@ -305,8 +305,9 @@ fork's `bb79322` (local branch was stale at `40a4df3` and was reset to
 `fork/playwright-runner-lsp` first; submodule at `72fbf34`, `version = "0.8.0"`,
 `sort-extensions`, `package-extensions` passed with the CLI at SHA `9ee3c503` re-downloaded
 to session scratch and symlinked as `./zed-extension`, Rust 1.90, manifest version 0.8.0);
-the owner pushes it with `git -C ../zed-extensions push fork playwright-runner-lsp`. The
-owner's Zed npm install path check for 0.8.0 is pending as of this record. Delivered, server
+pushed by the owner to `fork/playwright-runner-lsp` on 2026-10-29, so registry PR #7975's
+head is `c48f6b2`. The owner's Zed npm install path check for 0.8.0 PASSED on 2026-10-29
+(server 0.8.0 installed from npm, fixture tests passed). Delivered, server
 only, no Rust change: code action
 `Playwright: [x]/[ ] Show browser` (`playwright.toggleShowBrowser`, remembered per user in
 `show-browser.json` next to `trace-viewer.json`, Zed settings default

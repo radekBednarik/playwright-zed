@@ -76,4 +76,6 @@ package-extensions` passed with the CLI at SHA `9ee3c503` (manifest: name "Playw
 Runner", version 0.8.0, provides language-servers), committed as `c48f6b2`; the owner
 pushes to `fork`.
 
-Owner's Zed npm install path check for 0.8.0: pending.
+Owner's Zed npm install path check for 0.8.0 (2026-10-29): PASS. Zed installed server
+0.8.0 from npm into the extension's work directory and the fixture tests ran and passed
+through it (reported by the owner in the session).
