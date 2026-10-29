@@ -7,12 +7,14 @@ on:
     paths:
       - "site/**"
       - "docs/parity.md"
+      - "extension.toml"
       - ".github/workflows/docs-site.yml"
   push:
     branches: [main]
     paths:
       - "site/**"
       - "docs/parity.md"
+      - "extension.toml"
       - ".github/workflows/docs-site.yml"
   workflow_dispatch:
 

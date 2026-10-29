@@ -28,8 +28,9 @@ served by one command give the owner the design choice, recorded in
 ## Technical Context
 
 **Language/Version**: TypeScript 6.0.3 for the site (Astro config, scripts, components);
-Markdown and MDX content; one Python 3 helper (`capture-screenshot.py`, GLib bindings
-already on the machine) for the portal screenshot call, outside the site build; Node 26
+Markdown and MDX content; two Python 3 helpers (`capture-screenshot.py` for the portal
+screenshot call, `zed-input.py` for portal keystrokes and clicks, GLib bindings already
+on the machine), outside the site build; Node 26
 locally, Node 24 in CI; Rust and the language server untouched
 
 **Primary Dependencies**: `astro` 7.4.4, `@astrojs/starlight` 0.42.7,
@@ -130,8 +131,9 @@ site/
 │   ├── sync-parity.ts               # docs/parity.md -> src/content/docs/reference/parity.md (generated)
 │   ├── check-screenshots.ts         # manifest vs files vs capability list
 │   ├── check-external-links.ts      # outbound links in dist/, run locally
-│   ├── capture-screenshot.py        # portal call, crop, write PNG under a scene id
-│   └── zed-screenshot-profile.sh    # launches Zed with the dedicated profile on the fixture
+│   ├── capture-screenshot.py        # portal call, crop (top bar and dock), write PNG under a scene id
+│   ├── zed-input.py                 # portal keystrokes and clicks to stage scenes (added during implementation)
+│   └── zed-screenshot-profile.sh    # launches Zed with the dedicated profile and its own extension state
 ├── screenshots/
 │   └── zed-settings.json            # settings copied into the screenshot profile
 └── src/

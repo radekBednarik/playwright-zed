@@ -63,10 +63,10 @@ pictures are retaken or the check is consciously updated).
 ```yaml
 on:
   pull_request:
-    paths: [site/**, docs/parity.md, .github/workflows/docs-site.yml]
+    paths: [site/**, docs/parity.md, extension.toml, .github/workflows/docs-site.yml]
   push:
     branches: [main]
-    paths: [site/**, docs/parity.md, .github/workflows/docs-site.yml]
+    paths: [site/**, docs/parity.md, extension.toml, .github/workflows/docs-site.yml]
   workflow_dispatch:
 permissions: { contents: read, pages: write, id-token: write }
 jobs:
@@ -76,6 +76,8 @@ jobs:
 
 The `deploy` job needs Pages enabled with source "GitHub Actions" (owner). A PR that does
 not touch the listed paths triggers nothing from this workflow (spec story 4, scenario 2).
+`extension.toml` is in the list so a version bump runs the screenshot coverage check,
+which compares every manifest entry's `extensionVersion` with the manifest.
 
 ## Mocks (`specs/010-user-docs-site/mocks/`)
 

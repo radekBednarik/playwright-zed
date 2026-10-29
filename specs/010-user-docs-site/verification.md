@@ -144,7 +144,8 @@ One Dark, maximised window, 1920 x 1119 unless noted):
 attempts that showed the owner's terminal behind a floating window were discarded and
 retaken maximised); no personal data; the only paths outside the sample project are the
 Node binary and the run log in `run-output.png`, both under the owner's home directory
-whose name equals the public GitHub handle (accepted). The fixture is unchanged on disk
+whose name equals the public GitHub handle (accepted; FR-013 amended on 2026-10-29 after
+`/speckit-analyze` finding I1 to say so). The fixture is unchanged on disk
 after the session (`git status --short fixtures/` empty; one accidental newline during
 staging was undone and the buffer saved back to the on-disk content).
 

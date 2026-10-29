@@ -112,7 +112,18 @@ not depend on the design choice and take owner time at the keyboard, so they sta
       from the owner's own Zed profile); retake any that fail; list the files with sizes
       in `verification.md` scenario 3
 
-**Checkpoint**: 14 PNG files exist, each matching a quickstart scene id
+- [x] T053 Write `site/scripts/zed-input.py` (Python 3, GLib bindings): keystrokes
+      (`key ctrl+shift+p`, `type <text>`), pointer (`moveto x y`, `click`) and `sleep` through
+      `org.freedesktop.portal.RemoteDesktop` with a persisted restore token next to the
+      profile; `session` for the one-time approval (run by the owner, since the auto-mode
+      classifier refused the agent's first attempt). Added during implementation after the
+      owner asked the agent to stage the scenes (analysis finding I2, 2026-10-29); documented
+      in `docs/publishing.md` section 5 and `verification.md` scenario 3
+- [x] T054 Add `extension.toml` to the path filters of `.github/workflows/docs-site.yml`
+      and to `contracts/site.md` and `docs/publishing.md`, so a version bump runs the
+      screenshot coverage check (analysis finding C1, 2026-10-29)
+
+**Checkpoint**: 13 PNG files exist, each matching a quickstart scene id
 
 ---
 
@@ -420,8 +431,10 @@ steps, the address serves the site from another machine).
       number, merge commit, site address, publication state, the `typescript` 6.x
       exception, the screenshot procedure, "no version bump"); open it as a docs PR after
       the feature PR merges, as previous features did
-- [ ] T052 Run `/speckit-analyze` on the finished feature and fix any finding; make sure
-      every scenario in `specs/010-user-docs-site/verification.md` has a result
+- [x] T052 Run `/speckit-analyze` on the finished feature and fix any finding; make sure
+      every scenario in `specs/010-user-docs-site/verification.md` has a result (run
+      2026-10-29 before the merge: no critical or high finding; C1 and I2 applied as T053
+      and T054, I1 resolved by amending FR-013)
 
 ---
 

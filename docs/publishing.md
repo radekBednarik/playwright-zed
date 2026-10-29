@@ -127,8 +127,8 @@ validate locally, open the PR. The version must never decrease.
 The site at https://radekbednarik.github.io/playwright-zed/ is built from `site/` (Astro
 with Starlight, TypeScript) and published by `.github/workflows/docs-site.yml`:
 
-- Pull requests that touch `site/**`, `docs/parity.md` or the workflow run the `build`
-  job (`npm ci`, `npm run check`, `npm run build`); a type error, a missing screenshot or
+- Pull requests that touch `site/**`, `docs/parity.md`, `extension.toml` or the workflow
+  run the `build` job (`npm ci`, `npm run check`, `npm run build`); a type error, a missing screenshot or
   an invalid internal link fails the check.
 - Pushes to `main` that touch the same paths run `build` and then `deploy`
   (`actions/deploy-pages`, environment `github-pages`). Pages is configured with the

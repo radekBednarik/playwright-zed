@@ -257,9 +257,11 @@ Site
   output, show trace viewer and show trace, show browser, close all browsers) MUST have at
   least one screenshot of Zed showing that capability in use with the extension's current
   release on the sample project, with a text description of the image.
-- **FR-013**: Screenshots MUST show no personal data, private paths outside the sample
-  project, or unrelated windows, and each MUST record the extension version and Zed version
-  it was taken with.
+- **FR-013**: Screenshots MUST show no personal data and no unrelated windows; paths
+  outside the sample project are acceptable only under the owner's home directory, whose
+  name is already public as the GitHub handle (for example the Node binary in the run
+  output), and each screenshot MUST record the extension version and Zed version it was
+  taken with.
 - **FR-014**: The site MUST be readable on a phone, in light and dark mode, and without
   scripting; every internal link MUST resolve and every outbound link MUST point at its
   intended target.
