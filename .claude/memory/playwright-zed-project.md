@@ -19,7 +19,7 @@ published 2026-10-13 16:20 UTC by the owner; 0.3.0 published 2026-10-13 07:06 UT
 `npm unpublish playwright-zed-language-server@0.0.0-stage --otp=<code>` within 72 h of
 2026-10-12 16:07 UTC). Later releases: 0.5.0 and 0.5.1 (2026-10-16), **0.6.0 (2026-10-17,
 `latest` until 0.7.0; shell pin, `extension.toml` and `Cargo.toml` were 0.6.0, tag `v0.6.0` =
-`91aab9c`)**, then **0.7.0 (2026-10-20, current, see feature 008 below)**; tags `v0.1.0` through `v0.7.0`. Zed installing 0.2.0 and 0.3.0 from npm on its own is
+`91aab9c`)**, then 0.7.0 (2026-10-20), then **0.8.0 (2026-10-29, current, see feature 009 below)**; tags `v0.1.0` through `v0.8.0`. Zed installing 0.2.0 and 0.3.0 from npm on its own is
 verified; 0.4.0 npm install path verified on 2026-10-13 at `b4c1116`, 0.5.0, 0.5.1 and
 0.6.0 likewise (records in the feature 005 and 006 verification files). Through 0.3.0 the display name ended
 with " Zed" and the id was `playwright`; feature 004 renames them to "Playwright Runner" and
@@ -254,8 +254,8 @@ owner on 2026-10-20 as squash `a89d103`, branch deleted; `.specify/feature.json`
 it). **Released 0.7.0** (2026-10-20, lockstep, MINOR): release PR #16 merged by the owner
 as squash `01cae88`, tag `v0.7.0` = `01cae88`, server 0.7.0 published by the owner (npm
 `latest`), published package driven over stdio PASS (record in the feature's
-`verification.md`, "Release 0.7.0"); **the shell pin, `extension.toml` and `Cargo.toml`
-are 0.7.0 and `v0.7.0` is the current tag**. Registry bump committed in `../zed-extensions`
+`verification.md`, "Release 0.7.0"); the shell pin, `extension.toml` and `Cargo.toml`
+were 0.7.0 until 0.8.0 (feature 009). Registry bump committed in `../zed-extensions`
 on `playwright-runner-lsp` (local branch reset to the fork's `40a4df3`; this machine's
 clone had been stale at `0aef1c4`): "Update playwright-runner-lsp to v0.7.0", submodule
 at `01cae88`, `package-extensions` passed with the CLI at SHA `9ee3c503` (re-downloaded
@@ -293,9 +293,21 @@ plan, research, data model, contract, quickstart, tasks and verification written
 2026-10-29; implemented the same day; `/speckit-analyze` findings remediated (FR-005
 amended: video cannot be forced off from the CLI); `/speckit-converge` clean; **PR #17**
 (https://github.com/radekBednarik/playwright-zed/pull/17) merged by the owner on 2026-10-29
-as squash `fe8f09b`, branch deleted; `.specify/feature.json` points at it; **release 0.8.0
-pending** (lockstep, MINOR, two upstream capabilities; the shell pin, `extension.toml` and
-`Cargo.toml` are still 0.7.0)). Delivered, server only, no Rust change: code action
+as squash `fe8f09b`, branch deleted; `.specify/feature.json` points at it). **Released
+0.8.0** (2026-10-29, lockstep, MINOR, two upstream capabilities): release PR #19 merged by
+the owner as squash `72fbf34`, tag `v0.8.0` = `72fbf34`, server 0.8.0 published by the owner
+from the release branch (npm `latest` after about three minutes), published package driven
+over stdio PASS (install into scratch, both new commands advertised, discovery, a headless
+shown run through a kept server, toggle off stopped it, clean exit); **the shell pin,
+`extension.toml` and `Cargo.toml` are 0.8.0 and `v0.8.0` is the current tag**. Registry
+bump committed in `../zed-extensions` on `playwright-runner-lsp` as `c48f6b2` on top of the
+fork's `bb79322` (local branch was stale at `40a4df3` and was reset to
+`fork/playwright-runner-lsp` first; submodule at `72fbf34`, `version = "0.8.0"`,
+`sort-extensions`, `package-extensions` passed with the CLI at SHA `9ee3c503` re-downloaded
+to session scratch and symlinked as `./zed-extension`, Rust 1.90, manifest version 0.8.0);
+the owner pushes it with `git -C ../zed-extensions push fork playwright-runner-lsp`. The
+owner's Zed npm install path check for 0.8.0 is pending as of this record. Delivered, server
+only, no Rust change: code action
 `Playwright: [x]/[ ] Show browser` (`playwright.toggleShowBrowser`, remembered per user in
 `show-browser.json` next to `trace-viewer.json`, Zed settings default
 `lsp.playwright.settings.reuseBrowser` under upstream's setting name, a remembered choice
