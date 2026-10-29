@@ -275,6 +275,24 @@ existing CI jobs are unchanged; `mergeable: MERGEABLE`.
 `gh api repos/radekBednarik/playwright-zed/pages` returned
 `{"build_type":"workflow","html_url":"https://radekbednarik.github.io/playwright-zed/","source":{"branch":"main","path":"/"}}`.
 
-**Merge and deploy**: _pending_
+**Merge and deploy**: the owner merged PR #20 on 2026-10-29 with
+`gh pr merge 20 --squash --admin --delete-branch` (squash `35d25fe` on `main`). Workflow
+"Docs site" run 40922437794 on `35d25fe`: Build success, Deploy to GitHub Pages success
+(`gh run view 40922437794`).
 
-**Result**: _pending_
+**Live check** (`curl` from this machine, same day):
+
+```text
+/                          200
+/getting-started/install/  200
+/features/run-tests/       200
+/reference/parity/         200
+hero image /playwright-zed/_astro/landing-hero.<hash>.webp  200, 67634 bytes
+```
+
+The README's site link on GitHub resolves to the same address.
+
+**Result**: PASS (FR-017, SC-007). Follow-up found on the live page: the landing `<title>`
+read "Playwright Runner | Playwright Runner" because the page title equalled the site
+title; fixed in the docs PR that records this feature (page title "Playwright Runner for
+Zed").
