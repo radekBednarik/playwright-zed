@@ -164,3 +164,16 @@ describe('resolveStepReporterPath', () => {
     fs.rmSync(base, { recursive: true, force: true });
   });
 });
+
+describe('buildRunArgs with the browser shown (feature 009)', () => {
+  const config = { configDir: '/w', configPath: '/w/playwright.config.ts', projects: ['chromium', 'mobile'] } as unknown as PlaywrightConfig;
+  const base = ['test', 'tests/passing.spec.ts:3', '-c', '/w/playwright.config.ts', '--reporter=list,json,/abs/step-reporter.js', '--project', 'mobile'];
+  it('appends --headed --workers 1 --trace off only when asked, and never --trace on with them', () => {
+    expect(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, config, ['mobile'], '/abs/step-reporter.js', false, true)).toEqual([...base, '--headed', '--workers', '1', '--trace', 'off']);
+    expect(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, config, ['mobile'], '/abs/step-reporter.js', true, true)).toEqual([...base, '--headed', '--workers', '1', '--trace', 'off']);
+    const off = buildRunArgs({ kind: 'test', file: FILE, line: 3 }, config, ['mobile'], '/abs/step-reporter.js', false, false);
+    expect(off).toEqual(buildRunArgs({ kind: 'test', file: FILE, line: 3 }, config, ['mobile'], '/abs/step-reporter.js'));
+    expect(off).not.toContain('--headed');
+    expect(off).not.toContain('--workers');
+  });
+});

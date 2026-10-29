@@ -123,7 +123,7 @@ const config = {
 } as PlaywrightConfig;
 
 function request(id: string): RunRequest {
-  return { id, location: { kind: 'test', file: '/w/tests/a.spec.ts', line: 3 }, config, trigger: 'cursor', startedAt: new Date().toISOString(), dirty: false, projects: ['chromium'] };
+  return { id, location: { kind: 'test', file: '/w/tests/a.spec.ts', line: 3 }, config, trigger: 'cursor', startedAt: new Date().toISOString(), dirty: false, projects: ['chromium'], trace: false, showBrowser: false, browserEndpoint: null };
 }
 
 const tempDirs: string[] = [];
@@ -225,5 +225,23 @@ describe('RunManager with a step reporter (feature 006)', () => {
     expect(options.onStepEvent).toBeUndefined();
     spawn.calls[0].resolve({ code: 0, report: load('run-report-pass.json') });
     await pending;
+  });
+});
+
+describe('RunManager with the browser shown (feature 009)', () => {
+  it('passes the connect and reuse variables and the three flags exactly when an endpoint is set', async () => {
+    const spawn = controllableSpawn();
+    const manager = new RunManager(spawn.fn);
+    const shown = { ...request('1'), showBrowser: true, browserEndpoint: 'ws://127.0.0.1:4000/abc' };
+    const pending = manager.start(shown);
+    expect(spawn.calls[0].options.env).toEqual({ FORCE_COLOR: '0', PW_TEST_CONNECT_WS_ENDPOINT: 'ws://127.0.0.1:4000/abc', PW_TEST_REUSE_CONTEXT: '1' });
+    expect(spawn.calls[0].options.args).toEqual(['test', 'tests/a.spec.ts:3', '-c', '/w/playwright.config.ts', '--reporter=list,json', '--headed', '--workers', '1', '--trace', 'off']);
+    spawn.calls[0].resolve({ code: 0, report: load('run-report-pass.json') });
+    await pending;
+    const plain = manager.start(request('2'));
+    expect(spawn.calls[1].options.env).toEqual({ FORCE_COLOR: '0' });
+    expect(spawn.calls[1].options.args).toEqual(['test', 'tests/a.spec.ts:3', '-c', '/w/playwright.config.ts', '--reporter=list,json']);
+    spawn.calls[1].resolve({ code: 0, report: load('run-report-pass.json') });
+    await plain;
   });
 });

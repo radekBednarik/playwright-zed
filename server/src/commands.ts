@@ -12,6 +12,8 @@ export const COMMAND_SELECT_ALL_PROJECTS = 'playwright.selectAllProjects';
 export const COMMAND_SHOW_LAST_RUN_OUTPUT = 'playwright.showLastRunOutput';
 export const COMMAND_TOGGLE_TRACE_VIEWER = 'playwright.toggleTraceViewer';
 export const COMMAND_SHOW_TRACE = 'playwright.showTrace';
+export const COMMAND_TOGGLE_SHOW_BROWSER = 'playwright.toggleShowBrowser';
+export const COMMAND_CLOSE_ALL_BROWSERS = 'playwright.closeAllBrowsers';
 export const ALL_COMMANDS = [
   COMMAND_RUN_AT_CURSOR,
   COMMAND_RUN_FILE,
@@ -22,6 +24,8 @@ export const ALL_COMMANDS = [
   COMMAND_SHOW_LAST_RUN_OUTPUT,
   COMMAND_TOGGLE_TRACE_VIEWER,
   COMMAND_SHOW_TRACE,
+  COMMAND_TOGGLE_SHOW_BROWSER,
+  COMMAND_CLOSE_ALL_BROWSERS,
 ];
 
 export const STEP_REPORTER_FILE = 'step-reporter.js';
@@ -80,12 +84,15 @@ export function resolveTestLocation(tests: DiscoveredTest[], file: string, curso
  * CLI arguments for a run, per contracts/playwright-cli.md and feature 005's
  * contracts/project-selection.md: `--project <name>` per selected project unless every
  * project of the config is selected. Feature 008: `--trace on` when the trace viewer is on.
+ * Feature 009: `--headed --workers 1 --trace off` when the browser is shown (contract
+ * section 4); `trace` is ignored then, since a shown run never records a trace.
  */
-export function buildRunArgs(location: TestLocation, config: PlaywrightConfig, projects: string[] = [], reporterPath: string | null = null, trace = false): string[] {
+export function buildRunArgs(location: TestLocation, config: PlaywrightConfig, projects: string[] = [], reporterPath: string | null = null, trace = false, showBrowser = false): string[] {
   let target = path.relative(config.configDir, location.file);
   if (location.kind !== 'file' && location.line !== null) target = `${target}:${location.line}`;
   const reporters = reporterPath ? `list,json,${reporterPath}` : 'list,json';
-  return ['test', target, '-c', config.configPath, `--reporter=${reporters}`, ...projectArgs(projects, config.projects ?? []), ...(trace ? ['--trace', 'on'] : [])];
+  const extras = showBrowser ? ['--headed', '--workers', '1', '--trace', 'off'] : trace ? ['--trace', 'on'] : [];
+  return ['test', target, '-c', config.configPath, `--reporter=${reporters}`, ...projectArgs(projects, config.projects ?? []), ...extras];
 }
 
 /**

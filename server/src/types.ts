@@ -78,8 +78,29 @@ export interface RunRequest {
   dirty: boolean;
   /** Copy of `config.selection.projects` at start (feature 005). */
   projects: string[];
-  /** Feature 008: copy of the trace preference at start; `--trace on` is appended when true. */
+  /**
+   * Feature 008: copy of the trace preference at start; `--trace on` is appended when true.
+   * Feature 009: forced `false` when `showBrowser` is true (no trace while the browser is shown).
+   */
   trace: boolean;
+  /** Feature 009: copy of the "Show browser" preference at start. */
+  showBrowser: boolean;
+  /** Feature 009: the configuration's browser server endpoint for this run; set only when `showBrowser`. */
+  browserEndpoint: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Feature 009: the "Show browser" preference
+// ---------------------------------------------------------------------------
+
+/** Where the on/off state came from: the per-user store, the editor settings, or the built-in default (off). */
+export type BrowserPreferenceSource = 'remembered' | 'settings' | 'default';
+
+export interface BrowserPreference {
+  enabled: boolean;
+  source: BrowserPreferenceSource;
+  /** Set for `remembered` (copied from the store), else null. */
+  updatedAt: string | null;
 }
 
 export type RunStatus = 'queued' | 'running' | 'passed' | 'failed' | 'cancelled' | 'error';

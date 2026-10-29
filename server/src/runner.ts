@@ -147,11 +147,13 @@ export class RunManager {
     const config: PlaywrightConfig = request.config;
     const reportFile = reportFilePath('run', request.id);
     const withSteps = options.reporterPath !== null;
+    // Feature 009: a shown run connects to the configuration's kept browser and reuses its context.
+    const browserEnv: Record<string, string> = request.browserEndpoint ? { PW_TEST_CONNECT_WS_ENDPOINT: request.browserEndpoint, PW_TEST_REUSE_CONTEXT: '1' } : {};
     const handle = this.spawnFn({
       cli: config.playwrightCli,
-      args: buildRunArgs(request.location, config, request.projects, options.reporterPath, request.trace),
+      args: buildRunArgs(request.location, config, request.projects, options.reporterPath, request.trace, request.showBrowser),
       cwd: config.configDir,
-      env: { FORCE_COLOR: '0' },
+      env: { FORCE_COLOR: '0', ...browserEnv },
       reportFile,
       ...(withSteps ? { stepFile: stepFilePath(reportFile, request.id), onStepEvent: options.onStepEvent } : {}),
     });

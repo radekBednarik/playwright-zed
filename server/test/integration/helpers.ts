@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from 'node:child_process';
+import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -46,6 +46,8 @@ export interface StartOptions {
   noInlayHints?: boolean;
   /** Server entry script to spawn instead of `server/bin` (feature 006: a dist copy without the step reporter). */
   serverEntry?: string;
+  /** Extra environment for the server process (feature 009: `PW_DEBUG_CONTROLLER_HEADLESS` keeps the browser headless). */
+  env?: Record<string, string>;
 }
 
 export class TestClient {
@@ -70,7 +72,7 @@ export class TestClient {
     const stateDir = options.stateDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zed-state-'));
     const child = spawn(process.execPath, [options.serverEntry ?? BIN, '--stdio'], {
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, PLAYWRIGHT_ZED_STATE_DIR: stateDir },
+      env: { ...process.env, ...(options.env ?? {}), PLAYWRIGHT_ZED_STATE_DIR: stateDir },
     });
     const conn = createMessageConnection(new StreamMessageReader(child.stdout!), new StreamMessageWriter(child.stdin!));
     const client = new TestClient(child, conn, stateDir, ownsStateDir);
@@ -264,6 +266,37 @@ export interface ViewerSessionStatus {
   pid: number;
   currentPath: string | null;
   startedAt: string;
+}
+
+// Feature 009: the shape of the show browser fields in `playwright/status` (contract section 8).
+export interface ShowBrowserStatus {
+  enabled: boolean;
+  source: 'remembered' | 'settings' | 'default';
+}
+export interface BrowserServerStatus {
+  configPath: string;
+  pid: number;
+  wsEndpoint: string | null;
+  startedAt: string;
+  state: 'starting' | 'ready' | 'stopping';
+}
+
+/** Feature 009: direct children of a process (`pgrep -P`); empty on Windows or when `pgrep` is missing. */
+export function childPids(pid: number): number[] {
+  if (process.platform === 'win32') return [];
+  const result = spawnSync('pgrep', ['-P', String(pid)], { encoding: 'utf8' });
+  if (result.error || result.status === null) return [];
+  return result.stdout.split('\n').map((line) => Number(line.trim())).filter((n) => Number.isInteger(n) && n > 0);
+}
+
+/** Feature 009: true while the process exists. */
+export function processAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Feature 008: the real trace viewer opens a Chromium window; tests that start it skip without a display. */

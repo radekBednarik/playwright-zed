@@ -53,6 +53,9 @@ AI-assisted project.
   "Settings" below.
 - **Show last run output** opens the complete output of the latest run (the command line,
   Playwright's own report, everything the test printed) in an editor tab.
+- **Show trace viewer** records a trace for every run and opens Playwright's trace viewer
+  for it; **Show browser** runs tests in a visible browser window that stays open between
+  runs, and **Close all browsers** closes it (see the sections below).
 
 ## Requirements
 
@@ -169,6 +172,8 @@ workspace folder.
 | Read the full output of a run    | `ctrl-.` after a run, **Playwright: Show last run output**                         |
 | Record and show traces           | `ctrl-.` in any file of the config, **Playwright: [ ] Show trace viewer**          |
 | Open the trace of one test       | cursor in the test after a run, `ctrl-.`, **Playwright: Show trace**               |
+| Watch tests in a visible browser | `ctrl-.` in any file of the config, **Playwright: [ ] Show browser**               |
+| Close the kept browser           | `ctrl-.`, **Playwright: Close all browsers**                                       |
 
 Notes:
 
@@ -206,6 +211,14 @@ Notes:
   view, and the trace of a particular test is chosen with the cursor rather than in a Test
   Explorer tree, because Zed has neither. The viewer window starts with the first trace to
   show instead of before the run.
+- "Show browser" and "Close all browsers" are `ctrl-.` entries for the same reason. Turning
+  "Show trace viewer" on also turns "Show browser" off here, where the VS Code extension
+  only has the opposite direction. While
+  the browser is shown, the VS Code extension also turns video recording off; the command
+  line has no switch for that, so a project that records video keeps doing so and
+  Playwright then opens a fresh context per test instead of reusing one. The kept browser
+  is closed by the action or by turning the option off; closing its last page by hand does
+  not stop it (the next run simply opens a new page in it).
 
 ### Projects
 
@@ -292,6 +305,53 @@ the projects default and applies until you toggle the option yourself:
     "playwright": {
       "settings": {
         "showTrace": true
+      }
+    }
+  }
+}
+```
+
+### Show browser
+
+Like the VS Code extension's **Show browser** checkbox, **Playwright: [ ] Show browser** (in
+the `ctrl-.` menu of any file that belongs to a Playwright configuration) makes every run
+open a visible browser window and keeps that browser alive between runs:
+
+- Runs go through the browser one test at a time (`--headed --workers 1`), so you can watch
+  what the test does. The window stays open after the run with the last page still shown,
+  and the next run continues in the same window. Close the window by hand and the next run
+  opens a new one.
+- **Playwright: Close all browsers** closes the kept browser without changing the option;
+  the next run opens a fresh one. It is refused while a run is in progress.
+- Choose **Playwright: [x] Show browser** again to turn it off: the browser closes (after
+  the current run, if one is in progress) and runs go back to headless with your
+  configuration's own worker count. Every toggle is confirmed by a notification, for the same
+  menu-caching reason as the project picker.
+- A shown run never records a trace (`--trace off`), as upstream does, and the two options
+  exclude each other: turning **Show browser** on turns **Show trace viewer** off and
+  closes its window; turning **Show trace viewer** on turns **Show browser** off and closes
+  the kept browser. Only a folder default in settings can leave both on, and then runs
+  record no trace and the first such run says so once.
+
+Under the hood the extension starts one `playwright run-server` process per configuration
+from your project's own Playwright (in its extension mode, so the browser is reused across
+connections) and gives each run `PW_TEST_CONNECT_WS_ENDPOINT` and `PW_TEST_REUSE_CONTEXT=1`,
+exactly the hooks the VS Code extension uses. The process ends when you close the browsers,
+turn the option off, or quit Zed; if it dies on its own, a notification says so and the
+next run starts a new one. If it cannot start, you get one error notification with the
+command and the run does not start.
+
+The choice is remembered per user in `show-browser.json` next to `project-selection.json`
+(locations in "Projects" above). A folder or team default lives in the same settings block
+under the upstream setting name `reuseBrowser` and applies until you toggle the option
+yourself:
+
+```json
+{
+  "lsp": {
+    "playwright": {
+      "settings": {
+        "reuseBrowser": true
       }
     }
   }

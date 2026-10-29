@@ -25,20 +25,23 @@ import {
   COMMAND_SHOW_TRACE,
   COMMAND_TOGGLE_PROJECT,
   COMMAND_TOGGLE_TRACE_VIEWER,
+  COMMAND_TOGGLE_SHOW_BROWSER,
+  COMMAND_CLOSE_ALL_BROWSERS,
   countSelectedTests,
   resolveStepReporterPath,
   resolveTestLocation,
 } from './commands';
 import { runList } from './discovery';
 import { allSelected, isTestSelected, parseProjectsSetting, resolveSelection, selectAll, toggleProject } from './selection';
-import { readSelections, readTracePreference, stateDir, writeSelection, writeTracePreference } from './store';
+import { readBrowserPreference, readSelections, readTracePreference, stateDir, writeBrowserPreference, writeSelection, writeTracePreference } from './store';
+import { BrowserServers, bothOnKey, parseReuseBrowserSetting, resolveBrowserPreference } from './browser';
 import { ViewerSessions, latestTraceFor, parseShowTraceSetting, resolveTracePreference, showOutcomeWarning } from './trace';
 import { DISCOVERY_NOT_NOW, DISCOVERY_RUN, Reporter, failureLabel } from './reporting';
-import { RunManager, summarize } from './runner';
+import { RunManager, emptyCounts, summarize } from './runner';
 import { applyEvent, clearFile, createMarks, endRun, hintsFor, startRun as beginMarks } from './marks';
 import { formatRunLog, runLogFor, writeRunLog } from './output';
 import { editorHasTrustGate } from './trust';
-import type { DiscoveredTest, PlaywrightConfig, ProjectSelection, RunRequest, RunResult, RunTrigger, TestLocation, TracePreference, Workspace } from './types';
+import type { BrowserPreference, DiscoveredTest, PlaywrightConfig, ProjectSelection, RunRequest, RunResult, RunTrigger, TestLocation, TracePreference, Workspace } from './types';
 import { formatVersion } from './version';
 import { buildConfig, configForFile, findConfigs, isConfigFile, isUnderTestDirs } from './workspace';
 
@@ -90,6 +93,26 @@ const viewers = new ViewerSessions({
   onFailure: (name, command, detail) => {
     reporter.log(`playwright: trace viewer ${name} failed: ${detail}`);
     reporter.showError(`Playwright could not start the trace viewer.\nCommand: ${command}\n${detail}`);
+  },
+});
+/** Feature 009: the "Show browser" preference (data-model "ShowBrowserPreference"). */
+let browserPreference: BrowserPreference = { enabled: false, source: 'default', updatedAt: null };
+/** Feature 009: the `reuseBrowser` value from the editor settings, null when absent or invalid. */
+let browserSettingValue: boolean | null = null;
+let invalidReuseBrowserWarned = false;
+/** Feature 009: the combination of the two preferences the "no trace while the browser is shown" warning was shown for. */
+let bothOnWarnedKey: string | null = null;
+/** Feature 009: one `run-server` process per configuration, started by the first run that needs it. */
+const browsers = new BrowserServers({
+  onStarted: (name, pid, command) => reporter.log(`playwright: browser server ${name} started (pid ${pid}): ${command}`),
+  onListening: (name, endpoint) => reporter.log(`playwright: browser server ${name} listening on ${endpoint}`),
+  onOutput: (name, line) => reporter.log(`playwright: browser server ${name}: ${line}`),
+  onStopping: (name) => reporter.log(`playwright: browser server ${name} stopping`),
+  onExit: (name, code, unexpected) => {
+    reporter.log(`playwright: browser server ${name} exited (code ${code})`);
+    if (!unexpected) return;
+    reporter.log(`playwright: browser server ${name} exited on its own, a new one starts with the next run`);
+    reporter.showWarning(`Playwright: the browser server for ${name} exited (code ${code}); a new one starts with the next run`);
   },
 });
 
@@ -348,6 +371,7 @@ function removeWorkspace(folder: WorkspaceFolder): void {
   if (!rootPath) return;
   runManagers.get(rootPath)?.cancelActive();
   viewers.closeFor(rootPath);
+  browsers.closeFor(rootPath);
   workspaces.delete(rootPath);
   runManagers.delete(rootPath);
   publishedFiles.delete(rootPath);
@@ -380,6 +404,7 @@ connection.onInitialized(() => {
   if (stepReporter.path === null) reporter.log(`playwright: step reporter unavailable (${stepReporter.reason}); step marks and durations are disabled`);
   if (!clientRequestsInlayHints) reporter.log('playwright: client does not request inlay hints; step marks will not be shown');
   loadTracePreference();
+  loadBrowserPreference();
   void (async () => {
     await loadSettings();
     for (const { folder, fromWorkspaceFolders } of pendingFolders.splice(0)) await addWorkspace(folder, fromWorkspaceFolders);
@@ -421,6 +446,7 @@ async function loadSettings(): Promise<void> {
  */
 async function applySettings(value: unknown): Promise<void> {
   applyShowTraceSetting(value);
+  applyReuseBrowserSetting(value);
   const raw = value && typeof value === 'object' ? (value as { projects?: unknown }).projects : undefined;
   const parsed = parseProjectsSetting(raw);
   if (parsed.invalid) {
@@ -484,6 +510,56 @@ function applyShowTraceSetting(value: unknown): void {
   logTracePreference();
   if (tracePreference.enabled && tracePreference.source === 'settings') reporter.showInfo('Playwright: show trace viewer is on (from settings)');
   if (!tracePreference.enabled) viewers.closeAll();
+}
+
+// ---------------------------------------------------------------------------
+// Feature 009: the "Show browser" preference
+// ---------------------------------------------------------------------------
+
+/** Reads the remembered choice once at start-up; the settings may still apply when there is none. */
+function loadBrowserPreference(): void {
+  browserPreference = resolveBrowserPreference(readBrowserPreference(stateDir()), browserSettingValue);
+  logBrowserPreference();
+}
+
+function logBrowserPreference(): void {
+  reporter.info(`playwright: show browser: ${browserPreference.enabled ? 'on' : 'off'} (${browserPreference.source})`);
+}
+
+/**
+ * Stops the browser servers of every workspace without a run in progress (FR-007, research
+ * R4); a workspace whose run is in progress is stopped at that run's end by `startRun`.
+ */
+function stopIdleBrowsers(): void {
+  for (const ws of workspaces.values()) {
+    if (runManagers.get(ws.rootPath)?.running) continue;
+    browsers.closeFor(ws.rootPath);
+  }
+}
+
+/**
+ * Applies `{ reuseBrowser: true|false }` from the editor settings (data-model "Resolution"):
+ * a remembered choice wins, a settings value turns the option on or off, and an option
+ * turned on from settings is announced once.
+ */
+function applyReuseBrowserSetting(value: unknown): void {
+  const raw = value && typeof value === 'object' ? (value as { reuseBrowser?: unknown }).reuseBrowser : undefined;
+  const parsed = parseReuseBrowserSetting(raw);
+  if (parsed.invalid) {
+    if (!invalidReuseBrowserWarned) reporter.showWarning('Playwright: setting "reuseBrowser" must be true or false');
+    invalidReuseBrowserWarned = true;
+  } else {
+    invalidReuseBrowserWarned = false;
+  }
+  if (parsed.value === browserSettingValue) return;
+  browserSettingValue = parsed.value;
+  if (browserPreference.source === 'remembered') return;
+  const before = browserPreference;
+  browserPreference = resolveBrowserPreference(null, browserSettingValue);
+  if (before.enabled === browserPreference.enabled && before.source === browserPreference.source) return;
+  logBrowserPreference();
+  if (browserPreference.enabled && browserPreference.source === 'settings') reporter.showInfo('Playwright: show browser is on (from settings)');
+  if (!browserPreference.enabled) stopIdleBrowsers();
 }
 
 // ---------------------------------------------------------------------------
@@ -616,10 +692,16 @@ connection.onCodeAction((params) => {
   const owner = configForDocument(uri);
   // Feature 008: the trace viewer toggle from any served file of the config, and the trace of the test at the cursor.
   if (owner) actions.push(action(`Playwright: [${tracePreference.enabled ? 'x' : ' '}] Show trace viewer`, COMMAND_TOGGLE_TRACE_VIEWER, [{ uri }]));
-  if (tracePreference.enabled && ctx && ctx.ws.traces) {
+  // Feature 009: a run with the browser shown records no trace, so nothing is offered for it.
+  if (tracePreference.enabled && ctx && ctx.ws.traces && ctx.ws.traces.records.length > 0) {
     const cursorLine0 = params.range.start.line;
     const at = resolveTestLocation(ctx.config.tests.filter((t) => t.file === ctx.file), ctx.file, cursorLine0 + 1);
     if (at.kind === 'test') actions.push(action('Playwright: Show trace', COMMAND_SHOW_TRACE, [{ uri, line: cursorLine0 }]));
+  }
+  // Feature 009: the show browser toggle, and "Close all browsers" while the option is on or a server runs.
+  if (owner) {
+    actions.push(action(`Playwright: [${browserPreference.enabled ? 'x' : ' '}] Show browser`, COMMAND_TOGGLE_SHOW_BROWSER, [{ uri }]));
+    if (browserPreference.enabled || browsers.has(owner.ws.rootPath)) actions.push(action('Playwright: Close all browsers', COMMAND_CLOSE_ALL_BROWSERS, [{ uri }]));
   }
   // Feature 005: the project picker, one entry per project, from any served file of the config.
   if (owner && owner.config.projects.length >= 2) {
@@ -713,7 +795,10 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
     startedAt: new Date().toISOString(),
     dirty,
     projects: [...config.selection.projects],
-    trace: tracePreference.enabled,
+    // Feature 009: a shown run never records a trace (research R6).
+    trace: tracePreference.enabled && !browserPreference.enabled,
+    showBrowser: browserPreference.enabled,
+    browserEndpoint: null,
   };
   ws.lastRun = request;
   // Feature 006: marks and the run log belong to the newest run only (current run id guard).
@@ -723,6 +808,32 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
   writeLog(ws, request, null, null);
 
   if (dirty) reporter.showWarning(`${displayFile} has unsaved changes; running the saved version`);
+
+  // Feature 009: the configuration's kept browser must be listening before the run connects to it.
+  if (request.showBrowser) {
+    const ensured = await browsers.ensure(config, ws.rootPath);
+    if (ws.lastRun?.id !== request.id) return;
+    if (!ensured.ok) {
+      reporter.log(`playwright: run ${request.id} browser server failed: ${ensured.detail}`);
+      const failed: RunResult = { request, status: 'error', counts: emptyCounts(), failures: [], rawOutput: '', command: ensured.command, durationMs: null, traces: [], errorMessage: ensured.detail };
+      writeLog(ws, request, failed, new Date().toISOString());
+      endRun(ws.marks, request.id);
+      reporter.refreshInlayHints();
+      reporter.showError(`Playwright could not start the browser server.\nCommand: ${ensured.command}\n${ensured.detail}`);
+      return;
+    }
+    request.browserEndpoint = ensured.wsEndpoint;
+    reporter.log(`playwright: run ${request.id} browser server ${ensured.wsEndpoint}`);
+    // Both on is reachable only through a settings default (the toggles exclude each other).
+    if (tracePreference.enabled) {
+      reporter.log(`playwright: run ${request.id} trace recording off (show browser is on)`);
+      const key = bothOnKey(browserPreference, tracePreference);
+      if (bothOnWarnedKey !== key) {
+        bothOnWarnedKey = key;
+        reporter.showWarning('Playwright: show browser is on, so runs record no trace; turn it off to use the trace viewer');
+      }
+    }
+  }
 
   const previouslyPublished = publishedFiles.get(ws.rootPath) ?? new Set<string>();
   reporter.clearDiagnostics(new Set([location.file, ...previouslyPublished]));
@@ -784,6 +895,8 @@ async function startRun(ws: Workspace, location: TestLocation, config: Playwrigh
   } else {
     reporter.log(`playwright: run ${request.id} superseded, output not written`);
   }
+  // Feature 009: turned off while this shown run was in progress (FR-007).
+  if (request.showBrowser && !browserPreference.enabled && !managerFor(ws).running) browsers.closeFor(ws.rootPath);
 
   switch (result.status) {
     case 'cancelled':
@@ -891,8 +1004,73 @@ async function toggleTraceViewerCommand(uri: string): Promise<void> {
     reporter.log(`playwright: could not remember the trace viewer choice in ${stateDir()}: ${(error as Error).message}`);
   }
   logTracePreference();
+  // Feature 009: the two options exclude each other both ways (owner decision, research R6):
+  // turning the viewer on turns "Show browser" off and closes the kept browsers.
+  if (enabled && browserPreference.enabled) {
+    browserPreference = { enabled: false, source: 'remembered', updatedAt: now.toISOString() };
+    try {
+      writeBrowserPreference(stateDir(), false, now);
+    } catch (error) {
+      reporter.log(`playwright: could not remember the show browser choice in ${stateDir()}: ${(error as Error).message}`);
+    }
+    logBrowserPreference();
+    stopIdleBrowsers();
+    reporter.showInfo('Playwright: show trace viewer is on; show browser turned off (browsers closed)');
+    return;
+  }
   reporter.showInfo(`Playwright: show trace viewer is ${enabled ? 'on' : 'off'}`);
   if (!enabled) viewers.closeAll();
+}
+
+/**
+ * Feature 009: flips "Show browser", remembers it, confirms it (Zed caches the menu); turning it
+ * on turns the trace viewer off as upstream does; turning it off stops the idle servers.
+ */
+async function toggleShowBrowserCommand(uri: string): Promise<void> {
+  const gated = gatedWorkspace(uri);
+  if (gated) return refuseNotEnabled(gated);
+  if (!configForDocument(uri)) return notPlaywright(uri);
+  const enabled = !browserPreference.enabled;
+  const now = new Date();
+  browserPreference = { enabled, source: 'remembered', updatedAt: now.toISOString() };
+  try {
+    writeBrowserPreference(stateDir(), enabled, now);
+  } catch (error) {
+    reporter.log(`playwright: could not remember the show browser choice in ${stateDir()}: ${(error as Error).message}`);
+  }
+  logBrowserPreference();
+  if (enabled && tracePreference.enabled) {
+    tracePreference = { enabled: false, source: 'remembered', updatedAt: now.toISOString() };
+    try {
+      writeTracePreference(stateDir(), false, now);
+    } catch (error) {
+      reporter.log(`playwright: could not remember the trace viewer choice in ${stateDir()}: ${(error as Error).message}`);
+    }
+    logTracePreference();
+    viewers.closeAll();
+    reporter.showInfo('Playwright: show browser is on; show trace viewer turned off (no traces while the browser is shown)');
+    return;
+  }
+  reporter.showInfo(`Playwright: show browser is ${enabled ? 'on' : 'off'}`);
+  if (!enabled) stopIdleBrowsers();
+}
+
+/** Feature 009: stops the workspace's browser servers without changing the option; refused during a run. */
+async function closeAllBrowsersCommand(uri: string): Promise<void> {
+  const gated = gatedWorkspace(uri);
+  if (gated) return refuseNotEnabled(gated);
+  const owner = configForDocument(uri);
+  if (!owner) return notPlaywright(uri);
+  if (managerFor(owner.ws).running) {
+    reporter.showWarning('Playwright: cannot close browsers while tests are running');
+    return;
+  }
+  if (!browsers.has(owner.ws.rootPath)) {
+    reporter.showInfo('Playwright: no browsers to close');
+    return;
+  }
+  browsers.closeFor(owner.ws.rootPath);
+  reporter.showInfo('Playwright: browsers closed');
 }
 
 /** Feature 008: shows the latest trace of the test at the cursor from the last run (contract section 2). */
@@ -1000,6 +1178,14 @@ connection.onExecuteCommand(async (params) => {
         if (typeof arg.uri === 'string' && typeof arg.line === 'number') await showTraceCommand(arg.uri, arg.line);
         else reporter.showError('Playwright: show trace needs a document and a line');
         break;
+      case COMMAND_TOGGLE_SHOW_BROWSER:
+        if (typeof arg.uri === 'string') await toggleShowBrowserCommand(arg.uri);
+        else reporter.showError('Playwright: toggle show browser needs a document');
+        break;
+      case COMMAND_CLOSE_ALL_BROWSERS:
+        if (typeof arg.uri === 'string') await closeAllBrowsersCommand(arg.uri);
+        else reporter.showError('Playwright: close all browsers needs a document');
+        break;
       case COMMAND_TOGGLE_PROJECT:
         if (typeof arg.uri === 'string' && typeof arg.project === 'string') await toggleProjectCommand(arg.uri, arg.project);
         else reporter.showError('Playwright: toggle project needs a document and a project name');
@@ -1039,6 +1225,8 @@ connection.onRequest(STATUS_REQUEST, () =>
       ? { runId: ws.traces.runId, records: ws.traces.records.map(({ file, line, title, project, path: tracePath }) => ({ file, line, title, project, path: tracePath })) }
       : null,
     traceViewers: viewers.list(ws.rootPath).map(({ configPath, pid, currentPath, startedAt }) => ({ configPath, pid, currentPath, startedAt })),
+    showBrowser: { enabled: browserPreference.enabled, source: browserPreference.source },
+    browserServers: browsers.list(ws.rootPath).map(({ configPath, pid, wsEndpoint, startedAt, state }) => ({ configPath, pid, wsEndpoint, startedAt, state })),
     marks: {
       runId: ws.marks.runId,
       active: Array.from(ws.marks.active, ([file, lines]) => Array.from(lines, ([line, count]) => ({ file, line, count }))).flat(),
@@ -1059,10 +1247,19 @@ connection.onRequest(STATUS_REQUEST, () =>
   })),
 );
 
-// Feature 008: no viewer outlives the server (research R7).
-connection.onShutdown(() => viewers.closeAll());
-connection.onExit(() => viewers.closeAll(true));
-process.on('exit', () => viewers.closeAll(true));
+// Feature 008: no viewer outlives the server (research R7). Feature 009: nor does a browser server (FR-011).
+connection.onShutdown(() => {
+  viewers.closeAll();
+  browsers.closeAll();
+});
+connection.onExit(() => {
+  viewers.closeAll(true);
+  browsers.closeAll(true);
+});
+process.on('exit', () => {
+  viewers.closeAll(true);
+  browsers.closeAll(true);
+});
 
 documents.listen(connection);
 connection.listen();
