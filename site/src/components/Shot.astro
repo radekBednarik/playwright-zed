@@ -1,7 +1,8 @@
 ---
 // A documentation screenshot from the manifest: optimised image, alt text and a caption
-// naming the versions it shows (feature 010).
-import { Image } from 'astro:assets';
+// naming the versions it shows (feature 010). Clicking the picture opens it full size in
+// an overlay (readable on small screens); without scripting the link opens the file.
+import { Image, getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { screenshots } from '../data/screenshots.ts';
 
@@ -19,11 +20,15 @@ const image = images[`../assets/screenshots/${id}.png`]?.default;
 // only); a normal build fails on a missing file, as the coverage check does.
 const placeholder = !image && process.env.SCREENSHOTS_PLACEHOLDER === '1';
 if (!image && !placeholder) throw new Error(`Shot: no file src/assets/screenshots/${id}.png for "${id}"`);
+const full = image ? await getImage({ src: image, format: 'webp', quality: 90 }) : null;
 ---
 
 <figure class="shot">
-  {image ? (
-    <Image src={image} alt={shot.alt} width={Math.min(image.width, 1920)} loading="lazy" />
+  {image && full ? (
+    <a class="shot-link" href={full.src} data-lightbox data-alt={shot.alt} title="Open full size">
+      <Image src={image} alt={shot.alt} width={Math.min(image.width, 1920)} loading="lazy" />
+      <span class="shot-zoom" aria-hidden="true">⤢ full size</span>
+    </a>
   ) : (
     <div class="placeholder" role="img" aria-label={shot.alt}>Screenshot placeholder: {id}</div>
   )}
@@ -36,12 +41,33 @@ if (!image && !placeholder) throw new Error(`Shot: no file src/assets/screenshot
   .shot {
     margin: 1.5rem 0;
   }
+  .shot-link {
+    position: relative;
+    display: block;
+    cursor: zoom-in;
+  }
   .shot img {
     display: block;
     width: 100%;
     height: auto;
     border: 1px solid var(--sl-color-hairline);
     border-radius: 0.5rem;
+  }
+  .shot-zoom {
+    position: absolute;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--sl-color-black) 80%, transparent);
+    color: var(--sl-color-gray-2);
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-xs);
+    pointer-events: none;
+  }
+  .shot-link:hover .shot-zoom,
+  .shot-link:focus-visible .shot-zoom {
+    color: var(--sl-color-accent);
   }
   .shot .placeholder {
     aspect-ratio: 16 / 10;
@@ -64,3 +90,107 @@ if (!image && !placeholder) throw new Error(`Shot: no file src/assets/screenshot
     color: var(--sl-color-accent);
   }
 </style>
+
+<style is:global>
+  /* The overlay is created once per page by the script below. */
+  dialog.shot-dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: #0b0e13;
+    color: #d9e0e8;
+  }
+  dialog.shot-dialog::backdrop {
+    background: #0b0e13;
+  }
+  dialog.shot-dialog .shot-dialog-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0.9rem;
+    background: color-mix(in srgb, #0b0e13 85%, transparent);
+    border-bottom: 1px solid #1f2630;
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-xs);
+    color: #95a1b1;
+  }
+  dialog.shot-dialog .shot-dialog-bar span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  dialog.shot-dialog button {
+    flex: none;
+    font: inherit;
+    padding: 0.25rem 0.7rem;
+    border: 1px solid #2a323c;
+    border-radius: 0.3rem;
+    background: #11151c;
+    color: #4ade80;
+    cursor: pointer;
+  }
+  dialog.shot-dialog .shot-dialog-scroll {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    padding-top: 2.6rem;
+    cursor: zoom-out;
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+  dialog.shot-dialog img {
+    display: block;
+    width: 1920px;
+    max-width: none;
+    height: auto;
+  }
+  @media (min-width: 1960px) {
+    dialog.shot-dialog img {
+      margin: 0 auto;
+    }
+  }
+</style>
+
+<script>
+  // One overlay per page; opened by any screenshot link. Without this script the link
+  // simply opens the full-size file.
+  let dialog: HTMLDialogElement | null = null;
+
+  function ensureDialog(): HTMLDialogElement {
+    if (dialog) return dialog;
+    dialog = document.createElement('dialog');
+    dialog.className = 'shot-dialog';
+    dialog.innerHTML =
+      '<div class="shot-dialog-bar"><span></span><button type="button">close (Esc)</button></div>' +
+      '<div class="shot-dialog-scroll"><img alt=""></div>';
+    dialog.querySelector('button')!.addEventListener('click', () => dialog!.close());
+    dialog.querySelector('.shot-dialog-scroll')!.addEventListener('click', (event) => {
+      if ((event.target as HTMLElement).tagName !== 'IMG') dialog!.close();
+    });
+    dialog.querySelector('img')!.addEventListener('click', () => dialog!.close());
+    document.body.append(dialog);
+    return dialog;
+  }
+
+  document.querySelectorAll<HTMLAnchorElement>('a[data-lightbox]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const box = ensureDialog();
+      const img = box.querySelector('img')!;
+      img.src = link.href;
+      img.alt = link.dataset.alt ?? '';
+      box.querySelector('.shot-dialog-bar span')!.textContent = link.dataset.alt ?? '';
+      box.showModal();
+      box.querySelector('.shot-dialog-scroll')!.scrollTo(0, 0);
+    });
+  });
+</script>

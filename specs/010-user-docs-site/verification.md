@@ -296,3 +296,14 @@ The README's site link on GitHub resolves to the same address.
 read "Playwright Runner | Playwright Runner" because the page title equalled the site
 title; fixed in the docs PR that records this feature (page title "Playwright Runner for
 Zed").
+
+## Follow-up: click-to-zoom screenshots (2026-10-29)
+
+Owner feedback after the first deployment: the screenshots are not readable on small
+screens. `site/src/components/Shot.astro` now wraps every picture in a link to the
+full-size WebP (works without scripting) and a small inline script opens that file in a
+full-screen `<dialog>` at its native 1920 px width, scrollable and pinch-zoomable, closed
+by the button, a click outside the image or Escape. Checked with Playwright through
+`astro preview`: at 390 x 844 and 1280 x 900 the overlay opens, the image measures 1920 px
+wide, Escape closes it, no console errors; `astro check` 0 errors, build 16 pages, all
+internal links valid.

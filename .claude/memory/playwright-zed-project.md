@@ -388,7 +388,10 @@ unchanged buffer, otherwise the next run warns about unsaved changes); Chromium'
 prompt appears in the trace viewer on a Czech locale (dismiss before capturing).
 `/speckit-analyze` ran before the merge: no critical or high finding; C1 (workflow path
 filter), I1 (FR-013 wording) and I2 (input helper record) were applied. Gate after merge
-unchanged: 8 Rust, 284 vitest; the docs "Build" job takes under 30 s.
+unchanged: 8 Rust, 284 vitest; the docs "Build" job takes under 30 s. Follow-ups merged
+the same day: PR #21 (memory record, landing `<title>`) and the click-to-zoom overlay in
+`Shot.astro` (owner found the screenshots unreadable on phones; full-size WebP in a
+`<dialog>` at native width).
 
 Note: `create-new-feature.sh` in Spec Kit 1.1.2 no longer creates the git branch; it was
 created by hand.
