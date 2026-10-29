@@ -14,7 +14,8 @@ const L = { adds: 2 };
 const SUMMARY = /(\d+) passed, (\d+) failed, (\d+) skipped/;
 
 function projectTitles(actions: any[]): string[] {
-  return actions.map((a) => a.title as string).filter((t) => (t.startsWith('Playwright: [') && !t.includes('Show trace viewer')) || t === SELECT_ALL_TITLE);
+  // features 008 and 009 add `[ ]` toggles of their own; the picker entries are the project names
+  return actions.map((a) => a.title as string).filter((t) => (t.startsWith('Playwright: [') && !t.includes('Show trace viewer') && !t.includes('Show browser')) || t === SELECT_ALL_TITLE);
 }
 
 function runCommandLine(client: TestClient): string {

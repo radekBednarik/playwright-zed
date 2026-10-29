@@ -2,7 +2,19 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { STATE_SUBDIR, STORE_FILE, TRACE_STORE_FILE, readSelections, readTracePreference, stateDir, writeSelection, writeTracePreference } from '../../src/store';
+import {
+  BROWSER_STORE_FILE,
+  STATE_SUBDIR,
+  STORE_FILE,
+  TRACE_STORE_FILE,
+  readBrowserPreference,
+  readSelections,
+  readTracePreference,
+  stateDir,
+  writeBrowserPreference,
+  writeSelection,
+  writeTracePreference,
+} from '../../src/store';
 
 const temps: string[] = [];
 function tempDir(): string {
@@ -115,5 +127,45 @@ describe('trace preference store (feature 008)', () => {
     writeTracePreference(dir, false);
     expect(readTracePreference(dir)?.showTrace).toBe(false);
     expect(JSON.parse(fs.readFileSync(path.join(dir, TRACE_STORE_FILE), 'utf8')).version).toBe(1);
+  });
+});
+
+describe('show browser preference store (feature 009)', () => {
+  it('reads nothing for a missing, malformed, wrong-version, wrong-type or symlinked file', () => {
+    const dir = tempDir();
+    const file = path.join(dir, BROWSER_STORE_FILE);
+    expect(readBrowserPreference(dir)).toBeNull();
+    fs.writeFileSync(file, '{not json');
+    expect(readBrowserPreference(dir)).toBeNull();
+    fs.writeFileSync(file, JSON.stringify({ version: 2, showBrowser: true, updatedAt: 't' }));
+    expect(readBrowserPreference(dir)).toBeNull();
+    fs.writeFileSync(file, JSON.stringify({ version: 1, showBrowser: 'yes', updatedAt: 't' }));
+    expect(readBrowserPreference(dir)).toBeNull();
+    fs.writeFileSync(file, JSON.stringify({ version: 1, showBrowser: true }));
+    expect(readBrowserPreference(dir)).toBeNull();
+    // the trace key in the browser file does not count
+    fs.writeFileSync(file, JSON.stringify({ version: 1, showTrace: true, updatedAt: 't' }));
+    expect(readBrowserPreference(dir)).toBeNull();
+    fs.unlinkSync(file);
+    const real = path.join(dir, 'elsewhere.json');
+    fs.writeFileSync(real, JSON.stringify({ version: 1, showBrowser: true, updatedAt: 't' }));
+    fs.symlinkSync(real, file);
+    expect(readBrowserPreference(dir)).toBeNull();
+  });
+  it('round-trips the choice independently of the trace file, with owner-only modes', () => {
+    const dir = path.join(tempDir(), STATE_SUBDIR);
+    const written = writeBrowserPreference(dir, true, new Date('2026-10-29T10:00:00.000Z'));
+    expect(written).toEqual({ showBrowser: true, updatedAt: '2026-10-29T10:00:00.000Z' });
+    expect(readBrowserPreference(dir)).toEqual(written);
+    expect(readTracePreference(dir)).toBeNull();
+    writeTracePreference(dir, false);
+    expect(readBrowserPreference(dir)?.showBrowser).toBe(true);
+    expect(fs.readdirSync(dir).sort()).toEqual([BROWSER_STORE_FILE, TRACE_STORE_FILE].sort());
+    if (process.platform !== 'win32') {
+      expect(fs.statSync(path.join(dir, BROWSER_STORE_FILE)).mode & 0o777).toBe(0o600);
+    }
+    writeBrowserPreference(dir, false);
+    expect(readBrowserPreference(dir)?.showBrowser).toBe(false);
+    expect(JSON.parse(fs.readFileSync(path.join(dir, BROWSER_STORE_FILE), 'utf8'))).toMatchObject({ version: 1, showBrowser: false });
   });
 });

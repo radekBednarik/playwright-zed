@@ -10,6 +10,8 @@ export const STORE_FILE = 'project-selection.json';
 export const STATE_DIR_VAR = 'PLAYWRIGHT_ZED_STATE_DIR';
 /** Per-user "Show trace viewer" choice (feature 008, research R4). */
 export const TRACE_STORE_FILE = 'trace-viewer.json';
+/** Per-user "Show browser" choice (feature 009, research R5). */
+export const BROWSER_STORE_FILE = 'show-browser.json';
 
 export interface StoredSelection {
   projects: string[];
@@ -90,30 +92,26 @@ export function writeSelection(dir: string, configPath: string, projects: string
 }
 
 // ---------------------------------------------------------------------------
-// Feature 008: the "Show trace viewer" preference
+// One-boolean preference files: "Show trace viewer" (feature 008) and "Show browser" (feature 009)
 // ---------------------------------------------------------------------------
 
-export interface StoredTracePreference {
-  showTrace: boolean;
-  updatedAt: string;
-}
-
-interface TraceStoreFile {
+interface BooleanStoreFile {
   version: 1;
-  showTrace: boolean;
   updatedAt: string;
+  [key: string]: unknown;
 }
 
 /**
- * Reads the remembered choice. A missing, unreadable, malformed or symlinked file, a wrong
- * version, a non-boolean `showTrace` or a non-string `updatedAt` all read as "no choice".
+ * Reads `{ version: 1, <key>: boolean, updatedAt: string }` from `<dir>/<file>`. A missing,
+ * unreadable, malformed or symlinked file, a wrong version, a non-boolean value or a
+ * non-string `updatedAt` all read as "no choice" (null).
  */
-export function readTracePreference(dir: string): StoredTracePreference | null {
-  const file = path.join(dir, TRACE_STORE_FILE);
+function readBooleanPreference(dir: string, file: string, key: string): { value: boolean; updatedAt: string } | null {
+  const full = path.join(dir, file);
   let raw: string;
   try {
-    if (!fs.lstatSync(file).isFile()) return null;
-    raw = fs.readFileSync(file, 'utf8');
+    if (!fs.lstatSync(full).isFile()) return null;
+    raw = fs.readFileSync(full, 'utf8');
   } catch {
     return null;
   }
@@ -123,23 +121,56 @@ export function readTracePreference(dir: string): StoredTracePreference | null {
   } catch {
     return null;
   }
-  const store = parsed as Partial<TraceStoreFile> | null;
-  if (!store || store.version !== 1 || typeof store.showTrace !== 'boolean' || typeof store.updatedAt !== 'string') return null;
-  return { showTrace: store.showTrace, updatedAt: store.updatedAt };
+  const store = parsed as Partial<BooleanStoreFile> | null;
+  if (!store || store.version !== 1 || typeof store[key] !== 'boolean' || typeof store.updatedAt !== 'string') return null;
+  return { value: store[key] as boolean, updatedAt: store.updatedAt };
 }
 
 /** Writes the choice through a temp file and a rename. Directory `0700`, file `0600`. Throws on failure. */
-export function writeTracePreference(dir: string, showTrace: boolean, now: Date = new Date()): StoredTracePreference {
+function writeBooleanPreference(dir: string, file: string, key: string, value: boolean, now: Date): string {
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-  const store: TraceStoreFile = { version: 1, showTrace, updatedAt: now.toISOString() };
-  const file = path.join(dir, TRACE_STORE_FILE);
-  const temp = path.join(dir, `${TRACE_STORE_FILE}.${process.pid}.${Math.random().toString(36).slice(2)}.tmp`);
+  const updatedAt = now.toISOString();
+  const store: BooleanStoreFile = { version: 1, [key]: value, updatedAt };
+  const full = path.join(dir, file);
+  const temp = path.join(dir, `${file}.${process.pid}.${Math.random().toString(36).slice(2)}.tmp`);
   try {
     fs.writeFileSync(temp, `${JSON.stringify(store, null, 2)}\n`, { mode: 0o600 });
-    fs.renameSync(temp, file);
+    fs.renameSync(temp, full);
   } catch (error) {
     fs.rmSync(temp, { force: true });
     throw error;
   }
-  return { showTrace, updatedAt: store.updatedAt };
+  return updatedAt;
+}
+
+export interface StoredTracePreference {
+  showTrace: boolean;
+  updatedAt: string;
+}
+
+/** Feature 008: the remembered "Show trace viewer" choice, or null. */
+export function readTracePreference(dir: string): StoredTracePreference | null {
+  const stored = readBooleanPreference(dir, TRACE_STORE_FILE, 'showTrace');
+  return stored ? { showTrace: stored.value, updatedAt: stored.updatedAt } : null;
+}
+
+/** Feature 008: remembers the "Show trace viewer" choice. Throws on failure. */
+export function writeTracePreference(dir: string, showTrace: boolean, now: Date = new Date()): StoredTracePreference {
+  return { showTrace, updatedAt: writeBooleanPreference(dir, TRACE_STORE_FILE, 'showTrace', showTrace, now) };
+}
+
+export interface StoredBrowserPreference {
+  showBrowser: boolean;
+  updatedAt: string;
+}
+
+/** Feature 009: the remembered "Show browser" choice, or null. */
+export function readBrowserPreference(dir: string): StoredBrowserPreference | null {
+  const stored = readBooleanPreference(dir, BROWSER_STORE_FILE, 'showBrowser');
+  return stored ? { showBrowser: stored.value, updatedAt: stored.updatedAt } : null;
+}
+
+/** Feature 009: remembers the "Show browser" choice. Throws on failure. */
+export function writeBrowserPreference(dir: string, showBrowser: boolean, now: Date = new Date()): StoredBrowserPreference {
+  return { showBrowser, updatedAt: writeBooleanPreference(dir, BROWSER_STORE_FILE, 'showBrowser', showBrowser, now) };
 }

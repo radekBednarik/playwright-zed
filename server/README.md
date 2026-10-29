@@ -60,8 +60,27 @@ are written one per line, spaced so the viewer never reads two in one chunk. The
 automated suite starts that window once, so it needs a display (`xvfb-run -a npm test` on a
 headless machine; the test skips itself without one).
 
+Show browser (feature 009): the code action `Playwright: [x] Show browser` /
+`Playwright: [ ] Show browser` (command `playwright.toggleShowBrowser`, `[{ uri }]`) flips a
+per-user preference stored in `show-browser.json` under the state directory; a client may
+also answer `workspace/configuration` with `{ "reuseBrowser": true }` as a default (upstream's
+setting name). While it is on, the first run of a configuration starts one
+`playwright run-server --path=/<random> --host 127.0.0.1` process with `PW_EXTENSION_MODE=1`
+in the configuration's directory, waits for its `Listening on ws://...` line (15 s), and
+every run carries `--headed --workers 1 --trace off` plus `PW_TEST_CONNECT_WS_ENDPOINT` and
+`PW_TEST_REUSE_CONTEXT=1` in its environment, so Playwright connects to the kept browser and
+reuses its context. Turning the option on turns the trace viewer off (and writes
+`trace-viewer.json`), turning the trace viewer on turns this option off and stops the
+servers (and writes `show-browser.json`); a shown run never records a trace. `Playwright: Close all browsers`
+(`playwright.closeAllBrowsers`, `[{ uri }]`) stops the workspace's servers (refused while a
+run is in progress); turning the option off stops them after the current run; `shutdown`,
+`exit` and workspace removal stop them too. A stop is `SIGINT` (the server closes its
+browser and exits) with `SIGKILL` five seconds later if needed. The automated suite keeps
+the kept browser headless by setting `PW_DEBUG_CONTROLLER_HEADLESS=1` in the server's
+environment, so it needs no display.
+
 **Work in progress.** This is the first slice of the extension (detection, run at cursor,
-run file, re-run last, project selection, step marks, run output and the trace viewer). Expect breaking changes between minor versions; the extension pins the
+run file, re-run last, project selection, step marks, run output, the trace viewer and show browser). Expect breaking changes between minor versions; the extension pins the
 exact server version it was built against.
 
 **Built with AI assistance.** The server, like the rest of the extension, is developed with
