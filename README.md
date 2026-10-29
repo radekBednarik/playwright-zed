@@ -6,61 +6,37 @@ end-to-end tests from the editor. The goal is feature parity with the
 through the surfaces Zed gives extensions. Progress per upstream capability is tracked in
 [docs/parity.md](docs/parity.md).
 
+Documentation with screenshots: https://radekbednarik.github.io/playwright-zed/
+
+**Work in progress.** Today the extension runs a test, a `describe` group or a file from
+the editor, re-runs the last run, picks the Playwright projects (browsers) a run uses,
+shows the executing step and per-step durations inline, opens the full run output, records
+traces and opens them in Playwright's trace viewer, and runs tests in a visible browser
+that stays open between runs. The remaining upstream capabilities are listed with their
+status in [docs/parity.md](docs/parity.md). Expect rough edges, breaking changes between
+minor versions, and gaps compared to the VS Code extension. Bug reports and feedback are
+welcome in the [issue tracker](https://github.com/radekBednarik/playwright-zed/issues).
+
 This is an independent community extension. It is not affiliated with, endorsed by, or
 maintained by Microsoft or the Playwright team. "Playwright" is a trademark of Microsoft
 Corporation; the name is used only to describe what this extension works with. The extension
 contains no code from the Playwright projects and drives the Playwright installed in your
 own workspace through its public command line.
 
-## Project status
+The extension is developed with AI assistance (GitHub Spec Kit driven by Claude Code);
+every change is reviewed and verified by the maintainer. Details are in
+[Built with AI assistance](#built-with-ai-assistance) at the end of this document.
 
-**Work in progress.** Only the first slice is implemented: workspace detection, running a
-test, a `describe` group, or a file from the editor, and picking the Playwright projects
-(browsers) a run uses. The remaining upstream capabilities are
-listed with their status in [docs/parity.md](docs/parity.md). Expect rough edges, breaking
-changes between minor versions, and gaps compared to the VS Code extension. Bug reports and
-feedback are welcome in the issue tracker.
-
-## Built with AI assistance
-
-This extension is developed with AI assistance throughout: specification, planning, code,
-tests and documentation. The workflow is [GitHub Spec Kit](https://github.com/github/spec-kit)
-driven by [Claude Code](https://claude.com/claude-code) with the Claude models Fable and Opus.
-Every change is reviewed by the maintainer, and automated and manual verification is recorded
-per feature under `specs/`, but treat the code with the care you would give any young
-AI-assisted project.
-
-## What it does today
-
-- Detects Playwright workspaces (any `playwright.config.{ts,js,mts,mjs,cts,cjs}` with
-  `@playwright/test` v1.38 or newer resolvable next to it, monorepos included).
-- Runs nothing from a folder until it is trusted, because test discovery executes the
-  workspace's Playwright configuration and test files. On Zed 0.218 or newer, trusting the
-  folder in Zed is enough; older Zed releases get a question once per workspace and session.
-- Discovers tests through Playwright's own `--list` and shows **Run test** and
-  **Run describe** code lenses above each test and group.
-- **Run test at cursor**, **Run describe at cursor**, **Run file** and **Re-run last** as
-  code actions (`ctrl-.` / `cmd-.`).
-- Picks the Playwright projects (browsers) to run in, one, several or all, from the same
-  menu; the choice is remembered per config across restarts, and a folder default can be
-  set in Zed settings (see "Projects" below).
-- Runs happen through the Playwright installed in your workspace, headless. Results arrive
-  as a progress indicator, a pass/fail notification, an error marker on each failing line,
-  and the full output in Zed's language server log (`dev: open language server logs`).
-- While a test runs, the step that is executing right now carries a `⌛ waiting…` label at
-  the end of its line; afterwards every step line shows how long it took (`2003ms`, or
-  `2003ms (ran 2×)` when the line ran in two projects). The labels are inlay hints, see
-  "Settings" below.
-- **Show last run output** opens the complete output of the latest run (the command line,
-  Playwright's own report, everything the test printed) in an editor tab.
-- **Show trace viewer** records a trace for every run and opens Playwright's trace viewer
-  for it; **Show browser** runs tests in a visible browser window that stays open between
-  runs, and **Close all browsers** closes it (see the sections below).
+Contents: [Requirements](#requirements), [Install](#install), [What it does](#what-it-does),
+[Settings](#settings), [Usage](#usage),
+[Limitations and differences from the VS Code extension](#limitations-and-differences-from-the-vs-code-extension),
+[Getting help](#getting-help), [Contributing and development](#contributing-and-development),
+[License](#license).
 
 ## Requirements
 
 - Zed stable 1.23 or newer.
-- Node.js 20 or newer on your `PATH` (Zed may also provide its own Node).
+- Node.js 22 or newer on your `PATH` (Zed may also provide its own Node).
 - `@playwright/test` v1.38 or newer installed in your project, with browsers installed
   (`npx playwright install`).
 
@@ -72,7 +48,7 @@ AI-assisted project.
 the submission process is described in
 [docs/publishing.md](docs/publishing.md). Until the review completes, install from source.
 
-**From source.**
+**From source**, for the unreleased version or while the registry listing is under review:
 
 1. `rustup target add wasm32-wasip2`
 2. `cd server && npm install && npm run build`
@@ -90,14 +66,37 @@ the submission process is described in
    the project, or restart Zed; closing and reopening files does not help. Tracked in Zed as
    [zed-industries/zed#60405](https://github.com/zed-industries/zed/issues/60405) (the
    remote variant of the same mechanism).
-4. Optional, to use the local server build instead of the published npm package, set
-   `PLAYWRIGHT_ZED_SERVER_ENTRY=<repo>/server/bin/playwright-zed-language-server.js`. The
-   extension reads it from the shell environment Zed loads for the project, so either export
-   it in your shell profile (`~/.bashrc`, `~/.profile`) or start `zed` from a shell where it
-   is exported.
 
 The extension installs the language server package `playwright-zed-language-server`
-from npm on first use. Nothing is bundled.
+from npm on first use. Nothing is bundled. To run a locally built server instead, see
+[Building from the repository](#building-from-the-repository).
+
+## What it does
+
+- Detects Playwright workspaces (any `playwright.config.{ts,js,mts,mjs,cts,cjs}` with
+  `@playwright/test` v1.38 or newer resolvable next to it, monorepos included).
+- Runs nothing from a folder until it is trusted, because test discovery executes the
+  workspace's Playwright configuration and test files. On Zed 0.218 or newer, trusting the
+  folder in Zed is enough; older Zed releases get a question once per workspace and session.
+- Discovers tests through Playwright's own `--list` and shows **Run test** and
+  **Run describe** code lenses above each test and group.
+- **Run test at cursor**, **Run describe at cursor**, **Run file** and **Re-run last** as
+  code actions (`ctrl-.` / `cmd-.`).
+- Picks the Playwright projects (browsers) to run in, one, several or all, from the same
+  menu; the choice is remembered per config across restarts, and a folder default can be
+  set in Zed settings (see [Projects](#projects)).
+- Runs happen through the Playwright installed in your workspace, headless. Results arrive
+  as a progress indicator, a pass/fail notification, an error marker on each failing line,
+  and the full output in Zed's language server log (`dev: open language server logs`).
+- While a test runs, the step that is executing right now carries a `⌛ waiting…` label at
+  the end of its line; afterwards every step line shows how long it took (`2003ms`, or
+  `2003ms (ran 2×)` when the line ran in two projects). The labels are inlay hints, see
+  [Settings](#settings).
+- **Show last run output** opens the complete output of the latest run (the command line,
+  Playwright's own report, everything the test printed) in an editor tab.
+- **Show trace viewer** records a trace for every run and opens Playwright's trace viewer
+  for it; **Show browser** runs tests in a visible browser window that stays open between
+  runs, and **Close all browsers** closes it (see [Usage](#usage)).
 
 ## Settings
 
@@ -125,6 +124,42 @@ durations are inlay hints, so they appear only with:
 
 Both settings can live under `"languages": { "TypeScript": { ... } }` if you prefer them per
 language. Without them the extension runs tests exactly the same; only the labels are absent.
+
+Folder or team defaults for the extension's own options live in one settings block, in
+`.zed/settings.json` of the repository or in your user settings. Each key applies until you
+toggle the option yourself in the editor; changes take effect without a restart:
+
+```json
+{
+  "lsp": {
+    "playwright": {
+      "settings": {
+        "projects": ["chromium", "firefox"],
+        "showTrace": false,
+        "reuseBrowser": false
+      }
+    }
+  }
+}
+```
+
+- `projects`: the projects selected by default, see [Projects](#projects).
+- `showTrace`: record and show traces by default, see [Trace viewer](#trace-viewer).
+- `reuseBrowser`: show the browser by default, see
+  [Show browser and close all browsers](#show-browser-and-close-all-browsers).
+
+The extension remembers your in-editor choices in small JSON files owned by your user,
+outside the repository:
+
+| OS      | Location                                                           |
+| ------- | ------------------------------------------------------------------ |
+| Linux   | `$XDG_STATE_HOME` or `~/.local/state/playwright-zed-language-server/` |
+| macOS   | `~/Library/Application Support/playwright-zed-language-server/`     |
+| Windows | `%LOCALAPPDATA%\playwright-zed-language-server\`                    |
+
+Set `PLAYWRIGHT_ZED_STATE_DIR` in the environment Zed starts from to move it. The folder
+holds `project-selection.json`, `trace-viewer.json`, `show-browser.json` and a `runs/`
+folder with the latest run output per workspace.
 
 ## Usage
 
@@ -160,6 +195,8 @@ workspace folder.
   separately. Reading the installed Playwright version never executes workspace code, so
   the "version too old" warning can appear before you answer.
 
+### Actions
+
 | Action                           | How                                                                                |
 | -------------------------------- | ---------------------------------------------------------------------------------- |
 | Run the test under the cursor    | `ctrl-.` then **Playwright: Run test at cursor**, or click the **▶ Run test** lens |
@@ -177,11 +214,6 @@ workspace folder.
 
 Notes:
 
-- After toggling a project or selecting all, a notification names the projects now
-  selected. Zed keeps the `ctrl-.` menu cached per cursor position, so reopening it at the
-  very same spot still shows the old `[x]` marks; move the cursor (another line is enough)
-  and the menu is refetched with the current state. See "Projects" below.
-
 - Runs use the file on disk. If the buffer has unsaved changes you get a warning and the
   saved version runs.
 - Starting a run while one is in progress cancels the first one.
@@ -190,35 +222,10 @@ Notes:
   message starts with the project in brackets, for example `[mobile] adds numbers: ...`.
 - With several configuration files, the one nearest to the test file is used.
 - Playwright below v1.38 produces a single warning and disables running.
-- Step labels follow the file: an edit removes the durations of that file (their lines may
-  have moved), the next run removes all of them, and closing and reopening an unedited file
-  brings them back. Steps inside helper files and page objects are labelled there.
-- The run output is written to a `runs/` folder under the state directory listed in
-  "Projects" below, one file per workspace, latest run only, and opened as a normal buffer.
-  Zed keeps the tab in sync with the file, so the next run updates it in place. Put the
-  cursor on a `tests/foo.spec.ts:12:7` reference and use `editor: open selected filename`
-  to jump there.
-
-### Differences from the VS Code extension
-
-- The executing step is marked with a trailing label, not a highlighted line: Zed has no
-  decoration API for extensions, inlay hints are the closest native surface.
-- The run output opens as an editor tab, not in a Test Results panel, because Zed has no
-  panel an extension could fill. The tasks recipe under "Terminal output" is the way to a
-  real terminal.
-- Both surfaces are opt-in through Zed settings (`code_lens`, `inlay_hints`).
-- "Show trace viewer" is an entry in the `ctrl-.` menu rather than a checkbox in a settings
-  view, and the trace of a particular test is chosen with the cursor rather than in a Test
-  Explorer tree, because Zed has neither. The viewer window starts with the first trace to
-  show instead of before the run.
-- "Show browser" and "Close all browsers" are `ctrl-.` entries for the same reason. Turning
-  "Show trace viewer" on also turns "Show browser" off here, where the VS Code extension
-  only has the opposite direction. While
-  the browser is shown, the VS Code extension also turns video recording off; the command
-  line has no switch for that, so a project that records video keeps doing so and
-  Playwright then opens a fresh context per test instead of reusing one. The kept browser
-  is closed by the action or by turning the option off; closing its last page by hand does
-  not stop it (the next run simply opens a new page in it).
+- After toggling a project, the trace viewer or the browser option, a notification confirms
+  the new state. Zed keeps the `ctrl-.` menu cached per cursor position, so reopening it at
+  the very same spot still shows the old `[x]` marks; move the cursor (another line is
+  enough) and the menu is refetched with the current state.
 
 ### Projects
 
@@ -232,44 +239,32 @@ selects every one. Runs pass the selected projects to Playwright (no filter when
 selected), the run lenses show only tests that run in a selected project, and the progress
 message names the projects used.
 
-The choice is remembered per configuration file, outside the repository, in a small JSON
-file owned by your user:
+The choice is remembered per configuration file in `project-selection.json` under the state
+directory listed in [Settings](#settings). A project that disappears from the configuration
+is dropped from the selection with one notice; a new project stays unselected until you
+pick it.
 
-| OS      | Location                                                           |
-| ------- | ------------------------------------------------------------------ |
-| Linux   | `$XDG_STATE_HOME` or `~/.local/state/playwright-zed-language-server/` |
-| macOS   | `~/Library/Application Support/playwright-zed-language-server/`     |
-| Windows | `%LOCALAPPDATA%\playwright-zed-language-server\`                    |
+A team default for a folder is the `projects` key of the settings block in
+[Settings](#settings); it applies when you have not picked anything yet. Names the
+configuration does not define produce one warning listing the available projects. This
+setting is specific to the Zed extension; the upstream VS Code extension has no equivalent.
 
-Set `PLAYWRIGHT_ZED_STATE_DIR` in the environment Zed starts from to move it. A project that
-disappears from the configuration is dropped from the selection with one notice; a new
-project stays unselected until you pick it.
+Every toggle is confirmed by a notification naming the projects now selected (see the menu
+caching note under [Actions](#actions)).
 
-A team default for a folder can live in Zed settings (`.zed/settings.json` in the
-repository, or your user settings); it applies when you have not picked anything yet and
-changes take effect without a restart:
+### Step labels and run output
 
-```json
-{
-  "lsp": {
-    "playwright": {
-      "settings": {
-        "projects": ["chromium", "firefox"]
-      }
-    }
-  }
-}
-```
-
-Names the configuration does not define produce one warning listing the available projects.
-This setting is specific to the Zed extension; the upstream VS Code extension has no
-equivalent.
-
-Every toggle is confirmed by a notification naming the projects now selected. Zed caches
-the code action menu per cursor position and refetches it only when the cursor moves or the
-file changes, so reopening the menu at the very same spot right after a toggle still shows
-the old check marks; the notification shows the real state, and the next cursor move
-refreshes the menu.
+- While a test runs, the executing step carries a `⌛ waiting…` label at the end of its
+  line; afterwards every step line shows its duration. Step labels follow the file: an edit
+  removes the durations of that file (their lines may have moved), the next run removes all
+  of them, and closing and reopening an unedited file brings them back. Steps inside helper
+  files and page objects are labelled there. The labels need inlay hints turned on, see
+  [Settings](#settings).
+- **Playwright: Show last run output** opens the complete output of the latest run in an
+  editor tab. The output is written to the `runs/` folder under the state directory, one
+  file per workspace, latest run only, and opened as a normal buffer. Zed keeps the tab in
+  sync with the file, so the next run updates it in place. Put the cursor on a
+  `tests/foo.spec.ts:12:7` reference and use `editor: open selected filename` to jump there.
 
 ### Trace viewer
 
@@ -295,23 +290,11 @@ never deletes them. The viewer is started from your project's own Playwright
 if it cannot start, you get one error notification with the command, and the run itself is
 unaffected.
 
-The choice is remembered per user in `trace-viewer.json` next to `project-selection.json`
-(locations in "Projects" above). A folder or team default lives in the same settings block as
-the projects default and applies until you toggle the option yourself:
+The choice is remembered per user in `trace-viewer.json` under the state directory. A
+folder or team default is the `showTrace` key of the settings block in
+[Settings](#settings) and applies until you toggle the option yourself.
 
-```json
-{
-  "lsp": {
-    "playwright": {
-      "settings": {
-        "showTrace": true
-      }
-    }
-  }
-}
-```
-
-### Show browser
+### Show browser and close all browsers
 
 Like the VS Code extension's **Show browser** checkbox, **Playwright: [ ] Show browser** (in
 the `ctrl-.` menu of any file that belongs to a Playwright configuration) makes every run
@@ -341,24 +324,11 @@ turn the option off, or quit Zed; if it dies on its own, a notification says so 
 next run starts a new one. If it cannot start, you get one error notification with the
 command and the run does not start.
 
-The choice is remembered per user in `show-browser.json` next to `project-selection.json`
-(locations in "Projects" above). A folder or team default lives in the same settings block
-under the upstream setting name `reuseBrowser` and applies until you toggle the option
-yourself:
+The choice is remembered per user in `show-browser.json` under the state directory. A
+folder or team default is the `reuseBrowser` key (the upstream setting name) of the
+settings block in [Settings](#settings) and applies until you toggle the option yourself.
 
-```json
-{
-  "lsp": {
-    "playwright": {
-      "settings": {
-        "reuseBrowser": true
-      }
-    }
-  }
-}
-```
-
-## Terminal output (optional)
+### Terminal output (optional)
 
 Extensions cannot write to Zed's terminal panel. **Playwright: Show last run output** gives
 you the same text in an editor tab; if you want a real terminal, add this task to
@@ -378,36 +348,96 @@ you the same text in an editor tab; if you want a real terminal, add this task t
 ]
 ```
 
-## Manual testing
+## Limitations and differences from the VS Code extension
 
-Prerequisites: Rust with the `wasm32-wasip2` target, Node 22.12+, Zed 1.23+ on the same
-machine as this clone (on WSL use a Linux Zed, the Windows one cannot load a dev extension
-from a WSL path).
+- The executing step is marked with a trailing label, not a highlighted line: Zed has no
+  decoration API for extensions, inlay hints are the closest native surface.
+- The run output opens as an editor tab, not in a Test Results panel, because Zed has no
+  panel an extension could fill. The tasks recipe under
+  [Terminal output](#terminal-output-optional) is the way to a real terminal.
+- Both surfaces are opt-in through Zed settings (`code_lens`, `inlay_hints`).
+- "Show trace viewer" is an entry in the `ctrl-.` menu rather than a checkbox in a settings
+  view, and the trace of a particular test is chosen with the cursor rather than in a Test
+  Explorer tree, because Zed has neither. The viewer window starts with the first trace to
+  show instead of before the run.
+- "Show browser" and "Close all browsers" are `ctrl-.` entries for the same reason. Turning
+  "Show trace viewer" on also turns "Show browser" off here, where the VS Code extension
+  only has the opposite direction. While the browser is shown, the VS Code extension also
+  turns video recording off; the command line has no switch for that, so a project that
+  records video keeps doing so and Playwright then opens a fresh context per test instead
+  of reusing one. The kept browser is closed by the action or by turning the option off;
+  closing its last page by hand does not stop it (the next run simply opens a new page in
+  it).
+- Zed caches the `ctrl-.` menu per cursor position, so the `[x]` marks of the project,
+  trace viewer and browser toggles lag one toggle behind at an unchanged cursor; the
+  confirmation notification shows the real state.
+- After an update or reinstall of the extension in the same Zed session, Zed keeps the
+  Playwright server stopped until you run `editor: restart language server` (see
+  [Install](#install)).
+- Watch mode, pick locator, debugging, locator tuning and test recording are not
+  implemented yet; see [docs/parity.md](docs/parity.md) for the status of every upstream
+  capability.
+
+## Getting help
+
+Open an issue at https://github.com/radekBednarik/playwright-zed/issues. Helpful in a
+report:
+
+- Your Zed version (`zed: about`), the extension version (`zed: extensions`), your
+  operating system, and the `@playwright/test` version of the project.
+- For problems with runs or discovery: the Playwright server log from
+  `dev: open language server logs` (pick **Playwright**).
+- For problems with the extension itself (installation, the server not starting):
+  `zed: open log`.
+- The `playwright.config.*` and a minimal test that shows the problem, if you can share
+  them.
+
+## Contributing and development
+
+Everything below is for people who build or change the extension. Users do not need it.
+
+### Building from the repository
+
+Prerequisites: Rust with the `wasm32-wasip2` target (`rustup target add wasm32-wasip2`),
+Node 22.12 or newer, Zed 1.23 or newer on the same machine as the clone (a Zed on Windows
+cannot load a dev extension from a WSL path).
 
 1. Build the server and the browser for the sample project:
    ```sh
    (cd server && npm install && npm run build)
    (cd fixtures/sample-project && npm install && npx playwright install chromium)
    ```
-2. Point the extension at the local server. Add to `~/.bashrc` (Zed reads the shell
-   environment, a one-off `export` is not enough), then open a new shell:
-   ```sh
-   export PLAYWRIGHT_ZED_SERVER_ENTRY=/absolute/path/to/playwright-zed/server/bin/playwright-zed-language-server.js
-   ```
-3. Start Zed on the sample project with logs attached:
+2. To use the local server build instead of the published npm package, set
+   `PLAYWRIGHT_ZED_SERVER_ENTRY=<repo>/server/bin/playwright-zed-language-server.js`. The
+   extension reads it from the shell environment Zed loads for the project, so either export
+   it in your shell profile (`~/.bashrc`, `~/.profile`) or start `zed` from a shell where it
+   is exported; a one-off `export` in another terminal is not enough.
+3. In Zed, run `zed: install dev extension` and pick the repository root. Zed compiles the
+   Rust crate; the first build takes about a minute.
+
+After a Rust change run `zed: install dev extension` again, then
+`editor: restart language server` (Zed keeps the server stopped after a reinstall, see
+[Install](#install)). After a server change run `npm run build` and
+`editor: restart language server`. Problems with the extension itself appear in
+`zed: open log`; problems with runs appear in the Playwright server log.
+
+### Manual testing
+
+1. Build and point the extension at the local server as described above, then start Zed
+   on the sample project with logs attached:
    ```sh
    cd fixtures/sample-project && zed --foreground .
    ```
-4. `ctrl-shift-p`, run `zed: install dev extension`, choose the repository root. Zed
-   compiles the Rust crate; the first build takes about a minute.
-5. `zed: extensions` must list **Playwright Runner 0.8.0**.
-6. `zed: open settings`, add `"code_lens": "on"`.
-7. Zed 0.218+ asks whether you trust the folder; trust it. (Older Zed instead shows the
-   Playwright notification for `sample-project`; click **Run discovery**.) Open `tests/passing.spec.ts`. Expect `▶ Run test` above each test and
-   `▶ Run describe` above each group. Click the lightning bolt in the status bar, or run
+2. `ctrl-shift-p`, run `zed: install dev extension`, choose the repository root.
+3. `zed: extensions` must list **Playwright Runner 0.8.0**.
+4. `zed: open settings`, add `"code_lens": "on"`.
+5. Zed 0.218+ asks whether you trust the folder; trust it. (Older Zed instead shows the
+   Playwright notification for `sample-project`; click **Run discovery**.) Open
+   `tests/passing.spec.ts`. Expect `▶ Run test` above each test and `▶ Run describe` above
+   each group. Click the lightning bolt in the status bar, or run
    `dev: open language server logs`, pick **Playwright**: the log shows
    `discovered 16 test(s)`.
-8. Run checks (`ctrl-.` opens the actions):
+6. Run checks (`ctrl-.` opens the actions):
 
    | Check              | Steps                                                                                  | Expected                                                                                          |
    | ------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -426,23 +456,34 @@ from a WSL path).
    | No Playwright      | open a folder with a `.ts` file and no Playwright                                      | no question, no lenses, no actions, no warnings                                                   |
    | Old version        | copy the sample, set `@playwright/test` version to `1.37.1` in `node_modules`, open it | one warning naming 1.37.1 and 1.38, no actions                                                    |
 
-After a Rust change run `zed: install dev extension` again, then
-`editor: restart language server` (Zed keeps the server stopped after a reinstall, see
-Install). After a server change run
-`npm run build` and `editor: restart language server`. Problems with the extension itself
-appear in `zed: open log`; problems with runs appear in the Playwright server log.
-
-## Development
+### Development commands
 
 ```sh
 cargo test                                    # Rust shell helpers
 cargo build --release --target wasm32-wasip2  # the extension
 cd server && npm run lint && npm test         # language server unit + integration tests
+cd site && npm run check && npm run build     # the documentation site
 ```
 
 Integration tests run real Playwright against `fixtures/sample-project`; run
 `npm install && npx playwright install chromium` in that folder once. The `todomvc` tests
-visit https://demo.playwright.dev/todomvc/ and need network access.
+visit https://demo.playwright.dev/todomvc/ and need network access. Features are developed
+with [GitHub Spec Kit](https://github.com/github/spec-kit); each one has its specification,
+plan, tasks and verification record under `specs/`.
+
+### Publishing
+
+Releases of the language server (npm), the extension (Zed registry) and the documentation
+site (GitHub Pages) are described in [docs/publishing.md](docs/publishing.md).
+
+### Built with AI assistance
+
+This extension is developed with AI assistance throughout: specification, planning, code,
+tests and documentation. The workflow is [GitHub Spec Kit](https://github.com/github/spec-kit)
+driven by [Claude Code](https://claude.com/claude-code) with the Claude models Fable and Opus.
+Every change is reviewed by the maintainer, and automated and manual verification is recorded
+per feature under `specs/`, but treat the code with the care you would give any young
+AI-assisted project.
 
 ## License
 

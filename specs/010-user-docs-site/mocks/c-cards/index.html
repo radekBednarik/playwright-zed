@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playwright Runner</title>
+<meta name="description" content="Design proposal C, Cards: landing page for the Playwright Runner documentation site.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #f4f5f7;
+    --surface: #ffffff;
+    --border: #d9dde2;
+    --text: #1c2024;
+    --muted: #5a6572;
+    --accent: #0f766e;
+    --accent-strong: #115e59;
+    --accent-soft: #e6f4f2;
+    --on-accent: #ffffff;
+    --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 10px 28px -14px rgba(16, 24, 40, 0.16);
+    --radius: 14px;
+    --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141719;
+      --bg-alt: #1b1f23;
+      --surface: #1e2328;
+      --border: #30373e;
+      --text: #e7eaed;
+      --muted: #a2abb5;
+      --accent: #2fc4b2;
+      --accent-strong: #5fd6c8;
+      --accent-soft: #163331;
+      --on-accent: #0b1a18;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -14px rgba(0, 0, 0, 0.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141719;
+    --bg-alt: #1b1f23;
+    --surface: #1e2328;
+    --border: #30373e;
+    --text: #e7eaed;
+    --muted: #a2abb5;
+    --accent: #2fc4b2;
+    --accent-strong: #5fd6c8;
+    --accent-soft: #163331;
+    --on-accent: #0b1a18;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -14px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-strong); text-decoration: underline; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.08em 0.4em;
+  }
+  h1, h2, h3 { line-height: 1.2; margin: 0; letter-spacing: -0.01em; }
+  p { margin: 0; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+
+  /* Header */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; flex-wrap: wrap; }
+  .brand { font-weight: 700; font-size: 1.05rem; color: var(--text); display: inline-flex; align-items: center; gap: 10px; }
+  .brand:hover { text-decoration: none; color: var(--text); }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .topnav { display: flex; align-items: center; gap: 18px; font-weight: 500; font-size: 0.95rem; }
+  .topnav a { color: var(--text); }
+  .topnav a:hover { color: var(--accent); }
+  .btn-icon {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.85rem; cursor: pointer;
+  }
+  .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Hero */
+  .hero { padding: 56px 0 24px; text-align: center; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; }
+  .hero .lead { font-size: clamp(1.1rem, 2.2vw, 1.35rem); margin: 14px auto 0; max-width: 640px; }
+  .hero .support { color: var(--muted); margin: 10px auto 0; max-width: 640px; }
+  .actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 999px; font-weight: 600; font-size: 0.95rem;
+    border: 1px solid transparent; transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .btn:hover { text-decoration: none; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: var(--on-accent); }
+  .btn-primary:hover { background: var(--accent-strong); color: var(--on-accent); }
+  .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Screenshot placeholder frame */
+  .shot {
+    aspect-ratio: 16 / 10;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-alt);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 16px; font-weight: 500;
+  }
+  .hero .shot { max-width: 880px; margin: 40px auto 0; box-shadow: var(--shadow); }
+
+  /* Sections */
+  section { padding: 48px 0; }
+  .section-head { max-width: 640px; margin: 0 auto 28px; text-align: center; }
+  .section-head h2 { font-size: 1.6rem; }
+  .section-head p { color: var(--muted); margin-top: 8px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.12s ease, transform 0.12s ease;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card .mark {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; font-weight: 700; margin-bottom: 14px;
+  }
+  .card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 0.95rem; }
+
+  /* Install */
+  .install { background: var(--bg-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .install-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; align-items: start; }
+  .steps { margin: 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 12px; }
+  .steps li {
+    counter-increment: step;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px 16px 58px; position: relative;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left: 16px; top: 16px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: var(--on-accent);
+    display: grid; place-items: center; font-weight: 700; font-size: 0.9rem;
+  }
+  .req { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .req h3 { font-size: 1rem; margin-bottom: 8px; }
+  .req p { color: var(--muted); font-size: 0.95rem; }
+
+  /* Notices */
+  .notices { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+  .notice {
+    border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    border-radius: var(--radius); padding: 18px 20px; background: var(--surface);
+    font-size: 0.95rem;
+  }
+  .notice p { color: var(--muted); }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--border); padding: 28px 0 40px; color: var(--muted); font-size: 0.9rem; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; }
+  footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  footer a { font-weight: 500; }
+
+  @media (max-width: 799px) {
+    .hero { padding-top: 36px; }
+    section { padding: 36px 0; }
+    .topnav { gap: 14px; font-size: 0.9rem; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="dot" aria-hidden="true"></span>Playwright Runner</a>
+    <nav class="topnav" aria-label="Site">
+      <a href="docs.html">Documentation</a>
+      <a href="https://github.com/radekBednarik/playwright-zed">GitHub</a>
+      <button class="btn-icon" id="theme" type="button" aria-label="Switch colour theme">Theme</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <h1>Playwright Runner</h1>
+      <p class="lead">Run and manage Playwright end-to-end tests from the Zed editor.</p>
+      <p class="support">A community Zed extension that mirrors the Playwright VS Code extension through the surfaces Zed gives extensions. Work in progress.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="#install">Install</a>
+        <a class="btn btn-secondary" href="docs.html">Read the docs</a>
+      </div>
+      <div class="shot" role="img" aria-label="Screenshot: run lenses above a test">Screenshot: run lenses above a test</div>
+    </div>
+  </section>
+
+  <section id="capabilities">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>What it does</h2>
+        <p>Six capabilities, each one a page in the documentation.</p>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <div class="mark" aria-hidden="true">1</div>
+          <h3>Run tests</h3>
+          <p>Run the test, describe block or file under the cursor, re-run the last run.</p>
+        </article>
+        <article class="card">
+          <div class="mark" aria-hidden="true">2</div>
+          <h3>Projects</h3>
+          <p>Pick the Playwright projects (browsers) a run uses, remembered per config.</p>
+        </article>
+        <article class="card">
+          <div class="mark" aria-hidden="true">3</div>
+          <h3>Step labels and run output</h3>
+          <p>See the executing step and per-step durations inline, open the full output in a tab.</p>
+        </article>
+        <article class="card">
+          <div class="mark" aria-hidden="true">4</div>
+          <h3>Trace viewer</h3>
+          <p>Record a trace for every run and open it in Playwright's trace viewer.</p>
+        </article>
+        <article class="card">
+          <div class="mark" aria-hidden="true">5</div>
+          <h3>Show browser</h3>
+          <p>Watch tests in a visible browser that stays open between runs.</p>
+        </article>
+        <article class="card">
+          <div class="mark" aria-hidden="true">6</div>
+          <h3>Discovery consent</h3>
+          <p>Nothing runs in a folder until you trust it.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="install" class="install">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Install</h2>
+        <p>Three steps from the extension list to a first passing run.</p>
+      </div>
+      <div class="install-grid">
+        <ol class="steps">
+          <li>In Zed, open <code>zed: extensions</code> and search for <strong>Playwright Runner</strong>.</li>
+          <li>Turn on code lenses in your Zed settings: <code>"code_lens": "on"</code>.</li>
+          <li>Open a project with <code>@playwright/test</code> 1.38 or newer, trust the folder, and click <strong>&#9654; Run test</strong> above any test.</li>
+        </ol>
+        <div class="req">
+          <h3>Requirements</h3>
+          <p>Zed 1.23 or newer, Node.js 22 or newer, <code>@playwright/test</code> 1.38 or newer with browsers installed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="notices">
+    <div class="wrap">
+      <div class="notices">
+        <div class="notice" role="note">
+          <p>Work in progress. Expect rough edges and gaps compared to the VS Code extension; bug reports and feedback are welcome in the <a href="https://github.com/radekBednarik/playwright-zed/issues">issue tracker</a>.</p>
+        </div>
+        <div class="notice" role="note">
+          <p>Independent community extension. Not affiliated with, endorsed by, or maintained by Microsoft or the Playwright team. "Playwright" is a trademark of Microsoft Corporation; the name is used only to describe what this extension works with.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <ul>
+      <li><a href="docs.html">Documentation</a></li>
+      <li><a href="https://github.com/radekBednarik/playwright-zed">GitHub</a></li>
+      <li><a href="https://github.com/radekBednarik/playwright-zed/issues">Issues</a></li>
+      <li><a href="https://zed.dev">Zed</a></li>
+      <li><a href="https://playwright.dev">Playwright</a></li>
+    </ul>
+    <a href="../index.html">Back to proposals</a>
+  </div>
+</footer>
+
+<script>
+  document.getElementById("theme").addEventListener("click", function () {
+    var root = document.documentElement;
+    var dark = root.dataset.theme === "dark" ||
+      (!root.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+    root.dataset.theme = dark ? "light" : "dark";
+  });
+</script>
+</body>
+</html>

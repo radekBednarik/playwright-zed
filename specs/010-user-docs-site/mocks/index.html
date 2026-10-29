@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design proposals</title>
+<style>
+  :root { color-scheme: light dark; --bg: #fafafa; --fg: #1a1a1a; --muted: #5a5a5a; --card: #ffffff; --line: #dcdcdc; --accent: #0a66c2; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #141414; --fg: #ececec; --muted: #a8a8a8; --card: #1e1e1e; --line: #333; --accent: #6cb6ff; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 56rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  h1 { font-size: 1.8rem; margin: 0 0 .25rem; }
+  p.lead { color: var(--muted); margin-top: 0; }
+  code { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0 .3em; font-size: .92em; }
+  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); margin-top: 1.5rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.1rem; }
+  .card h2 { margin: 0 0 .25rem; font-size: 1.2rem; }
+  .card .id { color: var(--muted); font-family: ui-monospace, monospace; font-size: .85rem; }
+  .card ul { padding-left: 1.1rem; margin: .5rem 0 .75rem; color: var(--muted); font-size: .95rem; }
+  .links a { display: inline-block; margin-right: .75rem; color: var(--accent); font-weight: 600; text-decoration: none; }
+  .links a:hover { text-decoration: underline; }
+  footer { margin-top: 2.5rem; color: var(--muted); font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Playwright Runner site: design proposals</h1>
+  <p class="lead">Three complete proposals, each a landing page and one documentation page built from the same text (<code>CONTENT.md</code>). Resize the window to phone width and switch your system between light and dark to compare. Pick one and leave comments; the choice goes into <code>design-decision.md</code>.</p>
+  <p>Served with <code>python3 -m http.server --directory specs/010-user-docs-site/mocks 4321</code></p>
+  <div class="grid">
+    <section class="card">
+      <h2>A. Terminal</h2>
+      <div class="id">a-terminal</div>
+      <ul>
+        <li>Dark-first, monospace display type</li>
+        <li>One bright accent, dense documentation</li>
+        <li>Landing led by a large editor screenshot and a terminal-styled install block</li>
+      </ul>
+      <div class="links"><a href="a-terminal/index.html">Landing</a><a href="a-terminal/docs.html">Docs page</a></div>
+    </section>
+    <section class="card">
+      <h2>B. Editorial</h2>
+      <div class="id">b-editorial</div>
+      <ul>
+        <li>Light-first, serif display with a humanist sans body</li>
+        <li>Warm neutrals, wide measure, generous whitespace</li>
+        <li>Landing with text left and screenshot right</li>
+      </ul>
+      <div class="links"><a href="b-editorial/index.html">Landing</a><a href="b-editorial/docs.html">Docs page</a></div>
+    </section>
+    <section class="card">
+      <h2>C. Cards</h2>
+      <div class="id">c-cards</div>
+      <ul>
+        <li>Neutral palette with a teal accent</li>
+        <li>Rounded feature cards in a grid on the landing page</li>
+        <li>Standard Starlight density in the docs</li>
+      </ul>
+      <div class="links"><a href="c-cards/index.html">Landing</a><a href="c-cards/docs.html">Docs page</a></div>
+    </section>
+  </div>
+  <footer>The documentation page of every proposal keeps the Starlight skeleton (header, left sidebar, content, right table of contents) so the pick is reproducible with custom CSS; the landing pages are free.</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run tests</title>
+<meta name="description" content="Design proposal B, Editorial: the Run tests documentation page for Playwright Runner.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  :root {
+    --paper: #f7f3ec;
+    --surface: #fffdf9;
+    --ink: #2a2420;
+    --muted: #6b6058;
+    --rule: #e2dbd0;
+    --accent: #9a2f2f;
+    --accent-soft: #f1e3e0;
+    --frame: #c9bfb1;
+    --display: "Fraunces", Georgia, "Times New Roman", serif;
+    --body: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --measure: 42rem;
+    --gutter: 16px;
+    --header-h: 3.75rem;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1d1a17;
+      --surface: #272320;
+      --ink: #ece6dc;
+      --muted: #b3a89b;
+      --rule: #3a342e;
+      --accent: #e08a80;
+      --accent-soft: #3a2a28;
+      --frame: #5a5148;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1d1a17;
+    --surface: #272320;
+    --ink: #ece6dc;
+    --muted: #b3a89b;
+    --rule: #3a342e;
+    --accent: #e08a80;
+    --accent-soft: #3a2a28;
+    --frame: #5a5148;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--header-h) + 1rem); }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.15em; }
+  h1, h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.5em;
+  }
+  h1 { font-size: clamp(2.25rem, 5vw, 3.25rem); font-variation-settings: "opsz" 144; }
+  h2 { font-size: 1.75rem; font-variation-settings: "opsz" 48; margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); }
+  p, ul, ol { margin: 0 0 1em; }
+  li { margin-bottom: 0.4rem; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.05em 0.35em;
+  }
+  pre {
+    margin: 1.25rem 0;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+
+  /* Header bar */
+  .top {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1.25rem;
+    min-height: var(--header-h);
+    padding: 0.6rem var(--gutter);
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+  }
+  .site {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--ink);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .search { flex: 1 1 14rem; display: flex; order: 3; }
+  .search input {
+    width: 100%;
+    min-width: 0;
+    font: inherit;
+    font-size: 0.95rem;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+  }
+  .search input::placeholder { color: var(--muted); }
+  .tools { margin-left: auto; display: flex; align-items: center; gap: 1rem; font-size: 0.95rem; }
+  .tools a { color: var(--ink); text-decoration: none; }
+  .tools a:hover { color: var(--accent); }
+  .theme {
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 0.15rem 0.7rem;
+    cursor: pointer;
+  }
+  .theme:hover { color: var(--accent); border-color: var(--accent); }
+  @media (min-width: 700px) {
+    .search { order: 0; max-width: 24rem; margin: 0 auto; }
+  }
+
+  /* Shell: sidebar, content, table of contents */
+  .shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "side" "main" "toc";
+    max-width: 84rem;
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+  }
+  @media (min-width: 800px) {
+    .shell {
+      grid-template-columns: 15rem minmax(0, 1fr);
+      grid-template-areas: "side main" "side toc";
+      column-gap: 3rem;
+    }
+  }
+  @media (min-width: 1100px) {
+    .shell {
+      grid-template-columns: 15rem minmax(0, 1fr) 13rem;
+      grid-template-areas: "side main toc";
+      column-gap: 3.5rem;
+    }
+  }
+
+  /* Left sidebar as a details element: closed menu below 800px, always shown above */
+  .sidebar { grid-area: side; margin: 1rem 0; font-size: 0.95rem; }
+  .sidebar summary {
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--surface);
+  }
+  .sidebar summary::-webkit-details-marker { display: none; }
+  .sidebar summary::before { content: "☰ "; color: var(--accent); }
+  .sidebar[open] summary { border-color: var(--accent); }
+  .sidebar nav { padding-top: 1rem; }
+  .sidebar h3 {
+    font-family: var(--display);
+    font-variation-settings: "opsz" 24;
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin: 1.25rem 0 0.4rem;
+  }
+  .sidebar h3:first-child { margin-top: 0; }
+  .sidebar ul { list-style: none; padding: 0; margin: 0; border-left: 1px solid var(--rule); }
+  .sidebar li { margin: 0; }
+  .sidebar li a, .sidebar .lone {
+    display: block;
+    padding: 0.3rem 0.9rem;
+    margin-left: -1px;
+    color: var(--muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+  }
+  .sidebar li a:hover { color: var(--ink); }
+  .sidebar li a[aria-current="page"] {
+    color: var(--accent);
+    font-weight: 600;
+    border-left-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .sidebar .lone { font-weight: 600; color: var(--ink); border-left: 0; padding-left: 0; margin-top: 1.25rem; }
+  @media (min-width: 800px) {
+    .sidebar {
+      position: sticky;
+      top: var(--header-h);
+      align-self: start;
+      max-height: calc(100vh - var(--header-h));
+      overflow-y: auto;
+      padding: 1.5rem 0 2rem;
+      margin: 0;
+    }
+    .sidebar summary { display: none; }
+    .sidebar::details-content { content-visibility: visible; display: block; }
+    .sidebar nav { padding-top: 0; }
+  }
+
+  /* Main content */
+  .content { grid-area: main; padding: 1.5rem 0 2rem; min-width: 0; }
+  .article > * { max-width: var(--measure); }
+  .intro {
+    font-family: var(--display);
+    font-variation-settings: "opsz" 24;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .table-wrap { overflow-x: auto; margin: 1.25rem 0; border: 1px solid var(--rule); border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: 0.98rem; }
+  th, td { text-align: left; vertical-align: top; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--rule); }
+  th { font-family: var(--display); font-weight: 600; font-size: 1.05rem; background: var(--surface); }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { white-space: nowrap; }
+  figure { margin: 1.75rem 0; }
+  .frame {
+    aspect-ratio: 16 / 10;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 1rem;
+    border: 2px dashed var(--frame);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--muted);
+    font-style: italic;
+  }
+  figcaption { margin-top: 0.6rem; font-size: 0.9rem; color: var(--muted); }
+
+  /* Right column */
+  .toc { grid-area: toc; font-size: 0.92rem; padding: 1.5rem 0 2rem; }
+  .toc h2 {
+    font-family: var(--body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 0.6rem;
+    padding: 0;
+    border: 0;
+  }
+  .toc ul { list-style: none; padding: 0; margin: 0; border-left: 1px solid var(--rule); }
+  .toc li { margin: 0; }
+  .toc a { display: block; padding: 0.25rem 0.9rem; color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  @media (max-width: 1099.98px) {
+    .toc { border-top: 1px solid var(--rule); margin-top: 0.5rem; max-width: var(--measure); }
+  }
+  @media (min-width: 1100px) {
+    .toc { position: sticky; top: var(--header-h); align-self: start; }
+  }
+
+  /* Page footer */
+  .page-footer {
+    max-width: var(--measure);
+    margin-top: 3rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+  .page-footer .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1.5rem; margin-bottom: 1.25rem; }
+  .pager { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; }
+  .pager a {
+    flex: 1 1 12rem;
+    display: block;
+    text-decoration: none;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    color: var(--ink);
+  }
+  .pager a:hover { border-color: var(--accent); }
+  .pager .next { text-align: right; }
+  .pager small { display: block; font-size: 0.8rem; color: var(--muted); }
+  .pager span { font-family: var(--display); font-weight: 600; font-size: 1.1rem; }
+  .back { display: block; margin-top: 1.5rem; font-size: 0.85rem; color: var(--muted); }
+</style>
+</head>
+<body>
+  <header class="top">
+    <a class="site" href="index.html">Playwright Runner</a>
+    <form class="search" role="search" onsubmit="return false"><input type="search" placeholder="Search" aria-label="Search"></form>
+    <div class="tools">
+      <button class="theme" type="button" onclick="(function(r){var d=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=d?'light':'dark'})(document.documentElement)">Theme</button>
+      <a href="https://github.com/radekBednarik/playwright-zed">GitHub</a>
+    </div>
+  </header>
+
+  <div class="shell">
+    <details class="sidebar">
+      <summary>Menu</summary>
+      <nav aria-label="Documentation">
+        <h3>Getting started</h3>
+        <ul>
+          <li><a href="#">Requirements</a></li>
+          <li><a href="#">Install</a></li>
+          <li><a href="#">First run</a></li>
+        </ul>
+        <h3>Features</h3>
+        <ul>
+          <li><a href="docs.html" aria-current="page">Run tests</a></li>
+          <li><a href="#">Projects</a></li>
+          <li><a href="#">Step labels and run output</a></li>
+          <li><a href="#">Trace viewer</a></li>
+          <li><a href="#">Show browser</a></li>
+          <li><a href="#">Discovery consent</a></li>
+        </ul>
+        <h3>Reference</h3>
+        <ul>
+          <li><a href="#">Settings</a></li>
+          <li><a href="#">Differences from the VS Code extension</a></li>
+          <li><a href="#">State files</a></li>
+          <li><a href="#">Parity</a></li>
+        </ul>
+        <a class="lone" href="#">Help</a>
+      </nav>
+    </details>
+
+    <main class="content">
+      <article class="article">
+        <h1>Run tests</h1>
+        <p class="intro">Playwright Runner runs the Playwright installed in your workspace. Results arrive as a progress indicator, a pass or fail notification, an error marker on each failing line, and the full output in a tab.</p>
+
+        <h2 id="from-the-editor">From the editor</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Action</th><th>How</th></tr></thead>
+            <tbody>
+              <tr><td>Run the test under the cursor</td><td><code>ctrl-.</code> then <strong>Playwright: Run test at cursor</strong>, or click the <strong>▶ Run test</strong> lens</td></tr>
+              <tr><td>Run a whole describe</td><td>cursor on the <code>test.describe</code> line, same action, or <strong>▶ Run describe</strong></td></tr>
+              <tr><td>Run the whole file</td><td><code>ctrl-.</code> then <strong>Playwright: Run file</strong></td></tr>
+              <tr><td>Repeat the last run</td><td><code>ctrl-.</code> anywhere in the workspace, <strong>Playwright: Re-run last</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure>
+          <div class="frame" role="img" aria-label="Screenshot placeholder">Screenshot: run lenses above a test</div>
+          <figcaption>Lenses above each test and describe block (Zed 1.26.2, Playwright Runner 0.8.0, Linux)</figcaption>
+        </figure>
+
+        <h2 id="what-you-get-back">What you get back</h2>
+        <ul>
+          <li>A progress indicator while the run is in progress; starting another run cancels it.</li>
+          <li>A notification such as "1 passed, 0 failed, 0 skipped (0.4s)"; the time is Playwright's own measurement.</li>
+          <li>An error marker on the failing line until you edit the file or run again. With two or more projects, each failing project gets its own marker and the message starts with the project in brackets, for example <code>[mobile] adds numbers: ...</code>.</li>
+        </ul>
+        <figure>
+          <div class="frame" role="img" aria-label="Screenshot placeholder">Screenshot: failing run with the error marker</div>
+        </figure>
+
+        <h2 id="good-to-know">Good to know</h2>
+        <ul>
+          <li>Runs use the file on disk. With unsaved changes you get a warning and the saved version runs.</li>
+          <li>With several configuration files, the one nearest to the test file is used.</li>
+          <li>Playwright below 1.38 produces a single warning and disables running.</li>
+        </ul>
+<pre><code>{
+  "code_lens": "on",
+  "inlay_hints": { "enabled": true }
+}</code></pre>
+      </article>
+
+      <footer class="page-footer">
+        <div class="meta">
+          <a href="#">Edit this page</a>
+          <span>Last updated 29 October 2026</span>
+        </div>
+        <nav class="pager" aria-label="Previous and next">
+          <a class="prev" href="#"><small>Previous</small><span>First run</span></a>
+          <a class="next" href="#"><small>Next</small><span>Projects</span></a>
+        </nav>
+        <a class="back" href="../index.html">Back to proposals</a>
+      </footer>
+    </main>
+
+    <aside class="toc">
+      <h2>On this page</h2>
+      <ul>
+        <li><a href="#from-the-editor">From the editor</a></li>
+        <li><a href="#what-you-get-back">What you get back</a></li>
+        <li><a href="#good-to-know">Good to know</a></li>
+      </ul>
+    </aside>
+  </div>
+</body>
+</html>

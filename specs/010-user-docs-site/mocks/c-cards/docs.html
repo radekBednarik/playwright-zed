@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run tests – Playwright Runner</title>
+<meta name="description" content="Design proposal C, Cards: the Run tests documentation page for Playwright Runner.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #f4f5f7;
+    --surface: #ffffff;
+    --border: #d9dde2;
+    --text: #1c2024;
+    --muted: #5a6572;
+    --accent: #0f766e;
+    --accent-strong: #115e59;
+    --accent-soft: #e6f4f2;
+    --on-accent: #ffffff;
+    --radius: 12px;
+    --header-h: 60px;
+    --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141719;
+      --bg-alt: #1b1f23;
+      --surface: #1e2328;
+      --border: #30373e;
+      --text: #e7eaed;
+      --muted: #a2abb5;
+      --accent: #2fc4b2;
+      --accent-strong: #5fd6c8;
+      --accent-soft: #163331;
+      --on-accent: #0b1a18;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141719;
+    --bg-alt: #1b1f23;
+    --surface: #1e2328;
+    --border: #30373e;
+    --text: #e7eaed;
+    --muted: #a2abb5;
+    --accent: #2fc4b2;
+    --accent-strong: #5fd6c8;
+    --accent-soft: #163331;
+    --on-accent: #0b1a18;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--header-h) + 16px); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-strong); text-decoration: underline; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.08em 0.4em;
+  }
+  pre {
+    margin: 0;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+  pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+
+  /* Header */
+  .header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    min-height: var(--header-h); padding: 8px 16px;
+    max-width: 1440px; margin: 0 auto;
+  }
+  .brand { font-weight: 700; font-size: 1.05rem; color: var(--text); display: inline-flex; align-items: center; gap: 10px; }
+  .brand:hover { text-decoration: none; color: var(--text); }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .search { flex: 1 1 240px; display: flex; justify-content: center; }
+  .search input {
+    width: 100%; max-width: 420px;
+    font: inherit; font-size: 0.92rem; color: var(--text);
+    background: var(--bg-alt); border: 1px solid var(--border); border-radius: 999px;
+    padding: 8px 16px;
+  }
+  .search input::placeholder { color: var(--muted); }
+  .search input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .tools { display: flex; align-items: center; gap: 14px; margin-left: auto; font-weight: 500; font-size: 0.92rem; }
+  .tools a { color: var(--text); }
+  .tools a:hover { color: var(--accent); }
+  .btn-icon {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.85rem; cursor: pointer;
+  }
+  .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Layout: sidebar | content | on this page */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr) 220px;
+    gap: 0 40px;
+    max-width: 1440px; margin: 0 auto; padding: 0 16px;
+  }
+
+  /* Sidebar */
+  .sidebar { padding: 24px 0 40px; }
+  .sidebar > details { border: 0; }
+  .sidebar summary {
+    list-style: none; cursor: pointer; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; background: var(--surface);
+  }
+  .sidebar summary::-webkit-details-marker { display: none; }
+  .sidebar nav { font-size: 0.93rem; }
+  .sidebar h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 22px 0 8px; }
+  .sidebar h2:first-child { margin-top: 0; }
+  .sidebar ul { list-style: none; margin: 0; padding: 0; }
+  .sidebar li a, .sidebar > details > nav > a {
+    display: block; color: var(--text); padding: 6px 10px; border-radius: 8px; font-weight: 500;
+  }
+  .sidebar a:hover { background: var(--bg-alt); text-decoration: none; }
+  .sidebar a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .sidebar > details > nav > a { margin-top: 22px; font-weight: 600; }
+
+  /* Content */
+  .content { padding: 32px 0 48px; min-width: 0; }
+  .content h1 { font-size: 2.2rem; line-height: 1.15; margin: 0 0 16px; letter-spacing: -0.01em; }
+  .content h2 { font-size: 1.5rem; line-height: 1.25; margin: 40px 0 12px; letter-spacing: -0.01em; }
+  .content p, .content ul, .content pre, .content figure, .content .table-wrap { margin: 0 0 16px; }
+  .content ul { padding-left: 22px; }
+  .content li { margin-bottom: 6px; }
+  .content .intro { font-size: 1.08rem; color: var(--muted); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--bg-alt); font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  .shot {
+    aspect-ratio: 16 / 10;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-alt);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 16px; font-weight: 500;
+  }
+  figcaption { color: var(--muted); font-size: 0.88rem; margin-top: 8px; }
+
+  /* On this page */
+  .toc { padding: 32px 0; font-size: 0.9rem; }
+  .toc-inner { position: sticky; top: calc(var(--header-h) + 24px); }
+  .toc h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 8px; }
+  .toc ul { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--border); }
+  .toc li a { display: block; color: var(--text); padding: 5px 12px; margin-left: -2px; border-left: 2px solid transparent; }
+  .toc li a:hover { color: var(--accent); border-left-color: var(--accent); text-decoration: none; }
+
+  /* Page footer */
+  .page-footer {
+    margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 0.9rem;
+  }
+  .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; }
+  .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
+  .pager a {
+    display: block; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px 16px; color: var(--text); background: var(--surface);
+  }
+  .pager a:hover { border-color: var(--accent); text-decoration: none; }
+  .pager small { display: block; color: var(--muted); font-size: 0.78rem; }
+  .pager strong { color: var(--accent); }
+  .pager .next { text-align: right; }
+  .back { display: block; margin-top: 24px; font-size: 0.85rem; }
+
+  /* Desktop: sidebar always visible, summary hidden */
+  @media (min-width: 800px) {
+    .sidebar summary { display: none; }
+    .sidebar > details::details-content { content-visibility: visible; }
+    .sidebar > details {
+      position: sticky; top: calc(var(--header-h) + 24px);
+      max-height: calc(100vh - var(--header-h) - 48px); overflow-y: auto;
+    }
+  }
+  @media (max-width: 1099px) {
+    .layout { grid-template-columns: 260px minmax(0, 1fr); }
+    .toc { display: none; }
+  }
+  @media (max-width: 799px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .search { order: 3; flex-basis: 100%; }
+    .search input { max-width: none; }
+    .sidebar { padding: 16px 0 0; }
+    .sidebar nav { margin-top: 14px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+    .content { padding-top: 20px; }
+    .content h1 { font-size: 1.8rem; }
+    .pager { grid-template-columns: 1fr; }
+    .pager .next { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <a class="brand" href="index.html"><span class="dot" aria-hidden="true"></span>Playwright Runner</a>
+    <div class="search" role="search">
+      <input type="search" placeholder="Search" aria-label="Search">
+    </div>
+    <div class="tools">
+      <button class="btn-icon" id="theme" type="button" aria-label="Switch colour theme">Theme</button>
+      <a href="https://github.com/radekBednarik/playwright-zed">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <details>
+      <summary>Menu</summary>
+      <nav aria-label="Documentation">
+        <h2>Getting started</h2>
+        <ul>
+          <li><a href="#">Requirements</a></li>
+          <li><a href="#">Install</a></li>
+          <li><a href="#">First run</a></li>
+        </ul>
+        <h2>Features</h2>
+        <ul>
+          <li><a href="docs.html" aria-current="page">Run tests</a></li>
+          <li><a href="#">Projects</a></li>
+          <li><a href="#">Step labels and run output</a></li>
+          <li><a href="#">Trace viewer</a></li>
+          <li><a href="#">Show browser</a></li>
+          <li><a href="#">Discovery consent</a></li>
+        </ul>
+        <h2>Reference</h2>
+        <ul>
+          <li><a href="#">Settings</a></li>
+          <li><a href="#">Differences from the VS Code extension</a></li>
+          <li><a href="#">State files</a></li>
+          <li><a href="#">Parity</a></li>
+        </ul>
+        <a href="#">Help</a>
+      </nav>
+    </details>
+  </aside>
+
+  <main class="content">
+    <h1>Run tests</h1>
+    <p class="intro">Playwright Runner runs the Playwright installed in your workspace. Results arrive as a progress indicator, a pass or fail notification, an error marker on each failing line, and the full output in a tab.</p>
+
+    <h2 id="from-the-editor">From the editor</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Action</th><th>How</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Run the test under the cursor</td><td><code>ctrl-.</code> then <strong>Playwright: Run test at cursor</strong>, or click the <strong>&#9654; Run test</strong> lens</td></tr>
+          <tr><td>Run a whole describe</td><td>cursor on the <code>test.describe</code> line, same action, or <strong>&#9654; Run describe</strong></td></tr>
+          <tr><td>Run the whole file</td><td><code>ctrl-.</code> then <strong>Playwright: Run file</strong></td></tr>
+          <tr><td>Repeat the last run</td><td><code>ctrl-.</code> anywhere in the workspace, <strong>Playwright: Re-run last</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figure>
+      <div class="shot" role="img" aria-label="Screenshot: run lenses above a test">Screenshot: run lenses above a test</div>
+      <figcaption>Lenses above each test and describe block (Zed 1.26.2, Playwright Runner 0.8.0, Linux)</figcaption>
+    </figure>
+
+    <h2 id="what-you-get-back">What you get back</h2>
+    <ul>
+      <li>A progress indicator while the run is in progress; starting another run cancels it.</li>
+      <li>A notification such as "1 passed, 0 failed, 0 skipped (0.4s)"; the time is Playwright's own measurement.</li>
+      <li>An error marker on the failing line until you edit the file or run again. With two or more projects, each failing project gets its own marker and the message starts with the project in brackets, for example <code>[mobile] adds numbers: ...</code>.</li>
+    </ul>
+    <figure>
+      <div class="shot" role="img" aria-label="Screenshot: failing run with the error marker">Screenshot: failing run with the error marker</div>
+    </figure>
+
+    <h2 id="good-to-know">Good to know</h2>
+    <ul>
+      <li>Runs use the file on disk. With unsaved changes you get a warning and the saved version runs.</li>
+      <li>With several configuration files, the one nearest to the test file is used.</li>
+      <li>Playwright below 1.38 produces a single warning and disables running.</li>
+    </ul>
+<pre><code>{
+  "code_lens": "on",
+  "inlay_hints": { "enabled": true }
+}</code></pre>
+
+    <footer class="page-footer">
+      <div class="meta">
+        <a href="https://github.com/radekBednarik/playwright-zed">Edit this page</a>
+        <span>Last updated 29 October 2026</span>
+      </div>
+      <nav class="pager" aria-label="Previous and next page">
+        <a href="#"><small>Previous</small><strong>First run</strong></a>
+        <a href="#" class="next"><small>Next</small><strong>Projects</strong></a>
+      </nav>
+      <a class="back" href="../index.html">Back to proposals</a>
+    </footer>
+  </main>
+
+  <aside class="toc">
+    <div class="toc-inner">
+      <h2>On this page</h2>
+      <ul>
+        <li><a href="#from-the-editor">From the editor</a></li>
+        <li><a href="#what-you-get-back">What you get back</a></li>
+        <li><a href="#good-to-know">Good to know</a></li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<script>
+  document.getElementById("theme").addEventListener("click", function () {
+    var root = document.documentElement;
+    var dark = root.dataset.theme === "dark" ||
+      (!root.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+    root.dataset.theme = dark ? "light" : "dark";
+  });
+</script>
+</body>
+</html>

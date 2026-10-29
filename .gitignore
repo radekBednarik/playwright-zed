@@ -27,3 +27,8 @@ Thumbs.db
 
 # Feature 006 integration test: temporary dist copy without the step reporter
 server/.dist-nostep-*/
+
+# Feature 010: documentation site build output and the generated parity page
+site/dist/
+site/.astro/
+site/src/content/docs/reference/parity.md
