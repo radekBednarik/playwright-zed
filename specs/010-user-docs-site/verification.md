@@ -249,11 +249,25 @@ server, the fixture and the parity matrix are untouched.
 
 ## Scenario 7: Pull request check
 
-**Command**: _pending_
+**Date**: 2026-10-29. PR #20 (https://github.com/radekBednarik/playwright-zed/pull/20),
+head `c3133ac` (feature commit `353bbf0` plus the analysis fixes).
 
-**Output**: _pending_
+**Command**: `gh pr checks 20`
 
-**Result**: _pending_
+**Output**:
+
+```text
+pass  Analyze (actions), Analyze (javascript-typescript), Analyze (rust), CodeQL
+pass  Build                                    27s   (Docs site workflow: npm ci, check, build, artifact upload)
+pass  Language server (Node 22)             3m34s
+pass  Language server (Node 24)             5m08s
+pass  Rust extension                          48s
+pass  Rust extension (registry toolchain 1.90) 31s
+skipping  Deploy to GitHub Pages                    (pull request: deploy runs only on main)
+```
+
+**Result**: PASS (FR-016, SC-007 first half): the docs build runs on the PR and the
+existing CI jobs are unchanged; `mergeable: MERGEABLE`.
 
 ## Scenario 8: Publication (owner steps)
 

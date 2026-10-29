@@ -384,7 +384,7 @@ steps, the address serves the site from another machine).
       github-pages, url: ${{ steps.deployment.outputs.page_url }} }`,
       `actions/deploy-pages@v5` with `id: deployment`); re-check the latest action tags
       with `gh api repos/<owner>/<action>/releases/latest` at execution time
-- [ ] T044 [US4] Commit the feature on `010-user-docs-site` (README, `site/`, workflow,
+- [x] T044 [US4] Commit the feature on `010-user-docs-site` (README, `site/`, workflow,
       `.gitignore`, feature record including mocks and screenshots) and push; open the PR
       against `main` with a description that lists the quickstart scenarios run, states
       "no extension, server or registry change", and ends with the attribution line;
