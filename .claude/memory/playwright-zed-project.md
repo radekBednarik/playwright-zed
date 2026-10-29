@@ -345,6 +345,51 @@ vitest tests in 24 files. `projects.test.ts` filters the picker entries by the
 quickstart scenarios 1 to 12 in Zed on 2026-10-29. Parity rows "Show browser" (`full`,
 `lsp, playwright-ui`) and "Close all browsers" (`full`, `lsp`).
 
+**Feature 010, user docs site and README restructure** (`specs/010-user-docs-site/`,
+spec, plan, research, data model, two contracts, quickstart, tasks, three design mocks,
+decision record and verification written and implemented on 2026-10-29; **PR #20**
+(https://github.com/radekBednarik/playwright-zed/pull/20) merged by the owner the same day
+as squash `35d25fe`, branch deleted; `.specify/feature.json` points at it; docs only, **no
+extension, server or registry change**, the pin stays 0.8.0 and `v0.8.0` the current tag).
+Delivered: README reordered for users (requirements, install, what it does, settings,
+usage, limitations and differences, getting help, then one "Contributing and development"
+part; site link on the first screen; contract in `contracts/readme-structure.md`); the
+documentation site in `site/` (Astro 7.4.4 + Starlight 0.42.7, TypeScript, npm, exact pins,
+`typescript` 6.0.3 because `@astrojs/check` 0.9.12 accepts only 5.x and 6.x; design A
+"Terminal" chosen by the owner from three static mocks in `specs/010-user-docs-site/mocks/`;
+landing page as `site/src/pages/index.astro` inside Starlight's frame, 14 docs pages, parity
+page generated from `docs/parity.md` by `site/scripts/sync-parity.ts` at every build and
+gitignored, `starlight-links-validator` fails the build on invalid internal links,
+`site/scripts/check-screenshots.ts` fails `npm run check` when a capability has no
+screenshot or a manifest entry's `extensionVersion` differs from `extension.toml`,
+`check-external-links.ts` run locally only); 13 real screenshots in
+`site/src/assets/screenshots/` with a typed manifest `site/src/data/screenshots.ts` and the
+`<Shot id>` component (Zed 1.26.2, extension 0.8.0 from npm, One Dark, 1920 x 1119 after
+cropping the 32 px GNOME top bar and the 49 px Ubuntu dock); deploy workflow
+`.github/workflows/docs-site.yml` (build on PRs touching `site/**`, `docs/parity.md`,
+`extension.toml` or the workflow; build and deploy on pushes to `main`; Pages enabled by
+the owner on 2026-10-29 with the "GitHub Actions" source). Site address:
+https://radekbednarik.github.io/playwright-zed/ (**deployed** 2026-10-29 by workflow run 40922437794 on `35d25fe`, Build and Deploy both success; every page answers 200 and the optimised hero image is served; later site changes on `main` redeploy on their own). Screenshot procedure
+(`docs/publishing.md` section 5): `site/scripts/zed-screenshot-profile.sh` starts Zed with
+its own XDG config and data under `~/.cache/playwright-zed-screenshots/` and its own
+extension state through `PLAYWRIGHT_ZED_STATE_DIR` (the first menu capture showed the
+owner's real "Show trace viewer" choice before that was added); `capture-screenshot.py`
+captures through `org.freedesktop.portal.Screenshot` (one-time approval, remembered);
+`zed-input.py` sends keystrokes and clicks through `org.freedesktop.portal.RemoteDesktop`
+(one-time approval; the auto-mode classifier refused the agent's first `session` call,
+the owner ran it with `!`, after that the agent staged all 13 scenes: `zed <file>:<line>`
+with the profile env places the cursor, `ctrl-.` plus Down selects menu entries, Return
+runs; Zed dismisses its notifications after about 5 s, so a result capture must follow
+the run end at once, best by polling the run log under the profile state for a final
+`# status:`; `workspace: clear trusted worktrees` restarts Zed and restores windows
+un-maximised, the trust dialog is reopened from the Restricted Mode badge). Gotchas:
+pressing Return with the code action menu closed inserts a newline (undo and save the
+unchanged buffer, otherwise the next run warns about unsaved changes); Chromium's translate
+prompt appears in the trace viewer on a Czech locale (dismiss before capturing).
+`/speckit-analyze` ran before the merge: no critical or high finding; C1 (workflow path
+filter), I1 (FR-013 wording) and I2 (input helper record) were applied. Gate after merge
+unchanged: 8 Rust, 284 vitest; the docs "Build" job takes under 30 s.
+
 Note: `create-new-feature.sh` in Spec Kit 1.1.2 no longer creates the git branch; it was
 created by hand.
 

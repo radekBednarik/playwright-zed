@@ -395,7 +395,7 @@ steps, the address serves the site from another machine).
       `gh api repos/radekBednarik/playwright-zed/pages` returning `build_type: workflow`,
       `html_url: https://radekbednarik.github.io/playwright-zed/`. Copy this evidence into
       `verification.md` scenario 8 when T001 creates the file
-- [ ] T046 [US4] Owner merges the PR (`! gh pr merge <n> --squash --admin --delete-branch`);
+- [x] T046 [US4] Owner merges the PR (`! gh pr merge <n> --squash --admin --delete-branch`);
       the agent watches the `deploy` job (`gh run list --workflow docs-site.yml`), opens
       `https://radekbednarik.github.io/playwright-zed/` in a private window, checks the
       README link on GitHub resolves, records the run URL and date in `verification.md`
@@ -427,7 +427,7 @@ steps, the address serves the site from another machine).
       permission granted, the screenshot profile under `~/.cache/playwright-zed-screenshots`),
       keep the WSL notes as a dated "earlier machine" paragraph, and fix the `@` import in
       `CLAUDE.md`
-- [ ] T051 Record feature 010 in `.claude/memory/playwright-zed-project.md` (branch, PR
+- [x] T051 Record feature 010 in `.claude/memory/playwright-zed-project.md` (branch, PR
       number, merge commit, site address, publication state, the `typescript` 6.x
       exception, the screenshot procedure, "no version bump"); open it as a docs PR after
       the feature PR merges, as previous features did
